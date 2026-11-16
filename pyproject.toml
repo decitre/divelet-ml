@@ -11,7 +11,7 @@ license = "Apache-2.0"  # code; content adapted from Dive into Deep Learning is 
 # Pyodide kernel 0.7.0 runs Python 3.13. The browser kernels get the divelet_ml package and [project.dependencies].
 requires-python = ">=3.11"
 authors = [{ name = "decitre" }]
-dependencies = ["numpy", "matplotlib", "pandas"]
+dependencies = ["numpy", "matplotlib", "pandas", "autograd"]
 
 [project.urls]
 Homepage = "https://github.com/decitre/divelet-ml"

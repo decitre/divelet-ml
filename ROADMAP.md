@@ -11,7 +11,7 @@ assessment and a small set of representative chapters.
 **Current status:** Early development. Static compatibility analysis has been
 performed. The three initial sections are adapted: 2.1 *Data Manipulation*,
 3.3 *Synthetic Regression Data* and 11.3 *Attention Scoring Functions*, and
-Chapter 2 is under way with 2.2 *Data Preprocessing*, 2.3 *Linear Algebra* and 2.4 *Calculus*. They run in JupyterLite with both the Pyodide and
+Chapter 2 is under way with 2.2 *Data Preprocessing*, 2.3 *Linear Algebra*, 2.4 *Calculus* and 2.5 *Automatic Differentiation*. They run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -218,11 +218,13 @@ Adapting the whole chapter is a condition for the outreach below.
 - [x] 2.4 *Calculus*. `divelet_ml` now has the book's plotting helpers
       (`d2l.plt`, `set_figsize`, `set_axes`, `plot`), which 2.6 and later
       chapters use.
-- [ ] 2.5 *Automatic Differentiation*: NumPy has no automatic
-      differentiation. The notebook will use the
+- [x] 2.5 *Automatic Differentiation*: NumPy has no automatic
+      differentiation. The notebook uses the
       [autograd](https://github.com/HIPS/autograd) library, whose `grad`
-      follows JAX's, and so the book's JAX edition of the section. Later
-      chapters that train models will compute gradients the same way.
+      follows JAX's, and so follows the book's JAX edition of the section.
+      autograd is a dependency of `divelet_ml`; Pyodide ships version 1.7.0,
+      xeus-python gets 1.9.1 from conda-forge. Later chapters that train
+      models will compute gradients the same way.
 - [ ] 2.6 *Probability and Statistics*.
 - [ ] 2.7 *Documentation*.
 
