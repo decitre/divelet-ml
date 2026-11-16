@@ -23,6 +23,7 @@ The project aims to preserve the book's chapter structure, mathematical explanat
 |---|---|
 | 1 Introduction (no code) | [d2l.ai][d2l-1] |
 | [2.1 Data Manipulation][xeus-2.1] [\[p\]][pyodide-2.1] | [d2l.ai][d2l-2.1] |
+| [2.2 Data Preprocessing][xeus-2.2] [\[p\]][pyodide-2.2] | [d2l.ai][d2l-2.2] |
 | [2.3 Linear Algebra][xeus-2.3] [\[p\]][pyodide-2.3] | [d2l.ai][d2l-2.3] |
 | [2.4 Calculus][xeus-2.4] [\[p\]][pyodide-2.4] | [d2l.ai][d2l-2.4] |
 | [3.3 Synthetic Regression Data][xeus-3.3] [\[p\]][pyodide-3.3] | [d2l.ai][d2l-3.3] |
@@ -181,6 +182,9 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [xeus-2.1]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=02_preliminaries/02.01_ndarray.ipynb
 [pyodide-2.1]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=02_preliminaries/02.01_ndarray.ipynb
 [d2l-2.1]: https://d2l.ai/chapter_preliminaries/ndarray.html
+[xeus-2.2]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=02_preliminaries/02.02_data-preprocessing.ipynb
+[pyodide-2.2]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=02_preliminaries/02.02_data-preprocessing.ipynb
+[d2l-2.2]: https://d2l.ai/chapter_preliminaries/pandas.html
 [xeus-2.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=02_preliminaries/02.03_linear-algebra.ipynb
 [pyodide-2.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=02_preliminaries/02.03_linear-algebra.ipynb
 [d2l-2.3]: https://d2l.ai/chapter_preliminaries/linear-algebra.html

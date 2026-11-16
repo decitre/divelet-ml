@@ -11,7 +11,7 @@ assessment and a small set of representative chapters.
 **Current status:** Early development. Static compatibility analysis has been
 performed. The three initial sections are adapted: 2.1 *Data Manipulation*,
 3.3 *Synthetic Regression Data* and 11.3 *Attention Scoring Functions*, and
-Chapter 2 is under way with 2.3 *Linear Algebra* and 2.4 *Calculus*. They run in JupyterLite with both the Pyodide and
+Chapter 2 is under way with 2.2 *Data Preprocessing*, 2.3 *Linear Algebra* and 2.4 *Calculus*. They run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -211,7 +211,9 @@ additional topics of the book.
 Adapting the whole chapter is a condition for the outreach below.
 
 - [x] 2.1 *Data Manipulation*.
-- [ ] 2.2 *Data Preprocessing*: needs pandas, approved as a dependency.
+- [x] 2.2 *Data Preprocessing*. pandas is now a dependency of `divelet_ml`.
+      In Pyodide, the folder the notebook creates makes the kernel's drive
+      request its listing from the site; the smoke test allows those 404s.
 - [x] 2.3 *Linear Algebra*.
 - [x] 2.4 *Calculus*. `divelet_ml` now has the book's plotting helpers
       (`d2l.plt`, `set_figsize`, `set_axes`, `plot`), which 2.6 and later

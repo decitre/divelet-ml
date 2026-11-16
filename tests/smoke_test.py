@@ -115,6 +115,8 @@ def test_notebook(new_context, base_url, browser, site, app, notebook):
 
     # Self-hosted: no other host, and no file missing from the site (how a pruned Pyodide package shows up).
     assert {urlparse(u).netloc for u, _ in responses if not u.startswith(base_url)} == set()
-    assert not [(u, s) for u, s in responses if u.startswith(base_url) and s >= 400]
+    # Except listings of folders a notebook creates (2.2's ../data): Pyodide's drive asks the site for them.
+    assert not [(u, s) for u, s in responses if u.startswith(base_url) and s >= 400
+                and not re.search(r"/api/contents/.+/all\.json$", u)]
     assert not console_errors
     context.close()
