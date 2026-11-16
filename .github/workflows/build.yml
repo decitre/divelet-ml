@@ -25,7 +25,7 @@ jobs:
         run: |
           for version in 3.11 3.13; do
             echo "::group::Python $version"
-            uv run --isolated --python "$version" --group test pytest tests/test_divelet_ml.py tests/test_notebooks.py -v
+            uv run --isolated --python "$version" --group test pytest tests/test_divelet_ml.py tests/test_attention_scoring.py tests/test_notebooks.py -v
             echo "::endgroup::"
           done
       - name: Coverage

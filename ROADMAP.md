@@ -9,8 +9,8 @@ Development will proceed incrementally, starting with a compatibility
 assessment and a small set of representative chapters.
 
 **Current status:** Early development. Static compatibility analysis has been
-performed. Two sections are adapted, 2.1 *Data Manipulation* and 3.3
-*Synthetic Regression Data*. They run in JupyterLite with both the Pyodide and
+performed. The three initial sections are adapted: 2.1 *Data Manipulation*,
+3.3 *Synthetic Regression Data* and 11.3 *Attention Scoring Functions*. They run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -103,7 +103,23 @@ Objectives:
 **Upstream source:**
 `chapter_attention-mechanisms-and-transformers/attention-scoring-functions.md`
 
-**Status:** Planned.
+**Status:** Adapted as
+[`content/11_attention-mechanisms-and-transformers/11.03_attention-scoring-functions.ipynb`](content/11_attention-mechanisms-and-transformers/11.03_attention-scoring-functions.ipynb),
+validated like *Array Operations*, and the first section with plots.
+`tests/test_attention_scoring.py` checks the notebook's functions against the
+section's equations: masked weights are zero, the others sum to one, outputs are
+weighted averages of the values, and identical keys give equal weights.
+
+Findings:
+
+- The whole section reproduces in NumPy: it computes forward passes only, with
+  no training and no automatic differentiation.
+- `divelet_ml.nn` stands in for the parts of `torch.nn` it uses (`Module`,
+  `Dropout`, `LazyLinear`, `softmax`), so the book's classes keep their shape.
+- `d2l.show_heatmaps` needs matplotlib, now a dependency of `divelet_ml`
+  and loaded by both browser kernels.
+- Training attention models, as later sections do, will need gradients, which
+  NumPy does not provide.
 
 Objectives:
 
@@ -158,13 +174,14 @@ executable and educationally consistent.
 
 ### Tasks
 
-- [ ] Add tests for numerical correctness.
+- [ ] Add tests for numerical correctness (started:
+      `tests/test_attention_scoring.py` for 11.3).
 - [ ] Validate representative notebook outputs.
 - [x] Introduce browser-based execution tests (`tests/smoke_test.py`: every
       notebook runs in both kernels, with no request to other hosts and no
       browser console error).
-- [x] Integrate tests into GitHub Actions (`tests/test_divelet_ml.py` and
-      `tests/test_notebooks.py` in CPython, then the browser smoke test on the
+- [x] Integrate tests into GitHub Actions (`tests/test_divelet_ml.py`,
+      `tests/test_attention_scoring.py` and `tests/test_notebooks.py` in CPython, then the browser smoke test on the
       built site, before deploying).
 - [x] Track compatibility separately for Pyodide and xeus-python (the smoke
       test runs each notebook on each site and checks the site's kernel).

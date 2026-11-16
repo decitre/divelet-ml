@@ -24,6 +24,7 @@ The project aims to preserve the book's chapter structure, mathematical explanat
 | 1 Introduction (no code) | [d2l.ai][d2l-1] |
 | [2.1 Data Manipulation][xeus-2.1] [\[p\]][pyodide-2.1] | [d2l.ai][d2l-2.1] |
 | [3.3 Synthetic Regression Data][xeus-3.3] [\[p\]][pyodide-3.3] | [d2l.ai][d2l-3.3] |
+| [11.3 Attention Scoring Functions][xeus-11.3] [\[p\]][pyodide-11.3] | [d2l.ai][d2l-11.3] |
 
 The notebooks' sources are in [`content/`][content].
 
@@ -41,7 +42,7 @@ pip install divelet-ml
 import divelet_ml as d2l
 ```
 
-It provides `add_to_class`, `HyperParameters` and `DataModule`, adapted from the book's `d2l/torch.py`, and `ArrayLoader`, which yields minibatches of NumPy arrays in place of PyTorch's `DataLoader`. The package grows only as adapted chapters need more of it. Its code is licensed under the Apache License 2.0; the notebooks are not part of the package.
+It provides `add_to_class`, `HyperParameters`, `DataModule`, `check_shape` and `show_heatmaps`, adapted from the book's `d2l/torch.py`, and `ArrayLoader`, which yields minibatches of NumPy arrays in place of PyTorch's `DataLoader`. Its `divelet_ml.nn` module (`from divelet_ml import nn`) has NumPy stand-ins for the parts of `torch.nn` the notebooks use: `Module`, `Dropout`, `LazyLinear` and `softmax`, forward pass only. Plots use matplotlib. The package grows only as adapted chapters need more of it. Its code is licensed under the Apache License 2.0; the notebooks are not part of the package.
 
 ## Motivation
 
@@ -117,7 +118,7 @@ The first phase focuses on three representative sections of the book:
 |---|---|---|
 | 2.1 `chapter_preliminaries/ndarray.md` | Array operations and tensor fundamentals | Adapted |
 | 3.3 `chapter_linear-regression/synthetic-regression-data.md` | Synthetic datasets and numerical computation | Adapted |
-| 11.3 `chapter_attention-mechanisms-and-transformers/attention-scoring-functions.md` | Attention mechanisms and scoring functions | Planned |
+| 11.3 `chapter_attention-mechanisms-and-transformers/attention-scoring-functions.md` | Attention mechanisms and scoring functions | Adapted |
 
 The PyTorch implementations serve as the primary reference.
 
@@ -181,6 +182,9 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [xeus-3.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=03_linear-regression/03.03_synthetic-regression-data.ipynb
 [pyodide-3.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=03_linear-regression/03.03_synthetic-regression-data.ipynb
 [d2l-3.3]: https://d2l.ai/chapter_linear-regression/synthetic-regression-data.html
+[xeus-11.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=11_attention-mechanisms-and-transformers/11.03_attention-scoring-functions.ipynb
+[pyodide-11.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=11_attention-mechanisms-and-transformers/11.03_attention-scoring-functions.ipynb
+[d2l-11.3]: https://d2l.ai/chapter_attention-mechanisms-and-transformers/attention-scoring-functions.html
 [transformers-js]: https://huggingface.co/docs/transformers.js/
 [lmlite]: https://github.com/decitre/lmlite
 [roadmap]: https://github.com/decitre/divelet-ml/blob/main/ROADMAP.md

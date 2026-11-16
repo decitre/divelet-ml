@@ -1,6 +1,6 @@
 """divelet-ml's NumPy counterpart of the `d2l` library, imported as `import divelet_ml as d2l`.
 
-`add_to_class`, `HyperParameters` and `DataModule` are adapted from `d2l/torch.py` in Dive into Deep Learning
+`add_to_class`, `HyperParameters`, `DataModule`, `check_shape`, `use_svg_display` and `show_heatmaps` are adapted from `d2l/torch.py` in Dive into Deep Learning
 (https://github.com/d2l-ai/d2l-en, commit 23d7a5aecceee57d1292c56e90cce307f183bb0a),
 Copyright 2019 Amazon.com, Inc. or its affiliates, MIT-0 license (LICENSE-SAMPLECODE).
 Only what adapted chapters use is here.
@@ -68,3 +68,32 @@ class ArrayLoader:
         for i in range(0, len(self) * self.batch_size, self.batch_size):
             batch = order[i:i + self.batch_size]
             yield tuple(a[batch] for a in self.arrays)
+
+
+def check_shape(a, shape):
+    """Check the shape of an array."""
+    assert a.shape == shape, f'array\'s shape {a.shape} != expected shape {shape}'
+
+
+def use_svg_display():
+    """Use the svg format to display a plot in Jupyter."""
+    from matplotlib_inline import backend_inline
+    backend_inline.set_matplotlib_formats('svg')
+
+
+def show_heatmaps(matrices, xlabel, ylabel, titles=None, figsize=(2.5, 2.5), cmap='Reds'):
+    """Show heatmaps of matrices, an array of shape (rows, columns, height, width)."""
+    from matplotlib import pyplot as plt  # imported here, so notebooks without plots don't load matplotlib
+    use_svg_display()
+    num_rows, num_cols, _, _ = matrices.shape
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=figsize, sharex=True, sharey=True, squeeze=False)
+    for i, (row_axes, row_matrices) in enumerate(zip(axes, matrices)):
+        for j, (ax, matrix) in enumerate(zip(row_axes, row_matrices)):
+            pcm = ax.imshow(matrix, cmap=cmap)
+            if i == num_rows - 1:
+                ax.set_xlabel(xlabel)
+            if j == 0:
+                ax.set_ylabel(ylabel)
+            if titles:
+                ax.set_title(titles[j])
+    fig.colorbar(pcm, ax=axes, shrink=0.6)

@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 import divelet_ml as d2l
+from divelet_ml import nn
 
 
 def test_array_loader_covers_every_row_once():
@@ -51,3 +52,73 @@ def test_data_module_dataloaders():
             return 'train' if train else 'val'
 
     assert (Data().train_dataloader(), Data().val_dataloader()) == ('train', 'val')
+
+
+def test_check_shape():
+    d2l.check_shape(np.ones((2, 3)), (2, 3))
+    with pytest.raises(AssertionError, match=r'\(2, 3\) != expected shape \(3, 2\)'):
+        d2l.check_shape(np.ones((2, 3)), (3, 2))
+
+
+def test_show_heatmaps():
+    from matplotlib import pyplot as plt
+    d2l.show_heatmaps(np.random.rand(2, 3, 4, 5), xlabel='x', ylabel='y', titles=['a', 'b', 'c'])
+    fig = plt.gcf()
+    axes = fig.axes[:-1]  # the last one is the colorbar
+    assert len(axes) == 6 and len(fig.axes) == 7
+    assert [ax.get_xlabel() for ax in axes] == ['', '', '', 'x', 'x', 'x']
+    assert [ax.get_ylabel() for ax in axes] == ['y', '', '', 'y', '', '']
+    assert [ax.get_title() for ax in axes] == ['a', 'b', 'c'] * 2
+    plt.close(fig)
+
+
+def test_softmax():
+    X = np.array([[1.0, 2.0, 3.0], [1000.0, 1000.0, 1000.0]])
+    Y = nn.softmax(X)
+    assert np.allclose(Y.sum(axis=-1), 1) and np.allclose(Y[1], 1 / 3)  # no overflow for large inputs
+    assert np.allclose(Y[0], np.exp([1, 2, 3]) / np.exp([1, 2, 3]).sum())
+    assert np.allclose(nn.softmax(X, axis=0).sum(axis=0), 1)
+
+
+def test_module_train_and_eval_set_submodules():
+    class Outer(nn.Module):
+        def __init__(self):
+            self.inner, self.dropout = nn.Module(), nn.Dropout(0.5)
+
+        def forward(self, X):
+            return self.dropout(X)
+
+    model = Outer()
+    assert model.training and model.inner.training and model.dropout.training
+    assert model.eval() is model and not (model.training or model.inner.training or model.dropout.training)
+    model.train()
+    assert model.training and model.inner.training and model.dropout.training
+    with pytest.raises(NotImplementedError):
+        nn.Module()(1)
+
+
+def test_dropout():
+    X = np.ones((100, 100))
+    dropout = nn.Dropout(0.5)
+    Y = dropout(X)
+    assert set(np.unique(Y)) <= {0.0, 2.0} and 0.4 < (Y == 0).mean() < 0.6
+    assert dropout.eval()(X) is X
+    assert nn.Dropout(0)(X) is X
+    assert (nn.Dropout(1)(X) == 0).all()
+    with pytest.raises(AssertionError):
+        nn.Dropout(1.5)
+
+
+def test_lazy_linear():
+    layer = nn.LazyLinear(3)
+    assert layer.weight is None
+    X = np.random.rand(2, 5, 4)
+    Y = layer(X)
+    assert Y.shape == (2, 5, 3) and layer.weight.shape == (3, 4) and layer.bias.shape == (3,)
+    assert np.abs(layer.weight).max() <= 1 / 2 and np.abs(layer.bias).max() <= 1 / 2  # 1/sqrt(4)
+    assert np.allclose(Y, X @ layer.weight.T + layer.bias)
+    weight = layer.weight
+    layer(X)
+    assert layer.weight is weight  # set on the first call only
+    no_bias = nn.LazyLinear(1, bias=False)
+    assert np.allclose(no_bias(X), X @ no_bias.weight.T) and no_bias.bias is None
