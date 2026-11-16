@@ -24,6 +24,7 @@ The project aims to preserve the book's chapter structure, mathematical explanat
 | 1 Introduction (no code) | [d2l.ai][d2l-1] |
 | [2.1 Data Manipulation][xeus-2.1] [\[p\]][pyodide-2.1] | [d2l.ai][d2l-2.1] |
 | [2.3 Linear Algebra][xeus-2.3] [\[p\]][pyodide-2.3] | [d2l.ai][d2l-2.3] |
+| [2.4 Calculus][xeus-2.4] [\[p\]][pyodide-2.4] | [d2l.ai][d2l-2.4] |
 | [3.3 Synthetic Regression Data][xeus-3.3] [\[p\]][pyodide-3.3] | [d2l.ai][d2l-3.3] |
 | [11.3 Attention Scoring Functions][xeus-11.3] [\[p\]][pyodide-11.3] | [d2l.ai][d2l-11.3] |
 
@@ -43,7 +44,7 @@ pip install divelet-ml
 import divelet_ml as d2l
 ```
 
-It provides `add_to_class`, `HyperParameters`, `DataModule`, `check_shape` and `show_heatmaps`, adapted from the book's `d2l/torch.py`, and `ArrayLoader`, which yields minibatches of NumPy arrays in place of PyTorch's `DataLoader`. Its `divelet_ml.nn` module (`from divelet_ml import nn`) has NumPy stand-ins for the parts of `torch.nn` the notebooks use: `Module`, `Dropout`, `LazyLinear` and `softmax`, forward pass only. Plots use matplotlib. The package grows only as adapted chapters need more of it. Its code is licensed under the Apache License 2.0; the notebooks are not part of the package.
+It provides `add_to_class`, `HyperParameters`, `DataModule`, `check_shape`, the plotting helpers `plt`, `set_figsize`, `set_axes`, `plot` and `show_heatmaps`, adapted from the book's `d2l/torch.py`, and `ArrayLoader`, which yields minibatches of NumPy arrays in place of PyTorch's `DataLoader`. Its `divelet_ml.nn` module (`from divelet_ml import nn`) has NumPy stand-ins for the parts of `torch.nn` the notebooks use: `Module`, `Dropout`, `LazyLinear` and `softmax`, forward pass only. Plots use matplotlib. The package grows only as adapted chapters need more of it. Its code is licensed under the Apache License 2.0; the notebooks are not part of the package.
 
 ## Motivation
 
@@ -183,6 +184,9 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [xeus-2.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=02_preliminaries/02.03_linear-algebra.ipynb
 [pyodide-2.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=02_preliminaries/02.03_linear-algebra.ipynb
 [d2l-2.3]: https://d2l.ai/chapter_preliminaries/linear-algebra.html
+[xeus-2.4]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=02_preliminaries/02.04_calculus.ipynb
+[pyodide-2.4]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=02_preliminaries/02.04_calculus.ipynb
+[d2l-2.4]: https://d2l.ai/chapter_preliminaries/calculus.html
 [xeus-3.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=03_linear-regression/03.03_synthetic-regression-data.ipynb
 [pyodide-3.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=03_linear-regression/03.03_synthetic-regression-data.ipynb
 [d2l-3.3]: https://d2l.ai/chapter_linear-regression/synthetic-regression-data.html
