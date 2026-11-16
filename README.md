@@ -27,6 +27,7 @@ The project aims to preserve the book's chapter structure, mathematical explanat
 | [2.3 Linear Algebra][xeus-2.3] [\[p\]][pyodide-2.3] | [d2l.ai][d2l-2.3] |
 | [2.4 Calculus][xeus-2.4] [\[p\]][pyodide-2.4] | [d2l.ai][d2l-2.4] |
 | [2.5 Automatic Differentiation][xeus-2.5] [\[p\]][pyodide-2.5] | [d2l.ai][d2l-2.5] |
+| [2.6 Probability and Statistics][xeus-2.6] [\[p\]][pyodide-2.6] | [d2l.ai][d2l-2.6] |
 | [3.3 Synthetic Regression Data][xeus-3.3] [\[p\]][pyodide-3.3] | [d2l.ai][d2l-3.3] |
 | [11.3 Attention Scoring Functions][xeus-11.3] [\[p\]][pyodide-11.3] | [d2l.ai][d2l-11.3] |
 
@@ -195,6 +196,9 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [xeus-2.5]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=02_preliminaries/02.05_automatic-differentiation.ipynb
 [pyodide-2.5]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=02_preliminaries/02.05_automatic-differentiation.ipynb
 [d2l-2.5]: https://d2l.ai/chapter_preliminaries/autograd.html
+[xeus-2.6]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=02_preliminaries/02.06_probability.ipynb
+[pyodide-2.6]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=02_preliminaries/02.06_probability.ipynb
+[d2l-2.6]: https://d2l.ai/chapter_preliminaries/probability.html
 [xeus-3.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=03_linear-regression/03.03_synthetic-regression-data.ipynb
 [pyodide-3.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=03_linear-regression/03.03_synthetic-regression-data.ipynb
 [d2l-3.3]: https://d2l.ai/chapter_linear-regression/synthetic-regression-data.html
