@@ -23,6 +23,7 @@ The project aims to preserve the book's chapter structure, mathematical explanat
 |---|---|
 | 1 Introduction (no code) | [d2l.ai][d2l-1] |
 | [2.1 Data Manipulation][xeus-2.1] [\[p\]][pyodide-2.1] | [d2l.ai][d2l-2.1] |
+| [2.3 Linear Algebra][xeus-2.3] [\[p\]][pyodide-2.3] | [d2l.ai][d2l-2.3] |
 | [3.3 Synthetic Regression Data][xeus-3.3] [\[p\]][pyodide-3.3] | [d2l.ai][d2l-3.3] |
 | [11.3 Attention Scoring Functions][xeus-11.3] [\[p\]][pyodide-11.3] | [d2l.ai][d2l-11.3] |
 
@@ -179,6 +180,9 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [xeus-2.1]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=02_preliminaries/02.01_ndarray.ipynb
 [pyodide-2.1]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=02_preliminaries/02.01_ndarray.ipynb
 [d2l-2.1]: https://d2l.ai/chapter_preliminaries/ndarray.html
+[xeus-2.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=02_preliminaries/02.03_linear-algebra.ipynb
+[pyodide-2.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=02_preliminaries/02.03_linear-algebra.ipynb
+[d2l-2.3]: https://d2l.ai/chapter_preliminaries/linear-algebra.html
 [xeus-3.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=03_linear-regression/03.03_synthetic-regression-data.ipynb
 [pyodide-3.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=03_linear-regression/03.03_synthetic-regression-data.ipynb
 [d2l-3.3]: https://d2l.ai/chapter_linear-regression/synthetic-regression-data.html
