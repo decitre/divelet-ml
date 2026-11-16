@@ -10,7 +10,8 @@ assessment and a small set of representative chapters.
 
 **Current status:** Early development. Static compatibility analysis has been
 performed. The three initial sections are adapted: 2.1 *Data Manipulation*,
-3.3 *Synthetic Regression Data* and 11.3 *Attention Scoring Functions*. They run in JupyterLite with both the Pyodide and
+3.3 *Synthetic Regression Data* and 11.3 *Attention Scoring Functions*, and
+Chapter 2 is under way with 2.3 *Linear Algebra*. They run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -200,10 +201,26 @@ depend exclusively on exact numerical outputs.
 
 ## Phase 5 — Expand Chapter Coverage
 
-**Status: Planned**
+**Status: In progress**
 
 After validating the initial chapters, progressively extend coverage to
 additional topics of the book.
+
+### Chapter 2 — Preliminaries
+
+Adapting the whole chapter is a condition for the outreach below.
+
+- [x] 2.1 *Data Manipulation*.
+- [ ] 2.2 *Data Preprocessing*: needs pandas.
+- [x] 2.3 *Linear Algebra*.
+- [ ] 2.4 *Calculus*: plots with the book's `plot` helpers.
+- [ ] 2.5 *Automatic Differentiation*: NumPy has no automatic
+      differentiation. The notebook will use the
+      [autograd](https://github.com/HIPS/autograd) library, whose `grad`
+      follows JAX's, and so the book's JAX edition of the section. Later
+      chapters that train models will compute gradients the same way.
+- [ ] 2.6 *Probability and Statistics*.
+- [ ] 2.7 *Documentation*.
 
 Potential areas include:
 
