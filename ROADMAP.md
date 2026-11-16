@@ -31,7 +31,10 @@ The PyTorch edition serves as the primary implementation reference.
 - [x] Classify chapters by estimated adaptation difficulty.
 - [x] Identify initial candidate chapters.
 - [ ] Review remaining parser warnings and ambiguous code variants.
-- [ ] Verify upstream code licenses and third-party asset requirements.
+- [x] Verify upstream code licenses and third-party asset requirements
+      (`LICENSE-SUMMARY`: text CC BY-SA 4.0, sample code MIT-0). Covers the
+      material adapted so far; datasets and images that later chapters use
+      are reviewed as they are adapted.
 - [ ] Publish the compatibility assessment and methodology.
 
 ### Initial Assessment
@@ -58,7 +61,7 @@ establish whether a chapter executes successfully in JupyterLite.
 
 ## Phase 2 — Initial Chapter Adaptations
 
-**Status: In progress**
+**Status: Complete**
 
 The first implementation phase focuses on three representative sections.
 
@@ -133,15 +136,20 @@ Objectives:
 
 Each adapted chapter must:
 
-- [ ] Preserve the original learning objectives.
-- [ ] Retain the relevant mathematical explanations and exercises.
-- [ ] Identify its upstream source and revision.
-- [ ] Document substantive modifications.
-- [ ] Use browser-compatible dependencies.
-- [ ] Execute successfully in every JupyterLite runtime for which
+- [x] Preserve the original learning objectives.
+- [x] Retain the relevant mathematical explanations and exercises.
+- [x] Identify its upstream source and revision.
+- [x] Document substantive modifications.
+- [x] Use browser-compatible dependencies.
+- [x] Execute successfully in every JupyterLite runtime for which
       compatibility is claimed.
-- [ ] Produce results consistent with the intended educational examples.
-- [ ] Include applicable licensing and attribution notices.
+- [x] Produce results consistent with the intended educational examples.
+- [x] Include applicable licensing and attribution notices.
+
+All three sections meet these criteria (checked 2026-11-16): each keeps its
+source's headings, display equations and exercises. Every non-random output
+of 2.1 and 3.3 matches the book's PyTorch output up to print precision, and
+`tests/test_attention_scoring.py` checks 11.3's results against its equations.
 
 ## Phase 3 — JupyterLite Infrastructure
 
