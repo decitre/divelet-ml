@@ -27,6 +27,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).parent.parent
 PUBLIC = ROOT / "workspace" / "public"
 FAILURES = ROOT / "workspace" / "smoke-failures"  # screenshots of notebooks that did not finish
+FOLDER_LISTING = re.compile(r"/api/contents/.+/all\.json$")
 NOTEBOOKS = sorted(p.relative_to(ROOT / "content").as_posix() for p in (ROOT / "content").rglob("*.ipynb"))
 KERNEL_START_MS = 240_000  # first load downloads the kernel and its packages
 RUN_MS = 120_000
@@ -85,8 +86,10 @@ def test_notebook(new_context, base_url, browser, site, app, notebook):
     page.on("pageerror", lambda e: page_errors.append(str(e)))
     # The kernel's own fetches run in a web worker; their failures show up here, not always as responses.
     # The browser's own /favicon.ico request at the server root is outside the site.
+    # Listings of folders a notebook creates (2.2's ../data): Pyodide's drive asks the site for them.
     page.on("console", lambda m: console_errors.append(m.text)
-            if m.type == "error" and not m.location.get("url", "").endswith("/favicon.ico") else None)
+            if m.type == "error" and not m.location.get("url", "").endswith("/favicon.ico")
+            and not FOLDER_LISTING.search(m.location.get("url", "")) else None)
     page.goto(f"{base_url}/{site}/{app}/index.html?path={notebook}")
     page.wait_for_selector(".jp-CodeCell", timeout=KERNEL_START_MS)
     # Run All while the kernel is still starting can lose the session in WebKit: nothing runs, or Lab
@@ -115,6 +118,6 @@ def test_notebook(new_context, base_url, browser, site, app, notebook):
 
     # Self-hosted: no other host, and no file missing from the site (how a pruned Pyodide package shows up).
     assert {urlparse(u).netloc for u, _ in responses if not u.startswith(base_url)} == set()
-    assert not [(u, s) for u, s in responses if u.startswith(base_url) and s >= 400]
+    assert not [(u, s) for u, s in responses if u.startswith(base_url) and s >= 400 and not FOLDER_LISTING.search(u)]
     assert not console_errors
     context.close()
