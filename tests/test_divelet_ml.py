@@ -122,3 +122,40 @@ def test_lazy_linear():
     assert layer.weight is weight  # set on the first call only
     no_bias = nn.LazyLinear(1, bias=False)
     assert np.allclose(no_bias(X), X @ no_bias.weight.T) and no_bias.bias is None
+
+
+def test_plt_is_pyplot_and_unknown_attributes_raise():
+    from matplotlib import pyplot
+    assert d2l.plt is pyplot
+    with pytest.raises(AttributeError, match='no attribute'):
+        d2l.no_such_name
+
+
+def test_set_figsize():
+    d2l.set_figsize((4.5, 3.5))
+    assert list(d2l.plt.rcParams['figure.figsize']) == [4.5, 3.5]
+    d2l.set_figsize()
+    assert list(d2l.plt.rcParams['figure.figsize']) == [3.5, 2.5]
+
+
+def test_plot():
+    plt = d2l.plt
+    x = np.arange(0, 3, 0.1)
+    # Several curves against one x, with labels, legend, limits and scales
+    d2l.plot(x, [x ** 2, 2 * x - 3], 'x', 'f(x)', legend=['f(x)', 'tangent'],
+             xlim=[0, 3], ylim=[-3, 9], yscale='linear')
+    axes = plt.gca()
+    lines = axes.get_lines()
+    assert len(lines) == 2 and np.allclose(lines[0].get_xdata(), x) and np.allclose(lines[1].get_ydata(), 2 * x - 3)
+    assert lines[1].get_linestyle() == '--' and lines[1].get_color() == 'm'
+    assert (axes.get_xlabel(), axes.get_ylabel()) == ('x', 'f(x)')
+    assert [t.get_text() for t in axes.get_legend().get_texts()] == ['f(x)', 'tangent']
+    assert axes.get_xlim() == (0, 3) and axes.get_ylim() == (-3, 9)
+    # One curve given as Y only: plotted against its indices; the axes are cleared first
+    d2l.plot([1.0, 4.0, 9.0], axes=axes)
+    lines = axes.get_lines()
+    assert len(lines) == 1 and list(lines[0].get_xdata()) == [0, 1, 2] and list(lines[0].get_ydata()) == [1, 4, 9]
+    # One x for two curves, as a 1-axis Y
+    d2l.plot(x, x ** 2, axes=axes)
+    assert len(axes.get_lines()) == 1
+    plt.close('all')
