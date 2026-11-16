@@ -10,7 +10,7 @@ PUBLIC="$WORKSPACE/public"
 # Kept between builds (CI caches it): xeus environments and Pyodide/self-hosted downloads.
 CACHE="${JL_FORGE_CACHE:-$HOME/.cache/jl-forge}"
 APPS=(--apps lab --apps notebooks --apps tree)
-JL_FORGE="jl-forge==0.6.0"
+JL_FORGE="jl-forge==0.7.0"
 
 venv() {  # venv <dir> <packages...>: create a build venv with jl-forge and jupyterlite
   local dir="$1"; shift
@@ -45,8 +45,8 @@ uv build -q --wheel --out-dir "$WORKSPACE/content-pyodide" .
 jl-forge pyodide-install --pyproject pyproject.toml --package-name divelet_ml --wheel-dir "$WORKSPACE/content-pyodide"
 jl-forge notebooks "$WORKSPACE/content-pyodide" --strip --pyodide-install
 jl-forge pyodide-wheels --pyproject pyproject.toml --cache-dir "$CACHE" --out-dir "$WORKSPACE/lite-pyodide/pypi"
-# Self-host Pyodide, pruned to the kernel's startup packages and pyproject's dependencies (NumPy).
-PYODIDE_DIST=$(jl-forge pyodide-dist --pyproject pyproject.toml --cache-dir "$CACHE/pyodide" --out "$WORKSPACE/pyodide-dist.tar.bz2")
+# Self-host Pyodide, pruned to the kernel's startup packages, pyproject's dependencies and what the bundled wheels need.
+PYODIDE_DIST=$(jl-forge pyodide-dist --pyproject pyproject.toml --wheels-dir "$WORKSPACE/lite-pyodide/pypi" --cache-dir "$CACHE/pyodide" --out "$WORKSPACE/pyodide-dist.tar.bz2")
 (cd "$WORKSPACE" && jupyter lite build "${APPS[@]}" --contents "$WORKSPACE/content-pyodide" --output-dir "$PUBLIC/pyodide" --lite-dir lite-pyodide \
   --pyodide "$PYODIDE_DIST")
 
