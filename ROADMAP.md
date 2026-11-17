@@ -11,7 +11,7 @@ assessment and a small set of representative chapters.
 **Current status:** Early development. Static compatibility analysis has been
 performed. The three initial sections are adapted: 2.1 *Data Manipulation*,
 3.3 *Synthetic Regression Data* and 11.3 *Attention Scoring Functions*, and
-Chapter 2 is now complete with 2.2 *Data Preprocessing*, 2.3 *Linear Algebra*, 2.4 *Calculus*, 2.5 *Automatic Differentiation*, 2.6 *Probability and Statistics* and 2.7 *Documentation*. Chapter 3 is under way with 3.1 *Linear Regression*. They run in JupyterLite with both the Pyodide and
+Chapter 2 is now complete with 2.2 *Data Preprocessing*, 2.3 *Linear Algebra*, 2.4 *Calculus*, 2.5 *Automatic Differentiation*, 2.6 *Probability and Statistics* and 2.7 *Documentation*. Chapter 3 is complete with 3.1 *Linear Regression*, 3.2 *Object-Oriented Design for Implementation*, 3.4 *Linear Regression Implementation from Scratch*, 3.5 *Concise Implementation of Linear Regression*, 3.6 *Generalization* and 3.7 *Weight Decay*. They run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -235,12 +235,22 @@ Adapting the whole chapter is a condition for the outreach below.
 - [x] 3.1 *Linear Regression*. The section's three figures are the first
       book images adapted: the neuron drawing is Wikimedia Commons'
       `Neuron.svg` (CC BY-SA 3.0), credited in the notebook.
-- [ ] 3.2 *Object-Oriented Design for Implementation*.
+- [x] 3.2 *Object-Oriented Design for Implementation*. `divelet_ml` now has
+      the book's `ProgressBoard`, `Module`, `DataModule` and `Trainer`, which
+      later chapters build on.
 - [x] 3.3 *Synthetic Regression Data*.
-- [ ] 3.4 *Linear Regression Implementation from Scratch*.
-- [ ] 3.5 *Concise Implementation of Linear Regression*.
-- [ ] 3.6 *Generalization*.
-- [ ] 3.7 *Weight Decay*.
+- [x] 3.4 *Linear Regression Implementation from Scratch*. Training
+      computes gradients with autograd, as planned in 2.5:
+      `d2l.param_grads` differentiates a training step with respect to the
+      model's parameter arrays, in place of `loss.backward()`, and the
+      optimizer's `step(grads)` updates them.
+- [x] 3.5 *Concise Implementation of Linear Regression*. `divelet_ml.nn`
+      gains `MSELoss`, `Module.parameters()` and initializers for
+      `LazyLinear`, and `divelet_ml.optim.SGD` stands in for
+      `torch.optim.SGD`.
+- [x] 3.6 *Generalization* (no code).
+- [x] 3.7 *Weight Decay*. `optim.SGD` takes PyTorch's parameter groups with
+      `weight_decay`.
 
 Potential areas include:
 
