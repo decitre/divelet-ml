@@ -34,9 +34,9 @@ FOLDER_LISTING = re.compile(r"/api/contents/.+/all\.json$")
 NOTEBOOKS = sorted(p.relative_to(ROOT / "content").as_posix() for p in (ROOT / "content").rglob("*.ipynb"))
 KERNEL_START_MS = 240_000  # first load downloads the kernel and its packages
 RUN_MS = 120_000
-# The two notebooks that train two multilayer perceptrons take 1.5 to 3 minutes in Pyodide on a CI runner, in WebKit.
+# The two notebooks that train two multilayer perceptrons take 1.5 to 3 minutes in Pyodide on a CI runner, in WebKit; the dropout one has gone past 5.
 RUN_MS_NOTEBOOKS = {"05_multilayer-perceptrons/05.02_mlp-implementation.ipynb": 300_000,
-                    "05_multilayer-perceptrons/05.06_dropout.ipynb": 300_000}
+                    "05_multilayer-perceptrons/05.06_dropout.ipynb": 480_000}
 # The kernel name each site's toolbar shows: catches a site built with the other kernel.
 KERNEL_NAMES = {"xeus": "(XPython)", "pyodide": "(Pyodide)"}
 IPAD = "iPad (gen 11)"
