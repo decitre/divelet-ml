@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import divelet_ml as d2l
-from divelet_ml import nn
+from divelet_ml import nn, optim
 
 
 def test_array_loader_covers_every_row_once():
@@ -159,3 +159,108 @@ def test_plot():
     d2l.plot(x, x ** 2, axes=axes)
     assert len(axes.get_lines()) == 1
     plt.close('all')
+
+
+def test_module_parameters_and_lazy_linear_initializers():
+    class Net(nn.Module):
+        def __init__(self):
+            self.w, self.count, self.layer = np.ones(2), np.arange(3), nn.LazyLinear(2, bias_init=np.zeros)
+
+    net = Net()
+    assert list(net.modules()) == [net, net.layer]
+    assert [p is net.w for p in net.parameters()] == [True]  # integer arrays and uninitialized layers are not parameters
+    net.layer(np.ones((1, 3)))
+    assert [p.shape for p in net.parameters()] == [(2,), (2, 3), (2,)] and (net.layer.bias == 0).all()
+    layer = nn.LazyLinear(1, weight_init=np.ones)
+    assert np.allclose(layer(np.ones((1, 4))), 4 + layer.bias)
+
+
+def test_mse_loss():
+    assert nn.MSELoss()(np.array([1.0, 2.0]), np.array([1.0, 4.0])) == 2.0
+
+
+def test_param_grads_restores_the_parameters():
+    model = d2l.LinearRegressionScratch(num_inputs=2, lr=0.1)
+    model.w[:] = [[1.0], [2.0]]
+    w, b = model.w, model.b
+    X, y = np.array([[1.0, 1.0], [2.0, 0.0]]), np.array([[0.0], [1.0]])
+    grad_w, grad_b = d2l.param_grads(lambda: model.loss(model(X), y), model, [w, b])
+    residual = X @ w + b - y  # loss = mean(residual ** 2) / 2
+    assert np.allclose(grad_w, X.T @ residual / 2) and np.allclose(grad_b, residual.mean())
+    assert model.w is w and model.b is b
+    with pytest.raises(AssertionError, match='not an attribute'):
+        d2l.param_grads(lambda: 0.0, model, [np.ones(1)])
+
+
+def test_optim_sgd_weight_decay_and_parameter_groups():
+    w, b = np.ones(2), np.ones(1)
+    optim.SGD([w, b], lr=0.1).step([np.ones(2), np.ones(1)])
+    assert np.allclose(w, 0.9) and np.allclose(b, 0.9)
+    w, b = np.ones(2), np.ones(1)
+    sgd = optim.SGD([{'params': w, 'weight_decay': 3}, {'params': [b]}], lr=0.1)
+    assert sgd.params[0] is w and sgd.params[1] is b
+    sgd.step([np.zeros(2), np.zeros(1)])
+    assert np.allclose(w, 0.7) and np.allclose(b, 1)
+
+
+@pytest.mark.parametrize('make_model', [lambda: d2l.LinearRegressionScratch(2, lr=0.03),
+                                        lambda: d2l.LinearRegression(lr=0.03)], ids=['scratch', 'concise'])
+def test_trainer_fits_linear_regression(make_model):
+    np.random.seed(0)
+    model = make_model()
+    model.board.display = False
+    data = d2l.SyntheticRegressionData(w=np.array([2, -3.4]), b=4.2)
+    trainer = d2l.Trainer(max_epochs=3)
+    trainer.fit(model, data)
+    w, b = model.get_w_b() if hasattr(model, 'get_w_b') else (model.w, model.b)
+    assert np.abs(w.reshape(2) - [2, -3.4]).max() < 0.3 and abs(b.item() - 4.2) < 0.3
+    assert trainer.train_batch_idx == 3 * 32 and trainer.val_batch_idx == 3 * 32
+    assert set(model.board.data) == {'train_loss', 'val_loss'} and len(model.board.data['val_loss']) == 3
+
+
+def test_progress_board_averages_every_n_points_and_draws(capsys):
+    board = d2l.ProgressBoard('x', xlim=[0, 4], ylim=[0.1, 9], yscale='log')
+    for x in range(4):
+        board.draw(x, x ** 2, 'square', every_n=2)
+        board.draw(x, 1, 'one')
+    assert board.data['square'] == [(0.5, 0.5), (2.5, 6.5)] and len(board.data['one']) == 4
+    axes = board.fig.axes[0]
+    assert [t.get_text() for t in axes.get_legend().get_texts()] == ['square', 'one']
+    assert (axes.get_xlabel(), axes.get_yscale(), axes.get_xlim()) == ('x', 'log', (0, 4))
+    d2l.plt.close('all')
+
+
+def test_module_base_class():
+    model = d2l.Module()
+    assert model.hparams == {'plot_train_per_epoch': 2, 'plot_valid_per_epoch': 1}
+    for method, args in ((model.loss, (0, 0)), (model.configure_optimizers, ())):
+        with pytest.raises(NotImplementedError):
+            method(*args)
+    with pytest.raises(AssertionError, match='Neural network'):
+        model(np.ones(1))
+    model.net = lambda X: 2 * X
+    assert model(3) == 6
+
+
+def test_trainer_without_validation_data_and_with_gradient_clipping():
+    class Data(d2l.DataModule):
+        def __init__(self):
+            super().__init__()
+            self.batch_size = 2
+
+        def get_dataloader(self, train):
+            return self.get_tensorloader((np.ones((4, 1)), np.ones((4, 1))), train) if train else None
+
+    clipped = []
+
+    @d2l.add_to_class(d2l.Trainer)
+    def clip_gradients(self, grad_clip_val, grads):
+        clipped.append(grad_clip_val)
+        return grads
+
+    model = d2l.LinearRegressionScratch(1, lr=0.1)
+    model.board.display = False
+    trainer = d2l.Trainer(max_epochs=2, gradient_clip_val=1)
+    trainer.fit(model, Data())
+    del d2l.Trainer.clip_gradients
+    assert trainer.num_val_batches == 0 and trainer.val_batch_idx == 0 and clipped == [1] * 4

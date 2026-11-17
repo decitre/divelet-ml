@@ -30,7 +30,12 @@ The project aims to preserve the book's chapter structure, mathematical explanat
 | [2.6 Probability and Statistics][xeus-2.6] [\[p\]][pyodide-2.6] | [d2l.ai][d2l-2.6] |
 | [2.7 Documentation][xeus-2.7] [\[p\]][pyodide-2.7] | [d2l.ai][d2l-2.7] |
 | [3.1 Linear Regression][xeus-3.1] [\[p\]][pyodide-3.1] | [d2l.ai][d2l-3.1] |
+| [3.2 Object-Oriented Design for Implementation][xeus-3.2] [\[p\]][pyodide-3.2] | [d2l.ai][d2l-3.2] |
 | [3.3 Synthetic Regression Data][xeus-3.3] [\[p\]][pyodide-3.3] | [d2l.ai][d2l-3.3] |
+| [3.4 Linear Regression Implementation from Scratch][xeus-3.4] [\[p\]][pyodide-3.4] | [d2l.ai][d2l-3.4] |
+| [3.5 Concise Implementation of Linear Regression][xeus-3.5] [\[p\]][pyodide-3.5] | [d2l.ai][d2l-3.5] |
+| [3.6 Generalization][xeus-3.6] [\[p\]][pyodide-3.6] | [d2l.ai][d2l-3.6] |
+| [3.7 Weight Decay][xeus-3.7] [\[p\]][pyodide-3.7] | [d2l.ai][d2l-3.7] |
 | [11.3 Attention Scoring Functions][xeus-11.3] [\[p\]][pyodide-11.3] | [d2l.ai][d2l-11.3] |
 
 The notebooks' sources are in [`content/`][content].
@@ -49,7 +54,7 @@ pip install divelet-ml
 import divelet_ml as d2l
 ```
 
-It provides `add_to_class`, `HyperParameters`, `DataModule`, `check_shape`, the plotting helpers `plt`, `set_figsize`, `set_axes`, `plot` and `show_heatmaps`, adapted from the book's `d2l/torch.py`, and `ArrayLoader`, which yields minibatches of NumPy arrays in place of PyTorch's `DataLoader`. Its `divelet_ml.nn` module (`from divelet_ml import nn`) has NumPy stand-ins for the parts of `torch.nn` the notebooks use: `Module`, `Dropout`, `LazyLinear` and `softmax`, forward pass only. Plots use matplotlib. The package grows only as adapted chapters need more of it. Its code is licensed under the Apache License 2.0; the notebooks are not part of the package.
+It provides `add_to_class`, `HyperParameters`, `DataModule`, `check_shape`, the plotting helpers `plt`, `set_figsize`, `set_axes`, `plot` and `show_heatmaps`, and the training framework of Chapter 3: `ProgressBoard`, `Module`, `Trainer`, `SyntheticRegressionData`, `SGD`, `LinearRegressionScratch` and `LinearRegression`, all adapted from the book's `d2l/torch.py`. `ArrayLoader` yields minibatches of NumPy arrays in place of PyTorch's `DataLoader`, and `param_grads` computes gradients with [autograd](https://github.com/HIPS/autograd) in place of PyTorch's `backward`. Its `divelet_ml.nn` module (`from divelet_ml import nn`) has NumPy stand-ins for the parts of `torch.nn` the notebooks use: `Module`, `Dropout`, `LazyLinear`, `MSELoss` and `softmax`; `divelet_ml.optim` has `SGD`, in place of `torch.optim.SGD`. Plots use matplotlib. The package grows only as adapted chapters need more of it. Its code is licensed under the Apache License 2.0; the notebooks are not part of the package.
 
 ## Motivation
 
@@ -207,9 +212,24 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [xeus-3.1]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=03_linear-regression/03.01_linear-regression.ipynb
 [pyodide-3.1]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=03_linear-regression/03.01_linear-regression.ipynb
 [d2l-3.1]: https://d2l.ai/chapter_linear-regression/linear-regression.html
+[xeus-3.2]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=03_linear-regression/03.02_oo-design.ipynb
+[pyodide-3.2]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=03_linear-regression/03.02_oo-design.ipynb
+[d2l-3.2]: https://d2l.ai/chapter_linear-regression/oo-design.html
 [xeus-3.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=03_linear-regression/03.03_synthetic-regression-data.ipynb
 [pyodide-3.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=03_linear-regression/03.03_synthetic-regression-data.ipynb
 [d2l-3.3]: https://d2l.ai/chapter_linear-regression/synthetic-regression-data.html
+[xeus-3.4]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=03_linear-regression/03.04_linear-regression-scratch.ipynb
+[pyodide-3.4]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=03_linear-regression/03.04_linear-regression-scratch.ipynb
+[d2l-3.4]: https://d2l.ai/chapter_linear-regression/linear-regression-scratch.html
+[xeus-3.5]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=03_linear-regression/03.05_linear-regression-concise.ipynb
+[pyodide-3.5]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=03_linear-regression/03.05_linear-regression-concise.ipynb
+[d2l-3.5]: https://d2l.ai/chapter_linear-regression/linear-regression-concise.html
+[xeus-3.6]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=03_linear-regression/03.06_generalization.ipynb
+[pyodide-3.6]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=03_linear-regression/03.06_generalization.ipynb
+[d2l-3.6]: https://d2l.ai/chapter_linear-regression/generalization.html
+[xeus-3.7]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=03_linear-regression/03.07_weight-decay.ipynb
+[pyodide-3.7]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=03_linear-regression/03.07_weight-decay.ipynb
+[d2l-3.7]: https://d2l.ai/chapter_linear-regression/weight-decay.html
 [xeus-11.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=11_attention-mechanisms-and-transformers/11.03_attention-scoring-functions.ipynb
 [pyodide-11.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=11_attention-mechanisms-and-transformers/11.03_attention-scoring-functions.ipynb
 [d2l-11.3]: https://d2l.ai/chapter_attention-mechanisms-and-transformers/attention-scoring-functions.html

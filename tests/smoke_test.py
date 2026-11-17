@@ -13,6 +13,7 @@ Run after build.sh, from the repository root (needs Google Chrome; install WebKi
 Adapted from jl-forge's examples/demo/smoke_test.py.
 """
 
+import json
 import re
 import threading
 from functools import partial
@@ -91,17 +92,32 @@ def test_notebook(new_context, base_url, browser, site, app, notebook):
             if m.type == "error" and not m.location.get("url", "").endswith("/favicon.ico")
             and not FOLDER_LISTING.search(m.location.get("url", "")) else None)
     page.goto(f"{base_url}/{site}/{app}/index.html?path={notebook}")
-    page.wait_for_selector(".jp-CodeCell", timeout=KERNEL_START_MS)
+    # A notebook without code (3.6) still opens with a kernel; there is just nothing to run.
+    has_code = any(c["cell_type"] == "code" for c in json.loads((ROOT / "content" / notebook).read_text())["cells"])
+    page.wait_for_selector(".jp-CodeCell" if has_code else ".jp-MarkdownCell", timeout=KERNEL_START_MS)
     # Run All while the kernel is still starting can lose the session in WebKit: nothing runs, or Lab
     # shows a "Select Kernel" dialog. A tablet user who taps Run All right away sees the same.
     page.wait_for_function(KERNEL_READY_JS, timeout=KERNEL_START_MS, polling=100)
+    errors = page.locator(".jp-OutputArea-output[data-mime-type='application/vnd.jupyter.stderr']")
+    if has_code:
+        _run_all(page, errors, browser, site, app, notebook, page_errors, console_errors)
+    assert errors.count() == 0, errors.all_inner_texts()
+    assert KERNEL_NAMES[site] in page.locator(".jp-Toolbar-kernelName").first.inner_text()
+
+    # Self-hosted: no other host, and no file missing from the site (how a pruned Pyodide package shows up).
+    assert {urlparse(u).netloc for u, _ in responses if not u.startswith(base_url)} == set()
+    assert not [(u, s) for u, s in responses if u.startswith(base_url) and s >= 400 and not FOLDER_LISTING.search(u)]
+    assert not console_errors
+    context.close()
+
+
+def _run_all(page, errors, browser, site, app, notebook, page_errors, console_errors):
     page.click("li.lm-MenuBar-item:has-text('Run')")
     page.click("li.lm-Menu-item:has-text('Run All Cells')")
 
     # Run All stops at the first error, so the last code cell showing "[n]:" (not "[ ]:" or "[*]:")
     # means every cell ran. Off-screen prompts can render empty, so don't check them all.
     # Stop waiting at the first error output instead of timing out.
-    errors = page.locator(".jp-OutputArea-output[data-mime-type='application/vnd.jupyter.stderr']")
     last_ran = page.locator(".jp-CodeCell .jp-InputPrompt").last.filter(has_text=re.compile(r"\[\d+\]"))
     try:
         last_ran.or_(errors.first).wait_for(timeout=RUN_MS)
@@ -113,11 +129,3 @@ def test_notebook(new_context, base_url, browser, site, app, notebook):
         status = page.locator(".jp-Notebook-ExecutionIndicator").first.get_attribute("data-status")
         pytest.fail(f"cells did not finish: prompts {prompts}, kernel {status}, page errors {page_errors}, "
                     f"console errors {console_errors}, screenshot {shot}")
-    assert errors.count() == 0, errors.all_inner_texts()
-    assert KERNEL_NAMES[site] in page.locator(".jp-Toolbar-kernelName").first.inner_text()
-
-    # Self-hosted: no other host, and no file missing from the site (how a pruned Pyodide package shows up).
-    assert {urlparse(u).netloc for u, _ in responses if not u.startswith(base_url)} == set()
-    assert not [(u, s) for u, s in responses if u.startswith(base_url) and s >= 400 and not FOLDER_LISTING.search(u)]
-    assert not console_errors
-    context.close()

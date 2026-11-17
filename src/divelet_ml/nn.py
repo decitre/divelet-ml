@@ -1,14 +1,17 @@
 """NumPy stand-ins for the parts of PyTorch's `torch.nn` that adapted chapters use, imported as
 `from divelet_ml import nn`.
 
-Forward computation only: there are no gradients, parameter registries or devices. `Module.eval()`
-and `Module.train()` switch layers such as `Dropout` between training and inference behavior, as in
-PyTorch. `softmax` follows Flax's `nn.softmax(x, axis=-1)`, the JAX counterpart of
-`torch.nn.functional.softmax`.
+Forward computation only: there are no devices, and gradients come from autograd through
+`divelet_ml.param_grads`, so code that a model computes its loss with must use autograd's NumPy
+(`import autograd.numpy as np`) or array operators. A module's parameters are its floating-point array
+attributes. `Module.eval()` and `Module.train()` switch layers such as `Dropout` between training and
+inference behavior, as in PyTorch. `softmax` follows Flax's `nn.softmax(x, axis=-1)`, the JAX
+counterpart of `torch.nn.functional.softmax`.
 """
 
 import math
 
+import autograd.numpy as anp
 import numpy as np
 
 
@@ -31,6 +34,19 @@ class Module:
 
     def forward(self, *args, **kwargs):
         raise NotImplementedError
+
+    def modules(self):
+        """This module, then the modules held in its attributes, recursively."""
+        yield self
+        for value in vars(self).values():
+            if isinstance(value, Module):
+                yield from value.modules()
+
+    def parameters(self):
+        """The floating-point arrays held in the attributes of this module and its submodules."""
+        # shortcut: arrays in lists or dicts are not found; walk them when a model holds layers that way.
+        return [v for m in self.modules() for v in vars(m).values()
+                if isinstance(v, np.ndarray) and v.dtype.kind == 'f']
 
     def train(self, mode=True):
         self.training = mode
@@ -63,18 +79,27 @@ class LazyLinear(Module):
     `torch.nn.LazyLinear`.
 
     The weight, of shape (out_features, in_features), and the bias are drawn as in PyTorch, uniformly
-    from (-1/sqrt(in_features), 1/sqrt(in_features)).
+    from (-1/sqrt(in_features), 1/sqrt(in_features)), unless `weight_init` or `bias_init` is given: a
+    function of the shape that returns the initial array, like the initializers of Flax's `nn.Dense`.
     """
-    def __init__(self, out_features, bias=True):
+    def __init__(self, out_features, bias=True, weight_init=None, bias_init=None):
         self.out_features, self.has_bias = out_features, bias
+        self.weight_init, self.bias_init = weight_init, bias_init
         self.weight = self.bias = None
 
     def forward(self, X):
         if self.weight is None:
             in_features = X.shape[-1]
             bound = 1 / math.sqrt(in_features)
-            self.weight = np.random.uniform(-bound, bound, (self.out_features, in_features))
+            uniform = lambda shape: np.random.uniform(-bound, bound, shape)
+            self.weight = (self.weight_init or uniform)((self.out_features, in_features))
             if self.has_bias:
-                self.bias = np.random.uniform(-bound, bound, self.out_features)
+                self.bias = (self.bias_init or uniform)((self.out_features,))
         Y = X @ self.weight.T
         return Y if self.bias is None else Y + self.bias
+
+
+class MSELoss(Module):
+    """The mean of the squared differences between `input` and `target`, in place of `torch.nn.MSELoss`."""
+    def forward(self, input, target):
+        return anp.mean((input - target) ** 2)
