@@ -15,8 +15,11 @@ def _pyplot():
 
 
 def use_svg_display():
-    """Use the svg format to display a plot in Jupyter."""
-    from matplotlib_inline import backend_inline
+    """Use the svg format to display a plot in Jupyter. Outside Jupyter, there is no inline backend to set."""
+    try:
+        from matplotlib_inline import backend_inline
+    except ImportError:
+        return
     backend_inline.set_matplotlib_formats('svg')
 
 
@@ -89,8 +92,6 @@ class ProgressBoard(HyperParameters):
         self.save_hyperparameters()
 
     def draw(self, x, y, label, every_n=1):
-        from IPython import display
-        plt = _pyplot()
         Point = collections.namedtuple('Point', ['x', 'y'])
         if not hasattr(self, 'raw_points'):
             self.raw_points = collections.OrderedDict()
@@ -109,6 +110,8 @@ class ProgressBoard(HyperParameters):
         points.clear()
         if not self.display:
             return
+        from IPython import display  # only to show the board, which needs Jupyter
+        plt = _pyplot()
         use_svg_display()
         if self.fig is None:
             self.fig = plt.figure(figsize=self.figsize)

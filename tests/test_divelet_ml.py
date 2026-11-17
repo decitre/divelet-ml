@@ -264,3 +264,16 @@ def test_trainer_without_validation_data_and_with_gradient_clipping():
     trainer.fit(model, Data())
     del d2l.Trainer.clip_gradients
     assert trainer.num_val_batches == 0 and trainer.val_batch_idx == 0 and clipped == [1] * 4
+
+
+def test_training_and_plotting_without_jupyter(monkeypatch):
+    # Outside Jupyter, neither IPython nor matplotlib_inline may be installed: None in sys.modules makes imports fail.
+    import sys
+    monkeypatch.setitem(sys.modules, 'IPython', None)
+    monkeypatch.setitem(sys.modules, 'matplotlib_inline', None)
+    model = d2l.LinearRegression(lr=0.03)
+    model.board.display = False
+    d2l.Trainer(max_epochs=1).fit(model, d2l.SyntheticRegressionData(w=np.array([2, -3.4]), b=4.2))
+    assert len(model.board.data['val_loss']) == 1
+    d2l.plot([1.0, 2.0])
+    d2l.plt.close('all')
