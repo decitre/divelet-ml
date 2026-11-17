@@ -11,7 +11,7 @@ assessment and a small set of representative chapters.
 **Current status:** Early development. Static compatibility analysis has been
 performed. The three initial sections are adapted: 2.1 *Data Manipulation*,
 3.3 *Synthetic Regression Data* and 11.3 *Attention Scoring Functions*, and
-Chapter 2 is under way with 2.2 *Data Preprocessing*, 2.3 *Linear Algebra*, 2.4 *Calculus*, 2.5 *Automatic Differentiation* and 2.6 *Probability and Statistics*. They run in JupyterLite with both the Pyodide and
+Chapter 2 is now complete with 2.2 *Data Preprocessing*, 2.3 *Linear Algebra*, 2.4 *Calculus*, 2.5 *Automatic Differentiation*, 2.6 *Probability and Statistics* and 2.7 *Documentation*. They run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -227,7 +227,8 @@ Adapting the whole chapter is a condition for the outreach below.
       models will compute gradients the same way.
 - [x] 2.6 *Probability and Statistics*. PyTorch's `Multinomial` becomes
       `np.random.multinomial`, as in the book's JAX edition.
-- [ ] 2.7 *Documentation*.
+- [x] 2.7 *Documentation*. `dir(torch.distributions)` becomes
+      `dir(np.random)`, as in the book's MXNet edition.
 
 Potential areas include:
 
