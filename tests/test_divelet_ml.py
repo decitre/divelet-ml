@@ -299,6 +299,7 @@ def test_download_checks_the_hash_and_reuses_the_file(tmp_path, monkeypatch):
     assert path == str(tmp_path / 'sub' / 'file.csv') and open(path, 'rb').read() == b'abc'
     assert d2l.download('http://host/dir/file.csv', str(tmp_path / 'sub'), sha1_hash=sha1) == path
     assert len(calls) == 1  # the second call found the file
+    assert sorted(f.name for f in (tmp_path / 'sub').iterdir()) == ['file.csv']  # no partial file left
     with pytest.raises(AssertionError, match='SHA-1'):
         d2l.download('http://host/dir/other.csv', str(tmp_path), sha1_hash='0' * 40)
 

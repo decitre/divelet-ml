@@ -15,21 +15,31 @@ concurrency:
 
 jobs:
   test:
+    # One job per Python version, in parallel: 3.11 is the oldest requires-python allows; 3.13 is what both browser
+    # kernels run. uv installs the interpreter; --isolated gives the run its own temporary environment.
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.13']
+    name: test (Python ${{ matrix.python }})
+    env:
+      # One BLAS thread per worker: the notebooks run in as many parallel workers as there are cores.
+      OMP_NUM_THREADS: 1
+      OPENBLAS_NUM_THREADS: 1
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - name: Run divelet-ml package tests and notebooks in CPython
-        # 3.11 is the oldest Python requires-python allows; 3.13 is what both browser kernels run.
-        # uv installs each interpreter; --isolated gives each run its own temporary environment.
-        run: |
-          for version in 3.11 3.13; do
-            echo "::group::Python $version"
-            uv run --isolated --python "$version" --group test pytest tests/test_divelet_ml.py tests/test_attention_scoring.py tests/test_notebooks.py -v
-            echo "::endgroup::"
-          done
+        run: uv run --isolated --python "${{ matrix.python }}" --group test pytest tests/test_divelet_ml.py tests/test_attention_scoring.py tests/test_notebooks.py -n auto -v
+
+  coverage:
+    # The package tests only: notebooks run in a separate kernel process, which coverage doesn't see.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - name: Coverage
-        # The package tests only: notebooks run in a separate kernel process, which coverage doesn't see.
         run: uv run --python 3.13 --group test pytest tests/test_divelet_ml.py --cov --cov-report=xml --cov-report=term-missing
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
@@ -41,7 +51,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   build:
-    needs: test
+    # Independent of the tests, so that the two run side by side; deploy waits for both.
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -65,7 +75,8 @@ jobs:
           path: workspace/public
 
   smoke:
-    # One job per browser and kernel, in parallel, on the site the build job uploaded; a failure blocks deployment.
+    # One job per browser, kernel and group of chapters, in parallel, on the site the build job uploaded; a failure
+    # blocks deployment. `k` selects the group's notebooks by the number their test ids contain (e.g. "-04.").
     needs: build
     runs-on: ubuntu-24.04
     strategy:
@@ -73,7 +84,11 @@ jobs:
       matrix:
         browser: [chrome, ipad]
         site: [xeus, pyodide]
-    name: smoke (${{ matrix.browser }}, ${{ matrix.site }})
+        group:
+          - { name: ch2-3, k: '02. or 03.' }
+          - { name: ch4, k: '04.' }
+          - { name: ch5-11, k: '05. or 11.' }
+    name: smoke (${{ matrix.browser }}, ${{ matrix.site }}, ${{ matrix.group.name }})
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
@@ -90,17 +105,17 @@ jobs:
         run: uv run --group browser playwright install --with-deps webkit
       - name: Browser smoke test
         # Desktop Chrome is preinstalled on the runner; WebKit emulates an iPad.
-        run: uv run --group browser pytest tests/smoke_test.py -v -k "${{ matrix.browser }} and ${{ matrix.site }}"
+        run: uv run --group browser pytest tests/smoke_test.py -v -k "${{ matrix.browser }} and ${{ matrix.site }} and (${{ matrix.group.k }})"
       - name: Upload screenshots of notebooks that did not finish
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: smoke-failures-${{ matrix.browser }}-${{ matrix.site }}
+          name: smoke-failures-${{ matrix.browser }}-${{ matrix.site }}-${{ matrix.group.name }}
           path: workspace/smoke-failures/
           if-no-files-found: ignore
 
   deploy:
-    needs: [build, smoke]
+    needs: [test, coverage, build, smoke]
     if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-24.04
     permissions:

@@ -21,7 +21,7 @@ Issues = "https://github.com/decitre/divelet-ml/issues"
 [dependency-groups]
 dev = ["bumpver>=2024"]
 browser = ["pytest>=8", "playwright>=1.50"]
-test = ["pytest>=8", "pytest-cov>=5", "nbclient>=0.10", "ipykernel>=6"]
+test = ["pytest>=8", "pytest-cov>=5", "pytest-xdist>=3", "nbclient>=0.10", "ipykernel>=6"]
 
 [tool.hatch.version]
 path = "src/divelet_ml/__init__.py"

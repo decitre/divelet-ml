@@ -135,8 +135,11 @@ def download(url, folder, sha1_hash=None):
         return path
     data = _read_url(url)
     os.makedirs(folder, exist_ok=True)
-    with open(path, 'wb') as f:
+    # Written aside and renamed, so that processes downloading the same file at once never read half of it.
+    partial = f'{path}.{os.getpid()}.part'
+    with open(partial, 'wb') as f:
         f.write(data)
+    os.replace(partial, path)
     assert sha1_hash is None or _sha1(path) == sha1_hash, f'{path} does not have the SHA-1 hash {sha1_hash}'
     return path
 
