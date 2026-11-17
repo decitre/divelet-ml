@@ -11,7 +11,7 @@ assessment and a small set of representative chapters.
 **Current status:** Early development. Static compatibility analysis has been
 performed. The three initial sections are adapted: 2.1 *Data Manipulation*,
 3.3 *Synthetic Regression Data* and 11.3 *Attention Scoring Functions*, and
-Chapter 2 is now complete with 2.2 *Data Preprocessing*, 2.3 *Linear Algebra*, 2.4 *Calculus*, 2.5 *Automatic Differentiation*, 2.6 *Probability and Statistics* and 2.7 *Documentation*. They run in JupyterLite with both the Pyodide and
+Chapter 2 is now complete with 2.2 *Data Preprocessing*, 2.3 *Linear Algebra*, 2.4 *Calculus*, 2.5 *Automatic Differentiation*, 2.6 *Probability and Statistics* and 2.7 *Documentation*. Chapter 3 is under way with 3.1 *Linear Regression*. They run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -229,6 +229,18 @@ Adapting the whole chapter is a condition for the outreach below.
       `np.random.multinomial`, as in the book's JAX edition.
 - [x] 2.7 *Documentation*. `dir(torch.distributions)` becomes
       `dir(np.random)`, as in the book's MXNet edition.
+
+### Chapter 3 — Linear Neural Networks for Regression
+
+- [x] 3.1 *Linear Regression*. The section's three figures are the first
+      book images adapted: the neuron drawing is Wikimedia Commons'
+      `Neuron.svg` (CC BY-SA 3.0), credited in the notebook.
+- [ ] 3.2 *Object-Oriented Design for Implementation*.
+- [x] 3.3 *Synthetic Regression Data*.
+- [ ] 3.4 *Linear Regression Implementation from Scratch*.
+- [ ] 3.5 *Concise Implementation of Linear Regression*.
+- [ ] 3.6 *Generalization*.
+- [ ] 3.7 *Weight Decay*.
 
 Potential areas include:
 
