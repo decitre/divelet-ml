@@ -315,7 +315,7 @@ classifier.
       browser, and `d2l.download` finds them by name in the file browser (in
       both kernels, under `/drive`). The smoke test does the same upload in the
       Lab app, and skips the Notebook app, which has no file browser. See
-      `NOTICE.md`; the MIT copyright text for the data is still to be added.
+      `NOTICE.md`.
 
 ### Later chapters
 
