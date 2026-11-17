@@ -17,7 +17,7 @@ divelet-ml is an experimental, browser-native adaptation of the Jupyter notebook
 
 The project aims to preserve the book's chapter structure, mathematical explanations, learning objectives, and exercises while adapting its framework-dependent Python implementations for execution directly in the browser.
 
-**Project status:** Early development. Chapters 2 and 3 are adapted in full, and Chapters 4 and 5 are planned next. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
+**Project status:** Early development. Chapters 2 to 5 are adapted in full. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
 
 | Section | Original |
 |---|---|
@@ -36,6 +36,20 @@ The project aims to preserve the book's chapter structure, mathematical explanat
 | [3.5 Concise Implementation of Linear Regression][xeus-3.5] [\[p\]][pyodide-3.5] | [d2l.ai][d2l-3.5] |
 | [3.6 Generalization][xeus-3.6] [\[p\]][pyodide-3.6] | [d2l.ai][d2l-3.6] |
 | [3.7 Weight Decay][xeus-3.7] [\[p\]][pyodide-3.7] | [d2l.ai][d2l-3.7] |
+| [4.1 Softmax Regression][xeus-4.1] [\[p\]][pyodide-4.1] | [d2l.ai][d2l-4.1] |
+| [4.2 The Image Classification Dataset][xeus-4.2] [\[p\]][pyodide-4.2] | [d2l.ai][d2l-4.2] |
+| [4.3 The Base Classification Model][xeus-4.3] [\[p\]][pyodide-4.3] | [d2l.ai][d2l-4.3] |
+| [4.4 Softmax Regression Implementation from Scratch][xeus-4.4] [\[p\]][pyodide-4.4] | [d2l.ai][d2l-4.4] |
+| [4.5 Concise Implementation of Softmax Regression][xeus-4.5] [\[p\]][pyodide-4.5] | [d2l.ai][d2l-4.5] |
+| [4.6 Generalization in Classification][xeus-4.6] [\[p\]][pyodide-4.6] | [d2l.ai][d2l-4.6] |
+| [4.7 Environment and Distribution Shift][xeus-4.7] [\[p\]][pyodide-4.7] | [d2l.ai][d2l-4.7] |
+| [5.1 Multilayer Perceptrons][xeus-5.1] [\[p\]][pyodide-5.1] | [d2l.ai][d2l-5.1] |
+| [5.2 Implementation of Multilayer Perceptrons][xeus-5.2] [\[p\]][pyodide-5.2] | [d2l.ai][d2l-5.2] |
+| [5.3 Forward Propagation, Backward Propagation, and Computational Graphs][xeus-5.3] [\[p\]][pyodide-5.3] | [d2l.ai][d2l-5.3] |
+| [5.4 Numerical Stability and Initialization][xeus-5.4] [\[p\]][pyodide-5.4] | [d2l.ai][d2l-5.4] |
+| [5.5 Generalization in Deep Learning][xeus-5.5] [\[p\]][pyodide-5.5] | [d2l.ai][d2l-5.5] |
+| [5.6 Dropout][xeus-5.6] [\[p\]][pyodide-5.6] | [d2l.ai][d2l-5.6] |
+| [5.7 Predicting House Prices on Kaggle][xeus-5.7] [\[p\]][pyodide-5.7] | [d2l.ai][d2l-5.7] |
 | [11.3 Attention Scoring Functions][xeus-11.3] [\[p\]][pyodide-11.3] | [d2l.ai][d2l-11.3] |
 
 The notebooks' sources are in [`content/`][content].
@@ -54,7 +68,7 @@ pip install divelet-ml
 import divelet_ml as d2l
 ```
 
-It provides `add_to_class`, `HyperParameters`, `DataModule`, `check_shape`, the plotting helpers `plt`, `set_figsize`, `set_axes`, `plot` and `show_heatmaps`, and the training framework of Chapter 3: `ProgressBoard`, `Module`, `Trainer`, `SyntheticRegressionData`, `SGD`, `LinearRegressionScratch` and `LinearRegression`, all adapted from the book's `d2l/torch.py`. `ArrayLoader` yields minibatches of NumPy arrays in place of PyTorch's `DataLoader`, and `param_grads` computes gradients with [autograd](https://github.com/HIPS/autograd) in place of PyTorch's `backward`. Its `divelet_ml.nn` module (`from divelet_ml import nn`) has NumPy stand-ins for the parts of `torch.nn` the notebooks use: `Module`, `Dropout`, `LazyLinear`, `MSELoss` and `softmax`; `divelet_ml.optim` has `SGD`, in place of `torch.optim.SGD`. Plots use matplotlib. The package grows only as adapted chapters need more of it. Its code is licensed under the Apache License 2.0; the notebooks are not part of the package.
+It provides `add_to_class`, `HyperParameters`, `DataModule`, `check_shape`, the plotting helpers `plt`, `set_figsize`, `set_axes`, `plot` and `show_heatmaps`, and the training framework of Chapter 3: `ProgressBoard`, `Module`, `Trainer`, `SyntheticRegressionData`, `SGD`, `LinearRegressionScratch`, `LinearRegression`, `Classifier` and `SoftmaxRegression`, all adapted from the book's `d2l/torch.py`. `ArrayLoader` yields minibatches of NumPy arrays in place of PyTorch's `DataLoader`, and `param_grads` computes gradients with [autograd](https://github.com/HIPS/autograd) in place of PyTorch's `backward`. Its `divelet_ml.nn` module (`from divelet_ml import nn`) has NumPy stand-ins for the parts of `torch.nn` the notebooks use: `Module`, `Dropout`, `LazyLinear`, `MSELoss`, `Sequential`, `Flatten`, `ReLU`, `cross_entropy` and `softmax`; `divelet_ml.optim` has `SGD`, in place of `torch.optim.SGD`. Plots use matplotlib. The package grows only as adapted chapters need more of it. Its code is licensed under the Apache License 2.0; the notebooks are not part of the package.
 
 ## Motivation
 
@@ -124,7 +138,7 @@ The initial audit references the book's commit:
 
 ## Development Plan
 
-Chapters 2 (*Preliminaries*) and 3 (*Linear Neural Networks for Regression*) are adapted in full, together with section 11.3 (*Attention Scoring Functions*), which tested the approach on a later chapter. Chapter 4 (*Linear Neural Networks for Classification*) and Chapter 5 (*Multilayer Perceptrons*) come next. They are the first with a real dataset and longer training, so they depend on how the data is hosted and on how long training takes in each kernel.
+Chapters 2 (*Preliminaries*), 3 (*Linear Neural Networks for Regression*), 4 (*Linear Neural Networks for Classification*) and 5 (*Multilayer Perceptrons*) are adapted in full, together with section 11.3 (*Attention Scoring Functions*), which tested the approach on a later chapter. Chapters 4 and 5 are the first with a real dataset and longer training: Fashion-MNIST is served from the site, and in the browser the notebooks that train multilayer perceptrons run fewer epochs than the book, as each notebook says.
 
 The PyTorch implementations serve as the primary reference.
 
@@ -222,8 +236,50 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [pyodide-3.6]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=03_linear-regression/03.06_generalization.ipynb
 [d2l-3.6]: https://d2l.ai/chapter_linear-regression/generalization.html
 [xeus-3.7]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=03_linear-regression/03.07_weight-decay.ipynb
+[xeus-4.1]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=04_linear-classification/04.01_softmax-regression.ipynb
+[xeus-4.2]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=04_linear-classification/04.02_image-classification-dataset.ipynb
+[xeus-4.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=04_linear-classification/04.03_classification.ipynb
+[xeus-4.4]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=04_linear-classification/04.04_softmax-regression-scratch.ipynb
+[xeus-4.5]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=04_linear-classification/04.05_softmax-regression-concise.ipynb
+[xeus-4.6]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=04_linear-classification/04.06_generalization-classification.ipynb
+[xeus-4.7]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=04_linear-classification/04.07_environment-and-distribution-shift.ipynb
+[xeus-5.1]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=05_multilayer-perceptrons/05.01_mlp.ipynb
+[xeus-5.2]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=05_multilayer-perceptrons/05.02_mlp-implementation.ipynb
+[xeus-5.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=05_multilayer-perceptrons/05.03_backprop.ipynb
+[xeus-5.4]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=05_multilayer-perceptrons/05.04_numerical-stability-and-init.ipynb
+[xeus-5.5]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=05_multilayer-perceptrons/05.05_generalization-deep.ipynb
+[xeus-5.6]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=05_multilayer-perceptrons/05.06_dropout.ipynb
+[xeus-5.7]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=05_multilayer-perceptrons/05.07_kaggle-house-price.ipynb
 [pyodide-3.7]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=03_linear-regression/03.07_weight-decay.ipynb
+[pyodide-4.1]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=04_linear-classification/04.01_softmax-regression.ipynb
+[pyodide-4.2]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=04_linear-classification/04.02_image-classification-dataset.ipynb
+[pyodide-4.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=04_linear-classification/04.03_classification.ipynb
+[pyodide-4.4]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=04_linear-classification/04.04_softmax-regression-scratch.ipynb
+[pyodide-4.5]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=04_linear-classification/04.05_softmax-regression-concise.ipynb
+[pyodide-4.6]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=04_linear-classification/04.06_generalization-classification.ipynb
+[pyodide-4.7]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=04_linear-classification/04.07_environment-and-distribution-shift.ipynb
+[pyodide-5.1]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=05_multilayer-perceptrons/05.01_mlp.ipynb
+[pyodide-5.2]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=05_multilayer-perceptrons/05.02_mlp-implementation.ipynb
+[pyodide-5.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=05_multilayer-perceptrons/05.03_backprop.ipynb
+[pyodide-5.4]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=05_multilayer-perceptrons/05.04_numerical-stability-and-init.ipynb
+[pyodide-5.5]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=05_multilayer-perceptrons/05.05_generalization-deep.ipynb
+[pyodide-5.6]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=05_multilayer-perceptrons/05.06_dropout.ipynb
+[pyodide-5.7]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=05_multilayer-perceptrons/05.07_kaggle-house-price.ipynb
 [d2l-3.7]: https://d2l.ai/chapter_linear-regression/weight-decay.html
+[d2l-4.1]: https://d2l.ai/chapter_linear-classification/softmax-regression.html
+[d2l-4.2]: https://d2l.ai/chapter_linear-classification/image-classification-dataset.html
+[d2l-4.3]: https://d2l.ai/chapter_linear-classification/classification.html
+[d2l-4.4]: https://d2l.ai/chapter_linear-classification/softmax-regression-scratch.html
+[d2l-4.5]: https://d2l.ai/chapter_linear-classification/softmax-regression-concise.html
+[d2l-4.6]: https://d2l.ai/chapter_linear-classification/generalization-classification.html
+[d2l-4.7]: https://d2l.ai/chapter_linear-classification/environment-and-distribution-shift.html
+[d2l-5.1]: https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+[d2l-5.2]: https://d2l.ai/chapter_multilayer-perceptrons/mlp-implementation.html
+[d2l-5.3]: https://d2l.ai/chapter_multilayer-perceptrons/backprop.html
+[d2l-5.4]: https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html
+[d2l-5.5]: https://d2l.ai/chapter_multilayer-perceptrons/generalization-deep.html
+[d2l-5.6]: https://d2l.ai/chapter_multilayer-perceptrons/dropout.html
+[d2l-5.7]: https://d2l.ai/chapter_multilayer-perceptrons/kaggle-house-price.html
 [xeus-11.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=11_attention-mechanisms-and-transformers/11.03_attention-scoring-functions.ipynb
 [pyodide-11.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=11_attention-mechanisms-and-transformers/11.03_attention-scoring-functions.ipynb
 [d2l-11.3]: https://d2l.ai/chapter_attention-mechanisms-and-transformers/attention-scoring-functions.html

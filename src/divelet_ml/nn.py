@@ -13,12 +13,23 @@ import math
 
 import autograd.numpy as anp
 import numpy as np
+from autograd.tracer import getval
 
 
 def softmax(X, axis=-1):
     """Softmax along `axis`, shifted by the maximum so `exp` does not overflow."""
     X_exp = np.exp(X - X.max(axis=axis, keepdims=True))
     return X_exp / X_exp.sum(axis=axis, keepdims=True)
+
+
+def cross_entropy(input, target, reduction='mean'):
+    """Cross entropy of the logits `input`, of shape (n, classes), with the integer labels `target`: the
+    log-sum-exp is shifted by the maximum, so it neither overflows nor underflows. In place of
+    `torch.nn.functional.cross_entropy`; differentiable by autograd."""
+    shift = np.max(getval(input), axis=1, keepdims=True)
+    lse = anp.log(anp.sum(anp.exp(input - shift), axis=1)) + shift[:, 0]
+    l = lse - input[np.arange(len(target)), target]
+    return anp.mean(l) if reduction == 'mean' else l
 
 
 class Module:
@@ -92,9 +103,12 @@ class LazyLinear(Module):
             in_features = X.shape[-1]
             bound = 1 / math.sqrt(in_features)
             uniform = lambda shape: np.random.uniform(-bound, bound, shape)
-            self.weight = (self.weight_init or uniform)((self.out_features, in_features))
+            # The parameters take the input's floating-point type, as PyTorch's float32 does; else float32 data
+            # would be multiplied in float64, twice as slow.
+            dtype = X.dtype if X.dtype.kind == 'f' else np.float64
+            self.weight = np.asarray((self.weight_init or uniform)((self.out_features, in_features)), dtype)
             if self.has_bias:
-                self.bias = (self.bias_init or uniform)((self.out_features,))
+                self.bias = np.asarray((self.bias_init or uniform)((self.out_features,)), dtype)
         Y = X @ self.weight.T
         return Y if self.bias is None else Y + self.bias
 
@@ -103,3 +117,29 @@ class MSELoss(Module):
     """The mean of the squared differences between `input` and `target`, in place of `torch.nn.MSELoss`."""
     def forward(self, input, target):
         return anp.mean((input - target) ** 2)
+
+
+class ReLU(Module):
+    """The rectified linear unit, in place of `torch.nn.ReLU`."""
+    def forward(self, X):
+        return anp.maximum(X, 0)
+
+
+class Flatten(Module):
+    """Flatten all dimensions but the first, in place of `torch.nn.Flatten`."""
+    def forward(self, X):
+        return X.reshape((X.shape[0], -1))
+
+
+class Sequential(Module):
+    """Apply the given modules one after the other, in place of `torch.nn.Sequential`. The modules are
+    attributes named '0', '1', ..., as in PyTorch, so `parameters()` finds their arrays."""
+    def __init__(self, *layers):
+        self.num_layers = len(layers)
+        for i, layer in enumerate(layers):
+            setattr(self, str(i), layer)
+
+    def forward(self, X):
+        for i in range(self.num_layers):
+            X = getattr(self, str(i))(X)
+        return X

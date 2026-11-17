@@ -277,3 +277,187 @@ def test_training_and_plotting_without_jupyter(monkeypatch):
     assert len(model.board.data['val_loss']) == 1
     d2l.plot([1.0, 2.0])
     d2l.plt.close('all')
+
+
+def test_browser_epochs(monkeypatch):
+    import sys
+    assert d2l.browser_epochs(10) == 10  # CPython
+    monkeypatch.setattr('sys.platform', 'emscripten')
+    monkeypatch.setitem(sys.modules, 'pyjs', None)  # not importable: Pyodide
+    assert d2l.browser_epochs(10) == 1 and d2l.browser_epochs(10, pyodide=4) == 4 and d2l.browser_epochs(2, pyodide=4) == 2
+    monkeypatch.setitem(sys.modules, 'pyjs', type(sys)('pyjs'))  # importable: xeus-python
+    assert d2l.browser_epochs(10) == 3
+
+
+def test_download_checks_the_hash_and_reuses_the_file(tmp_path, monkeypatch):
+    import hashlib
+    from divelet_ml import data
+    calls = []
+    monkeypatch.setattr(data, '_read_url', lambda url: calls.append(url) or b'abc')
+    sha1 = hashlib.sha1(b'abc').hexdigest()
+    path = d2l.download('http://host/dir/file.csv', str(tmp_path / 'sub'), sha1_hash=sha1)
+    assert path == str(tmp_path / 'sub' / 'file.csv') and open(path, 'rb').read() == b'abc'
+    assert d2l.download('http://host/dir/file.csv', str(tmp_path / 'sub'), sha1_hash=sha1) == path
+    assert len(calls) == 1  # the second call found the file
+    assert sorted(f.name for f in (tmp_path / 'sub').iterdir()) == ['file.csv']  # no partial file left
+    with pytest.raises(AssertionError, match='SHA-1'):
+        d2l.download('http://host/dir/other.csv', str(tmp_path), sha1_hash='0' * 40)
+
+
+def test_download_in_jupyterlite_looks_in_the_file_browser(tmp_path, monkeypatch):
+    import hashlib
+    from divelet_ml import data
+    monkeypatch.setattr(data, '_site_url', lambda: 'https://site')  # a JupyterLite kernel
+    monkeypatch.setattr(data, 'DRIVE', str(tmp_path))
+    monkeypatch.setattr(data, '_read_url', lambda url: pytest.fail('a page cannot read other hosts'))
+    url = 'https://host/dir/file.csv'
+    with pytest.raises(FileNotFoundError, match='upload it'):
+        d2l.download(url, '../data')
+    (tmp_path / 'any' / 'folder').mkdir(parents=True)
+    (tmp_path / 'any' / 'folder' / 'file.csv').write_bytes(b'abc')  # uploaded anywhere in the file browser
+    sha1 = hashlib.sha1(b'abc').hexdigest()
+    assert d2l.download(url, '../data', sha1_hash=sha1) == str(tmp_path / 'any' / 'folder' / 'file.csv')
+    with pytest.raises(AssertionError, match='SHA-1'):
+        d2l.download(url, '../data', sha1_hash='0' * 40)
+
+
+def _fake_fashion_mnist(folder, n_train=40, n_val=10):
+    """Fashion-MNIST-shaped idx files, gzipped: image i has the constant gray level 10 * (i % 10) and label i % 10."""
+    import gzip
+    import struct
+    from divelet_ml import data
+    folder.mkdir(parents=True, exist_ok=True)
+    for (images, labels), n in zip(data.FASHION_MNIST_FILES.values(), (n_train, n_val)):
+        y = np.arange(n) % 10
+        pixels = np.repeat((10 * y).astype(np.uint8), 28 * 28)
+        (folder / images).write_bytes(gzip.compress(struct.pack('>IIII', 2051, n, 28, 28) + pixels.tobytes()))
+        (folder / labels).write_bytes(gzip.compress(struct.pack('>II', 2049, n) + y.astype(np.uint8).tobytes()))
+
+
+@pytest.fixture
+def fashion(tmp_path, monkeypatch):
+    """The Fashion-MNIST files served from tmp_path/'source'; the data root is tmp_path/'data'."""
+    from divelet_ml import data
+    _fake_fashion_mnist(tmp_path / 'source')
+    monkeypatch.setattr(data, 'FASHION_MNIST_URL', (tmp_path / 'source').as_uri() + '/')
+    (tmp_path / 'work').mkdir()
+    monkeypatch.chdir(tmp_path / 'work')  # the default root is ../data
+    return tmp_path
+
+
+def test_fashion_mnist(fashion, monkeypatch):
+    import matplotlib
+    from divelet_ml import data
+    matplotlib.use('Agg')
+    fm = d2l.FashionMNIST(batch_size=16)
+    assert (len(fm.train), len(fm.val)) == (40, 10)
+    X, y = fm.train[3]
+    assert X.shape == (1, 28, 28) and X.dtype == np.float32 and y.dtype == np.int64 and y == 3
+    assert np.allclose(X, 30 / 255)  # no resizing: the pixels divided by 255
+    assert fm.text_labels([0, 9]) == ['t-shirt', 'ankle boot']
+    batches = list(fm.train_dataloader())
+    assert len(batches) == 3 and batches[0][0].shape == (16, 1, 28, 28) and batches[-1][1].shape == (8,)
+    assert sorted(np.concatenate([b[1] for b in fm.val_dataloader()])) == sorted(np.arange(10))
+    fm.visualize(next(iter(fm.val_dataloader())), nrows=2, ncols=5)
+    assert len(matplotlib.pyplot.gcf().axes) == 10
+    matplotlib.pyplot.close('all')
+    # The files were downloaded once to the root and are read from there afterwards.
+    monkeypatch.setattr(data, 'FASHION_MNIST_URL', 'file:///nonexistent/')
+    assert len(d2l.FashionMNIST().train) == 40
+    assert d2l.FashionMNIST(resize=(32, 32)).train[0][0].shape == (1, 32, 32)
+    assert sorted(p.name for p in (fashion / 'data' / 'fashion-mnist').iterdir()) == sorted(
+        n for names in data.FASHION_MNIST_FILES.values() for n in names)
+
+
+def test_resize_is_bilinear_with_half_pixel_centers():
+    from divelet_ml.data import _resize
+    X = np.full((2, 28, 28), 0.25, np.float32)
+    assert np.allclose(_resize(X, (32, 14)), 0.25) and _resize(X, (32, 14)).shape == (2, 32, 14)
+    ramp = np.tile(np.arange(4, dtype=np.float32), (1, 4, 1))  # columns 0, 1, 2, 3
+    assert np.allclose(_resize(ramp, (4, 2))[0, 0], [0.5, 2.5])  # halving averages neighbors
+    assert np.allclose(_resize(ramp, (4, 8))[0, 0], [0, 0.25, 0.75, 1.25, 1.75, 2.25, 2.75, 3])  # doubling interpolates
+
+
+def test_read_url_outside_and_inside_jupyterlite(tmp_path, monkeypatch):
+    import sys
+    import types
+    from divelet_ml import data
+    (tmp_path / 'f.bin').write_bytes(b'xyz')
+    assert data._site_url() is None and data._read_url((tmp_path / 'f.bin').as_uri()) == b'xyz'
+
+    class Request:  # the browser's XMLHttpRequest, served from a dict
+        files = {'https://host/site/data/fashion-mnist/f.bin': b'abc'}
+
+        def open(self, method, url, asynchronous):
+            assert (method, asynchronous) == ('GET', False)
+            self.url = url
+
+        def send(self):
+            self.status = 200 if self.url in self.files else 404
+            self.response = self.files.get(self.url)
+
+    js = types.SimpleNamespace(
+        location=types.SimpleNamespace(href='https://host/site/xeus/extensions/@jupyterlite/x/static/1.js?v=2'),
+        XMLHttpRequest=types.SimpleNamespace(new=Request),
+        Uint8Array=types.SimpleNamespace(new=lambda b: types.SimpleNamespace(to_py=lambda: memoryview(b))))
+    monkeypatch.setitem(sys.modules, 'js', js)
+    assert data._site_url() == 'https://host/site' and data._site_data_url() == 'https://host/site/data/'
+    assert data._read_url('https://host/site/data/fashion-mnist/f.bin') == b'abc'
+    assert data._fashion_mnist_bytes('f.bin', '../data') == b'abc'
+    with pytest.raises(AssertionError, match='HTTP 404'):
+        data._read_url('https://host/site/data/missing')
+
+
+def test_cross_entropy_is_stable_and_differentiable():
+    import autograd
+    logits = np.array([[2.0, 0.5, -1.0], [1000.0, 0.0, -1000.0]])
+    y = np.array([0, 2])
+    expected = np.array([np.log(np.exp(logits[0]).sum()) - 2.0, 2000.0])
+    assert np.allclose(nn.cross_entropy(logits, y, reduction='none'), expected)  # no overflow at 1000
+    assert np.isclose(nn.cross_entropy(logits, y), expected.mean())
+    grad = autograd.grad(lambda z: nn.cross_entropy(z, y))(logits)
+    onehot = np.eye(3)[y]
+    assert np.allclose(grad, (nn.softmax(logits) - onehot) / 2)
+
+
+def test_sequential_flatten_relu():
+    net = nn.Sequential(nn.Flatten(), nn.LazyLinear(5), nn.ReLU(), nn.LazyLinear(2))
+    X = np.random.randn(4, 3, 2, 2).astype(np.float32)
+    assert net(X).shape == (4, 2) and net(X).dtype == np.float32  # the parameters take the input's dtype
+    assert (nn.ReLU()(np.array([-1.0, 0.0, 2.0])) == [0, 0, 2]).all()
+    assert [p.shape for p in net.parameters()] == [(5, 12), (5,), (2, 5), (2,)]
+
+
+def test_classifier_accuracy_loss_and_softmax_regression_training():
+    class Data(d2l.DataModule):
+        def __init__(self):
+            super().__init__()
+            self.batch_size = 8
+            rng = np.random.default_rng(0)
+            self.y = rng.integers(0, 3, 64)
+            self.X = (np.eye(3)[self.y] * 3 + rng.normal(0, 0.3, (64, 3))).astype(np.float32).reshape(64, 1, 3)
+
+        def get_dataloader(self, train):
+            return self.get_tensorloader((self.X, self.y), train)
+
+    clf = d2l.Classifier()
+    Y_hat, Y = np.array([[0.1, 0.9], [0.8, 0.2], [0.3, 0.7]]), np.array([1, 0, 0])
+    assert np.isclose(clf.accuracy(Y_hat, Y), 2 / 3) and clf.accuracy(Y_hat, Y, averaged=False).tolist() == [1, 1, 0]
+    assert clf.loss(Y_hat, Y, averaged=False).shape == (3,) and np.isclose(clf.loss(Y_hat, Y), clf.loss(Y_hat, Y, False).mean())
+    model = d2l.SoftmaxRegression(num_outputs=3, lr=0.5)
+    model.board.display = False
+    data = Data()
+    trainer = d2l.Trainer(max_epochs=3)
+    trainer.fit(model, data)
+    assert set(model.board.data) == {'train_loss', 'val_loss', 'val_acc'}
+    assert model.board.data['val_acc'][-1][1] > 0.9 and isinstance(trainer.optim, optim.SGD)
+    assert model.accuracy(model(data.X), data.y) > 0.9
+
+
+def test_show_images(tmp_path):
+    import matplotlib
+    matplotlib.use('Agg')
+    axes = d2l.show_images(np.zeros((6, 4, 4)), 2, 3, titles=list('abcdef'))
+    assert len(axes) == 6 and axes[4].get_title() == 'e'
+    assert len(d2l.show_images(np.zeros((2, 4, 4)), 1, 2)) == 2
+    matplotlib.pyplot.close('all')

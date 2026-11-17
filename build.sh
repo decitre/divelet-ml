@@ -50,6 +50,24 @@ PYODIDE_DIST=$(jl-forge pyodide-dist --pyproject pyproject.toml --wheels-dir "$W
 (cd "$WORKSPACE" && jupyter lite build "${APPS[@]}" --contents "$WORKSPACE/content-pyodide" --output-dir "$PUBLIC/pyodide" --lite-dir lite-pyodide \
   --pyodide "$PYODIDE_DIST")
 
+echo "== Fashion-MNIST"
+# The dataset's four original files, served from the site's own host to the notebooks of 4.2 onwards (MIT license,
+# Zalando SE). They stay out of content/, which xeus-python packs into the archive every notebook downloads.
+FASHION_URL=https://github.com/zalandoresearch/fashion-mnist/raw/master
+mkdir -p "$CACHE/fashion-mnist" "$PUBLIC/data/fashion-mnist"
+while read -r sha name; do
+  [ -f "$CACHE/fashion-mnist/$name" ] || curl -fsSL -o "$CACHE/fashion-mnist/$name" "$FASHION_URL/data/fashion/$name"
+  echo "$sha  $CACHE/fashion-mnist/$name" | sha256sum -c --quiet -
+  cp "$CACHE/fashion-mnist/$name" "$PUBLIC/data/fashion-mnist/"
+done <<'SUMS'
+3aede38d61863908ad78613f6a32ed271626dd12800ba2636569512369268a84 train-images-idx3-ubyte.gz
+a04f17134ac03560a47e3764e11b92fc97de4d1bfaf8ba1a3aa29af54cc90845 train-labels-idx1-ubyte.gz
+346e55b948d973a97e58d2351dde16a484bd415d4595297633bb08f03db6a073 t10k-images-idx3-ubyte.gz
+67da17c76eaffca5446c3361aaab5c3cd6d1c2608764d35dfb1850b086bf8dd5 t10k-labels-idx1-ubyte.gz
+SUMS
+[ -f "$CACHE/fashion-mnist/LICENSE" ] || curl -fsSL -o "$CACHE/fashion-mnist/LICENSE" "$FASHION_URL/LICENSE"
+cp "$CACHE/fashion-mnist/LICENSE" "$PUBLIC/data/fashion-mnist/LICENSE"
+
 cat > "$PUBLIC/index.html" <<'HTML'
 <!doctype html>
 <meta charset="utf-8">

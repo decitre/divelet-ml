@@ -9,11 +9,10 @@ Development will proceed incrementally, starting with a compatibility
 assessment and a small set of representative chapters.
 
 **Current status:** Early development. Static compatibility analysis has been
-performed. Chapters 2 (*Preliminaries*) and 3 (*Linear Neural Networks for
-Regression*) are adapted in full, along with 11.3 *Attention Scoring
-Functions*. Chapters 4 (*Classification*) and 5 (*Multilayer Perceptrons*) are
-planned below; they need a dataset-hosting decision and a training budget for
-Pyodide. The adapted notebooks run in JupyterLite with both the Pyodide and
+performed. Chapters 2 (*Preliminaries*), 3 (*Linear Neural Networks for
+Regression*), 4 (*Linear Neural Networks for Classification*) and 5
+(*Multilayer Perceptrons*) are adapted in full, along with 11.3 *Attention
+Scoring Functions*. The adapted notebooks run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -258,79 +257,65 @@ Adapting the whole chapter is a condition for the outreach below.
 
 Upstream: `chapter_linear-classification/`. The first chapter with a real
 dataset (Fashion-MNIST) and the first where the browser's compute budget
-matters; the probes below were run in desktop Chrome on a local build, with
-hand-written NumPy and random data of Fashion-MNIST's shape (60,000 × 784).
-
-**Decisions to make first**
+matters.
 
 - **Where the data lives.** Fashion-MNIST (about 30 MB) cannot go in
   `content/`: xeus-python packs all of `content/` into the archive every
-  notebook's kernel downloads at startup, so it would slow every notebook on
-  the site. Serve it as a static file outside `content/`, from the site's own
-  host (the smoke test allows no other host), and fetch it from the notebook.
-  Probed: both kernels have the `js` module (xeus-python also has `pyjs`), and
-  a binary file came back byte-identical by sync `XMLHttpRequest`,
-  `await js.fetch(...)` and sync XHR with an arraybuffer. Still to check: the
-  real file on the deployed Pages site, WebKit/iPad, and caching so a notebook
-  does not download it twice. This also closes "Define dataset-loading and
-  caching strategies" in Phase 3.
-- **Which format.** Store the images in a compact binary form and decode with
-  NumPy, in place of `torchvision.datasets.FashionMNIST`. A `FashionMNIST`
-  class in `divelet_ml` keeps the book's `train`/`val` interface and
-  `get_dataloader` (via `ArrayLoader`).
-- **Training budget.** Measured per epoch: softmax regression takes 0.5 s in
-  xeus-python and 1.3 s in Pyodide, so Chapter 4 fits. Compare the 10 epochs
-  the book trains for with the smoke test's 120 s run limit.
+  notebook's kernel downloads at startup. `build.sh` copies the dataset's four
+  original gzip files (MIT license, Zalando SE; the license is copied with them)
+  to `data/fashion-mnist/` at the root of the site, and `d2l.load_fashion_mnist`
+  fetches them from there with a synchronous request (both kernels have the
+  `js` module) and decodes them with NumPy, in place of torchvision. Outside
+  JupyterLite, it downloads them once to `../data`. This closes "Define
+  dataset-loading and caching strategies" in Phase 3 for datasets the site can
+  host; the browser's HTTP cache avoids a second download.
+- **Training budget.** Softmax regression takes about 0.5 s per epoch in
+  xeus-python and 1.3 s in Pyodide, so 4.4 and 4.5 train for the book's 10
+  epochs in both.
 
-**Sections** (each also needs `divelet_ml` additions as listed)
-
-- [ ] 4.1 *Softmax Regression* (no code).
-- [ ] 4.2 *The Image Classification Dataset*: `FashionMNIST`, `text_labels`,
-      `visualize` (matplotlib `imshow` in place of `d2l.show_images`).
-- [ ] 4.3 *The Base Classification Model*: `Classifier` with `accuracy` and
-      `validation_step`.
-- [ ] 4.4 *Softmax Regression Implementation from Scratch*: `cross_entropy`
-      and `SoftmaxRegressionScratch`, gradients with autograd as in 3.4.
-- [ ] 4.5 *Concise Implementation of Softmax Regression*: `nn` gains a
-      cross-entropy loss that works on logits (numerically stable).
-- [ ] 4.6 *Generalization in Classification* (no code, apart from the
-      section's small simulation, if any).
-- [ ] 4.7 *Environment and Distribution Shift* (no code).
+- [x] 4.1 *Softmax Regression* (no code).
+- [x] 4.2 *The Image Classification Dataset*: `FashionMNIST`, `show_images`.
+- [x] 4.3 *The Base Classification Model*: `Classifier`.
+- [x] 4.4 *Softmax Regression Implementation from Scratch*, with gradients
+      from autograd as in 3.4.
+- [x] 4.5 *Concise Implementation of Softmax Regression*: `nn.Sequential`,
+      `nn.Flatten` and `nn.cross_entropy`, which is numerically stable.
+- [x] 4.6 *Generalization in Classification* (no code).
+- [x] 4.7 *Environment and Distribution Shift* (no code). Two of the book's
+      three figures are stock photographs (Getty Images) and are linked, not
+      embedded.
 
 ### Chapter 5 — Multilayer Perceptrons
 
 Upstream: `chapter_multilayer-perceptrons/`. Builds on Chapter 4's data and
 classifier.
 
-**Decisions to make first**
-
 - **Pyodide's speed.** Pyodide has no BLAS. One epoch of the book's MLP (256
   hidden units, minibatches of 256) took 0.8 s on desktop CPython, 4.1 s in
-  xeus-python and **33.9 s in Pyodide**. Ten epochs would take about six
-  minutes in Pyodide, past the smoke test's 120 s limit. Options: fewer epochs
-  or a subset of the data in the Pyodide site only (documented in the
-  notebook), a larger limit for these notebooks, or both. Do not hide the
-  difference: the notebook says which kernel it runs on.
-- **Measure the real `Trainer`.** The probes above are raw NumPy loops. The
-  `Trainer` also redraws its plot every epoch, which the book's code does too;
-  its cost in each kernel is not yet measured.
+  xeus-python and 33.9 s in Pyodide (hand-written NumPy loops). Ten epochs would
+  take about six minutes in Pyodide, past the smoke test's 120 s limit, so
+  `d2l.browser_epochs(10)` gives 10 epochs outside JupyterLite, 3 in xeus-python
+  and 1 in Pyodide. Each notebook that trains MLPs (5.2 and 5.6) says so and
+  that its accuracies are lower than the book's. Not yet measured: the cost of
+  the `Trainer`'s per-epoch plot in each kernel.
 
-**Sections**
-
-- [ ] 5.1 *Multilayer Perceptrons*: activation plots (`relu`, `sigmoid`,
-      `tanh`) with the gradients computed by autograd as in 2.5.
-- [ ] 5.2 *Implementation of Multilayer Perceptrons*: `MLPScratch` and `MLP`;
-      `nn` gains `ReLU`, `Sequential` and `Flatten` as needed.
-- [ ] 5.3 *Forward Propagation, Backward Propagation, and Computational
+- [x] 5.1 *Multilayer Perceptrons*: activation plots, with gradients from
+      autograd.
+- [x] 5.2 *Implementation of Multilayer Perceptrons*.
+- [x] 5.3 *Forward Propagation, Backward Propagation, and Computational
       Graphs* (no code).
-- [ ] 5.4 *Numerical Stability and Initialization* (small code: plots of
-      gradients of the sigmoid).
-- [ ] 5.5 *Generalization in Deep Learning* (no code).
-- [ ] 5.6 *Dropout*: `Dropout` already exists in `divelet_ml.nn` for
-      Chapter 11, forward pass only; it needs a backward pass through autograd.
-- [ ] 5.7 *Predicting House Prices on Kaggle*: downloads the Kaggle data from
-      the book's own host, which the smoke test forbids. Host the CSV files
-      with the site, as for Fashion-MNIST, and keep the licence notice.
+- [x] 5.4 *Numerical Stability and Initialization*.
+- [x] 5.5 *Generalization in Deep Learning* (no code).
+- [x] 5.6 *Dropout*: `nn.Dropout` is differentiated by autograd.
+- [x] 5.7 *Predicting House Prices on Kaggle*. The two CSV files are not
+      hosted: Kaggle's competition rules (7.B) forbid making the data available
+      to people who have not joined the competition, although the data page
+      lists the license as MIT. In JupyterLite, the notebook shows the book's
+      links; the reader downloads the files and uploads them with the file
+      browser, and `d2l.download` finds them by name in the file browser (in
+      both kernels, under `/drive`). The smoke test does the same upload in the
+      Lab app, and skips the Notebook app, which has no file browser. See
+      `NOTICE.md`.
 
 ### Later chapters
 
