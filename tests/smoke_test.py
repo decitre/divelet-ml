@@ -34,6 +34,9 @@ FOLDER_LISTING = re.compile(r"/api/contents/.+/all\.json$")
 NOTEBOOKS = sorted(p.relative_to(ROOT / "content").as_posix() for p in (ROOT / "content").rglob("*.ipynb"))
 KERNEL_START_MS = 240_000  # first load downloads the kernel and its packages
 RUN_MS = 120_000
+# The two notebooks that train two multilayer perceptrons take 1.5 to 3 minutes in Pyodide on a CI runner, in WebKit.
+RUN_MS_NOTEBOOKS = {"05_multilayer-perceptrons/05.02_mlp-implementation.ipynb": 300_000,
+                    "05_multilayer-perceptrons/05.06_dropout.ipynb": 300_000}
 # The kernel name each site's toolbar shows: catches a site built with the other kernel.
 KERNEL_NAMES = {"xeus": "(XPython)", "pyodide": "(Pyodide)"}
 IPAD = "iPad (gen 11)"
@@ -151,7 +154,7 @@ def _run_all(page, errors, browser, site, app, notebook, page_errors, console_er
     # Stop waiting at the first error output instead of timing out.
     last_ran = page.locator(".jp-CodeCell .jp-InputPrompt").last.filter(has_text=re.compile(r"\[\d+\]"))
     try:
-        last_ran.or_(errors.first).first.wait_for(timeout=RUN_MS)
+        last_ran.or_(errors.first).first.wait_for(timeout=RUN_MS_NOTEBOOKS.get(notebook, RUN_MS))
     except PlaywrightTimeoutError:
         FAILURES.mkdir(parents=True, exist_ok=True)
         shot = FAILURES / f"{browser}-{site}-{app}-{Path(notebook).stem}.png"
