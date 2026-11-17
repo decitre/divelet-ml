@@ -13,9 +13,11 @@ Run after build.sh, from the repository root (needs Google Chrome; install WebKi
 Adapted from jl-forge's examples/demo/smoke_test.py.
 """
 
+import hashlib
 import json
 import re
 import threading
+import urllib.request
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -42,6 +44,11 @@ KERNEL_READY_JS = """() => {
   if (status && status !== 'idle') window.__kernelStarting = true;
   return window.__kernelStarting === true && status === 'idle';
 }"""
+# Notebooks that need files the site cannot host: the reader downloads them from the book's host and uploads them with
+# the file browser, so the test does the same (in the Lab app; the Notebook app has no file browser).
+UPLOADS = {"05_multilayer-perceptrons/05.07_kaggle-house-price.ipynb": {
+    "kaggle_house_pred_train.csv": "585e9cc93e70b39160e7921475f9bcd7d31219ce",
+    "kaggle_house_pred_test.csv": "fa19780a7b011d9b009e8bff8e99922a8ee2eb90"}}
 CASES = [(b, site, app, nb) for b in ("chrome", "ipad") for site in ("xeus", "pyodide")
          for app in ("lab", "notebooks") for nb in NOTEBOOKS]
 
@@ -59,6 +66,22 @@ def base_url():
     threading.Thread(target=server.serve_forever, daemon=True).start()
     yield f"http://127.0.0.1:{server.server_port}"
     server.shutdown()
+
+
+@pytest.fixture(scope="session")
+def upload_files(tmp_path_factory):
+    """upload_files(notebook): the paths of the files the notebook needs, downloaded and checked."""
+    def upload_files(notebook):
+        folder = tmp_path_factory.mktemp("uploads")
+        paths = []
+        for name, sha1 in UPLOADS[notebook].items():
+            path = folder / name
+            if not path.exists():
+                path.write_bytes(urllib.request.urlopen(f"https://d2l-data.s3.amazonaws.com/{name}").read())
+            assert hashlib.sha1(path.read_bytes()).hexdigest() == sha1
+            paths.append(str(path))
+        return paths
+    return upload_files
 
 
 @pytest.fixture(scope="module")
@@ -79,7 +102,9 @@ def new_context():
 
 @pytest.mark.parametrize(("browser", "site", "app", "notebook"), CASES,
                          ids=[f"{b}-{s}-{a}-{Path(n).stem}" for b, s, a, n in CASES])
-def test_notebook(new_context, base_url, browser, site, app, notebook):
+def test_notebook(new_context, upload_files, base_url, browser, site, app, notebook):
+    if notebook in UPLOADS and app != "lab":
+        pytest.skip("needs files uploaded with the file browser, which only the Lab app has")
     context = new_context(browser)
     page = context.new_page()
     responses, console_errors, page_errors = [], [], []
@@ -99,6 +124,12 @@ def test_notebook(new_context, base_url, browser, site, app, notebook):
     # shows a "Select Kernel" dialog. A tablet user who taps Run All right away sees the same.
     page.wait_for_function(KERNEL_READY_JS, timeout=KERNEL_START_MS, polling=100)
     errors = page.locator(".jp-OutputArea-output[data-mime-type='application/vnd.jupyter.stderr']")
+    if notebook in UPLOADS:
+        with page.expect_file_chooser() as chooser:
+            page.get_by_title("Upload Files").first.click()
+        chooser.value.set_files(upload_files(notebook))
+        # Lab opens the uploaded CSV files in tabs over the notebook: come back to it.
+        page.locator(".lm-DockPanel-tabBar .lm-TabBar-tab", has_text=Path(notebook).stem.split("_")[0]).first.click()
     if has_code:
         _run_all(page, errors, browser, site, app, notebook, page_errors, console_errors)
     assert errors.count() == 0, errors.all_inner_texts()
@@ -120,7 +151,7 @@ def _run_all(page, errors, browser, site, app, notebook, page_errors, console_er
     # Stop waiting at the first error output instead of timing out.
     last_ran = page.locator(".jp-CodeCell .jp-InputPrompt").last.filter(has_text=re.compile(r"\[\d+\]"))
     try:
-        last_ran.or_(errors.first).wait_for(timeout=RUN_MS)
+        last_ran.or_(errors.first).first.wait_for(timeout=RUN_MS)
     except PlaywrightTimeoutError:
         FAILURES.mkdir(parents=True, exist_ok=True)
         shot = FAILURES / f"{browser}-{site}-{app}-{Path(notebook).stem}.png"

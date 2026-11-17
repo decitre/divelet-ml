@@ -1,4 +1,4 @@
-"""Models, the trainer and the optimizer of Chapter 3.
+"""Models, the trainer and the optimizer of Chapters 3 to 5.
 
 Adapted from `d2l/torch.py` in Dive into Deep Learning (https://github.com/d2l-ai/d2l-en, commit
 23d7a5aecceee57d1292c56e90cce307f183bb0a), Copyright 2019 Amazon.com, Inc. or its affiliates, MIT-0 license.
@@ -160,3 +160,37 @@ class LinearRegression(Module):
 
     def get_w_b(self):
         return (self.net.weight, self.net.bias)
+
+
+class Classifier(Module):
+    """The base class of classification models."""
+    def configure_optimizers(self):
+        return optim.SGD(self.parameters(), lr=self.lr)
+
+    def validation_step(self, batch):
+        Y_hat = self(*batch[:-1])
+        self.plot('loss', self.loss(Y_hat, batch[-1]), train=False)
+        self.plot('acc', self.accuracy(Y_hat, batch[-1]), train=False)
+
+    def accuracy(self, Y_hat, Y, averaged=True):
+        """Compute the number of correct predictions."""
+        Y_hat = Y_hat.reshape((-1, Y_hat.shape[-1]))
+        preds = Y_hat.argmax(axis=1).astype(Y.dtype)
+        compare = (preds == Y.reshape(-1)).astype(np.float32)
+        return compare.mean() if averaged else compare
+
+    def loss(self, Y_hat, Y, averaged=True):
+        Y_hat = Y_hat.reshape((-1, Y_hat.shape[-1]))
+        Y = Y.reshape((-1,))
+        return nn.cross_entropy(Y_hat, Y, reduction='mean' if averaged else 'none')
+
+
+class SoftmaxRegression(Classifier):
+    """The softmax regression model."""
+    def __init__(self, num_outputs, lr):
+        super().__init__()
+        self.save_hyperparameters()
+        self.net = nn.Sequential(nn.Flatten(), nn.LazyLinear(num_outputs))
+
+    def forward(self, X):
+        return self.net(X)

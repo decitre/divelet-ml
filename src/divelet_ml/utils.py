@@ -7,6 +7,7 @@ Copyright 2019 Amazon.com, Inc. or its affiliates, MIT-0 license.
 """
 
 import inspect
+import sys
 
 import autograd
 import numpy as np
@@ -66,3 +67,16 @@ def param_grads(fn, module, params):
     finally:
         for (m, k), param in zip(slots, params):
             setattr(m, k, param)
+
+
+def browser_epochs(epochs, pyodide=1, xeus=3):
+    """`epochs` outside the browser; in JupyterLite, `pyodide` epochs in the Pyodide kernel, whose NumPy has no
+    BLAS and multiplies matrices about 8 times slower, and `xeus` in xeus-python. Training the book's multilayer
+    perceptrons for `epochs` epochs takes minutes there. Not in the book."""
+    if sys.platform != 'emscripten':
+        return epochs
+    try:
+        import pyjs  # xeus-python's bridge to JavaScript; Pyodide has none. (Both have a `pyodide` entry in sys.modules.)
+    except ImportError:
+        return min(epochs, pyodide)
+    return min(epochs, xeus)

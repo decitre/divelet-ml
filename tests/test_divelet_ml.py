@@ -277,3 +277,44 @@ def test_training_and_plotting_without_jupyter(monkeypatch):
     assert len(model.board.data['val_loss']) == 1
     d2l.plot([1.0, 2.0])
     d2l.plt.close('all')
+
+
+def test_browser_epochs(monkeypatch):
+    import sys
+    assert d2l.browser_epochs(10) == 10  # CPython
+    monkeypatch.setattr('sys.platform', 'emscripten')
+    monkeypatch.setitem(sys.modules, 'pyjs', None)  # not importable: Pyodide
+    assert d2l.browser_epochs(10) == 1 and d2l.browser_epochs(10, pyodide=4) == 4 and d2l.browser_epochs(2, pyodide=4) == 2
+    monkeypatch.setitem(sys.modules, 'pyjs', type(sys)('pyjs'))  # importable: xeus-python
+    assert d2l.browser_epochs(10) == 3
+
+
+def test_download_checks_the_hash_and_reuses_the_file(tmp_path, monkeypatch):
+    import hashlib
+    from divelet_ml import data
+    calls = []
+    monkeypatch.setattr(data, '_read_url', lambda url: calls.append(url) or b'abc')
+    sha1 = hashlib.sha1(b'abc').hexdigest()
+    path = d2l.download('http://host/dir/file.csv', str(tmp_path / 'sub'), sha1_hash=sha1)
+    assert path == str(tmp_path / 'sub' / 'file.csv') and open(path, 'rb').read() == b'abc'
+    assert d2l.download('http://host/dir/file.csv', str(tmp_path / 'sub'), sha1_hash=sha1) == path
+    assert len(calls) == 1  # the second call found the file
+    with pytest.raises(AssertionError, match='SHA-1'):
+        d2l.download('http://host/dir/other.csv', str(tmp_path), sha1_hash='0' * 40)
+
+
+def test_download_in_jupyterlite_looks_in_the_file_browser(tmp_path, monkeypatch):
+    import hashlib
+    from divelet_ml import data
+    monkeypatch.setattr(data, '_site_url', lambda: 'https://site')  # a JupyterLite kernel
+    monkeypatch.setattr(data, 'DRIVE', str(tmp_path))
+    monkeypatch.setattr(data, '_read_url', lambda url: pytest.fail('a page cannot read other hosts'))
+    url = 'https://host/dir/file.csv'
+    with pytest.raises(FileNotFoundError, match='upload it'):
+        d2l.download(url, '../data')
+    (tmp_path / 'any' / 'folder').mkdir(parents=True)
+    (tmp_path / 'any' / 'folder' / 'file.csv').write_bytes(b'abc')  # uploaded anywhere in the file browser
+    sha1 = hashlib.sha1(b'abc').hexdigest()
+    assert d2l.download(url, '../data', sha1_hash=sha1) == str(tmp_path / 'any' / 'folder' / 'file.csv')
+    with pytest.raises(AssertionError, match='SHA-1'):
+        d2l.download(url, '../data', sha1_hash='0' * 40)

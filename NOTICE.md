@@ -70,3 +70,30 @@ The original work and its associated rights remain with their respective authors
 ## Project Repository
 
 https://github.com/decitre/divelet-ml
+
+## Third-Party Data
+
+**Fashion-MNIST** (Xiao, Rasul and Vollgraf, 2017), used from section 4.2 onwards.
+
+- **Source:** https://github.com/zalandoresearch/fashion-mnist
+- **Copyright:** 2017 Zalando SE
+- **License:** MIT, copied with the data to `data/fashion-mnist/LICENSE` on the published site
+
+The site serves the dataset's four original gzip files unchanged, from its own host, so that notebooks fetch them without contacting another site.
+
+### Ames Housing / Kaggle House Prices
+
+Used in section 5.7.
+
+Files:
+
+- `kaggle_house_pred_train.csv`
+- `kaggle_house_pred_test.csv`
+
+- **Source:** Kaggle, "House Prices: Advanced Regression Techniques".
+- **Original dataset:** Ames Housing, compiled by Dean De Cock (2011).
+- **Distribution:** Dive into Deep Learning, whose host `d2l-data.s3.amazonaws.com` serves these files for the book's code (`DATA_HUB['kaggle_house_train']` and `['kaggle_house_test']`). The 5.7 notebook checks their SHA-1 hashes (`585e9cc93e70b39160e7921475f9bcd7d31219ce` and `fa19780a7b011d9b009e8bff8e99922a8ee2eb90`).
+- **License and rules:** MIT, as shown in the "License" field of the competition's data page on Kaggle (captured on 17 November 2026). The competition's rules, which a participant accepts, limit the data to "non-commercial purposes only, including for participating in the Competition ... and for academic research and education" (7.A) and forbid redistributing it "to any party not participating in the Competition" (7.B), so divelet-ml does not host it.
+- **Reference:** De Cock, D. (2011). Ames, Iowa: Alternative to the Boston Housing Data as an End of Semester Regression Project. *Journal of Statistics Education*, 19(3).
+
+The site does not host these files. Section 5.7 asks the reader to download them from the book's host and upload them to the file browser: Kaggle's competition rules (section 7.B) forbid making the data available to anyone not participating in the competition.
