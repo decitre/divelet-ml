@@ -60,24 +60,47 @@ jobs:
           restore-keys: jl-forge-
       - name: Build xeus-python and Pyodide sites
         run: ./build.sh
-      - name: Install WebKit for the iPad smoke test
-        run: uv run --group browser playwright install --with-deps webkit
-      - name: Browser smoke test
-        # Desktop Chrome (preinstalled on the runner) and WebKit as an iPad; a failure blocks deployment.
-        run: uv run --group browser pytest tests/smoke_test.py -v
-      - name: Upload screenshots of notebooks that did not finish
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: smoke-failures
-          path: workspace/smoke-failures/
-          if-no-files-found: ignore
       - uses: actions/upload-pages-artifact@v5
         with:
           path: workspace/public
 
-  deploy:
+  smoke:
+    # One job per browser and kernel, in parallel, on the site the build job uploaded; a failure blocks deployment.
     needs: build
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, ipad]
+        site: [xeus, pyodide]
+    name: smoke (${{ matrix.browser }}, ${{ matrix.site }})
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v8
+        with:
+          name: github-pages
+          path: ${{ runner.temp }}/site
+      - name: Unpack the site
+        run: mkdir -p workspace/public && tar -xf "$RUNNER_TEMP/site/artifact.tar" -C workspace/public
+      - name: Install WebKit for the iPad smoke test
+        if: matrix.browser == 'ipad'
+        run: uv run --group browser playwright install --with-deps webkit
+      - name: Browser smoke test
+        # Desktop Chrome is preinstalled on the runner; WebKit emulates an iPad.
+        run: uv run --group browser pytest tests/smoke_test.py -v -k "${{ matrix.browser }} and ${{ matrix.site }}"
+      - name: Upload screenshots of notebooks that did not finish
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: smoke-failures-${{ matrix.browser }}-${{ matrix.site }}
+          path: workspace/smoke-failures/
+          if-no-files-found: ignore
+
+  deploy:
+    needs: [build, smoke]
     if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-24.04
     permissions:
