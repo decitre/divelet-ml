@@ -9,9 +9,11 @@ Development will proceed incrementally, starting with a compatibility
 assessment and a small set of representative chapters.
 
 **Current status:** Early development. Static compatibility analysis has been
-performed. The three initial sections are adapted: 2.1 *Data Manipulation*,
-3.3 *Synthetic Regression Data* and 11.3 *Attention Scoring Functions*, and
-Chapter 2 is now complete with 2.2 *Data Preprocessing*, 2.3 *Linear Algebra*, 2.4 *Calculus*, 2.5 *Automatic Differentiation*, 2.6 *Probability and Statistics* and 2.7 *Documentation*. Chapter 3 is complete with 3.1 *Linear Regression*, 3.2 *Object-Oriented Design for Implementation*, 3.4 *Linear Regression Implementation from Scratch*, 3.5 *Concise Implementation of Linear Regression*, 3.6 *Generalization* and 3.7 *Weight Decay*. They run in JupyterLite with both the Pyodide and
+performed. Chapters 2 (*Preliminaries*) and 3 (*Linear Neural Networks for
+Regression*) are adapted in full, along with 11.3 *Attention Scoring
+Functions*. Chapters 4 (*Classification*) and 5 (*Multilayer Perceptrons*) are
+planned below; they need a dataset-hosting decision and a training budget for
+Pyodide. The adapted notebooks run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -252,15 +254,92 @@ Adapting the whole chapter is a condition for the outreach below.
 - [x] 3.7 *Weight Decay*. `optim.SGD` takes PyTorch's parameter groups with
       `weight_decay`.
 
-Potential areas include:
+### Chapter 4 — Linear Neural Networks for Classification
 
-- Linear regression and optimization.
-- Linear classification.
-- Multilayer perceptrons.
-- Automatic differentiation.
+Upstream: `chapter_linear-classification/`. The first chapter with a real
+dataset (Fashion-MNIST) and the first where the browser's compute budget
+matters; the probes below were run in desktop Chrome on a local build, with
+hand-written NumPy and random data of Fashion-MNIST's shape (60,000 × 784).
+
+**Decisions to make first**
+
+- **Where the data lives.** Fashion-MNIST (about 30 MB) cannot go in
+  `content/`: xeus-python packs all of `content/` into the archive every
+  notebook's kernel downloads at startup, so it would slow every notebook on
+  the site. Serve it as a static file outside `content/`, from the site's own
+  host (the smoke test allows no other host), and fetch it from the notebook.
+  Probed: both kernels have the `js` module (xeus-python also has `pyjs`), and
+  a binary file came back byte-identical by sync `XMLHttpRequest`,
+  `await js.fetch(...)` and sync XHR with an arraybuffer. Still to check: the
+  real file on the deployed Pages site, WebKit/iPad, and caching so a notebook
+  does not download it twice. This also closes "Define dataset-loading and
+  caching strategies" in Phase 3.
+- **Which format.** Store the images in a compact binary form and decode with
+  NumPy, in place of `torchvision.datasets.FashionMNIST`. A `FashionMNIST`
+  class in `divelet_ml` keeps the book's `train`/`val` interface and
+  `get_dataloader` (via `ArrayLoader`).
+- **Training budget.** Measured per epoch: softmax regression takes 0.5 s in
+  xeus-python and 1.3 s in Pyodide, so Chapter 4 fits. Compare the 10 epochs
+  the book trains for with the smoke test's 120 s run limit.
+
+**Sections** (each also needs `divelet_ml` additions as listed)
+
+- [ ] 4.1 *Softmax Regression* (no code).
+- [ ] 4.2 *The Image Classification Dataset*: `FashionMNIST`, `text_labels`,
+      `visualize` (matplotlib `imshow` in place of `d2l.show_images`).
+- [ ] 4.3 *The Base Classification Model*: `Classifier` with `accuracy` and
+      `validation_step`.
+- [ ] 4.4 *Softmax Regression Implementation from Scratch*: `cross_entropy`
+      and `SoftmaxRegressionScratch`, gradients with autograd as in 3.4.
+- [ ] 4.5 *Concise Implementation of Softmax Regression*: `nn` gains a
+      cross-entropy loss that works on logits (numerically stable).
+- [ ] 4.6 *Generalization in Classification* (no code, apart from the
+      section's small simulation, if any).
+- [ ] 4.7 *Environment and Distribution Shift* (no code).
+
+### Chapter 5 — Multilayer Perceptrons
+
+Upstream: `chapter_multilayer-perceptrons/`. Builds on Chapter 4's data and
+classifier.
+
+**Decisions to make first**
+
+- **Pyodide's speed.** Pyodide has no BLAS. One epoch of the book's MLP (256
+  hidden units, minibatches of 256) took 0.8 s on desktop CPython, 4.1 s in
+  xeus-python and **33.9 s in Pyodide**. Ten epochs would take about six
+  minutes in Pyodide, past the smoke test's 120 s limit. Options: fewer epochs
+  or a subset of the data in the Pyodide site only (documented in the
+  notebook), a larger limit for these notebooks, or both. Do not hide the
+  difference: the notebook says which kernel it runs on.
+- **Measure the real `Trainer`.** The probes above are raw NumPy loops. The
+  `Trainer` also redraws its plot every epoch, which the book's code does too;
+  its cost in each kernel is not yet measured.
+
+**Sections**
+
+- [ ] 5.1 *Multilayer Perceptrons*: activation plots (`relu`, `sigmoid`,
+      `tanh`) with the gradients computed by autograd as in 2.5.
+- [ ] 5.2 *Implementation of Multilayer Perceptrons*: `MLPScratch` and `MLP`;
+      `nn` gains `ReLU`, `Sequential` and `Flatten` as needed.
+- [ ] 5.3 *Forward Propagation, Backward Propagation, and Computational
+      Graphs* (no code).
+- [ ] 5.4 *Numerical Stability and Initialization* (small code: plots of
+      gradients of the sigmoid).
+- [ ] 5.5 *Generalization in Deep Learning* (no code).
+- [ ] 5.6 *Dropout*: `Dropout` already exists in `divelet_ml.nn` for
+      Chapter 11, forward pass only; it needs a backward pass through autograd.
+- [ ] 5.7 *Predicting House Prices on Kaggle*: downloads the Kaggle data from
+      the book's own host, which the smoke test forbids. Host the CSV files
+      with the site, as for Fashion-MNIST, and keep the licence notice.
+
+### Later chapters
+
+Not yet planned in detail:
+
 - Convolutional neural networks.
 - Recurrent neural networks.
-- Attention mechanisms and transformers.
+- Attention mechanisms and transformers (11.3 is done; the rest of Chapter 11
+  builds on the Chapter 3–5 framework).
 
 Adaptation priorities will depend on educational value, browser feasibility,
 implementation complexity, and runtime performance.

@@ -17,7 +17,7 @@ divelet-ml is an experimental, browser-native adaptation of the Jupyter notebook
 
 The project aims to preserve the book's chapter structure, mathematical explanations, learning objectives, and exercises while adapting its framework-dependent Python implementations for execution directly in the browser.
 
-**Project status:** Early development. Compatibility assessment is underway. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
+**Project status:** Early development. Chapters 2 and 3 are adapted in full, and Chapters 4 and 5 are planned next. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
 
 | Section | Original |
 |---|---|
@@ -122,21 +122,15 @@ The initial audit references the book's commit:
 
 `23d7a5aecceee57d1292c56e90cce307f183bb0a`
 
-## Initial Development Plan
+## Development Plan
 
-The first phase focuses on three representative sections of the book:
-
-| Section | Focus | Status |
-|---|---|---|
-| 2.1 `chapter_preliminaries/ndarray.md` | Array operations and tensor fundamentals | Adapted |
-| 3.3 `chapter_linear-regression/synthetic-regression-data.md` | Synthetic datasets and numerical computation | Adapted |
-| 11.3 `chapter_attention-mechanisms-and-transformers/attention-scoring-functions.md` | Attention mechanisms and scoring functions | Adapted |
+Chapters 2 (*Preliminaries*) and 3 (*Linear Neural Networks for Regression*) are adapted in full, together with section 11.3 (*Attention Scoring Functions*), which tested the approach on a later chapter. Chapter 4 (*Linear Neural Networks for Classification*) and Chapter 5 (*Multilayer Perceptrons*) come next. They are the first with a real dataset and longer training, so they depend on how the data is hosted and on how long training takes in each kernel.
 
 The PyTorch implementations serve as the primary reference.
 
-Each adaptation will be reviewed for educational fidelity, browser compatibility, dependencies, and reproducibility.
+Each adaptation is reviewed for educational fidelity, browser compatibility, dependencies, and reproducibility, and runs in the browser under both kernels in CI.
 
-The project will progressively expand to additional chapters based on the results of these initial experiments.
+Later chapters follow the results of these.
 
 See [ROADMAP.md][roadmap] for further details.
 
