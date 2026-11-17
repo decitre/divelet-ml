@@ -80,3 +80,47 @@ def browser_epochs(epochs, pyodide=1, xeus=3):
     except ImportError:
         return min(epochs, pyodide)
     return min(epochs, xeus)
+
+
+def browser_examples(examples, pyodide, xeus):
+    """`examples` training examples outside the browser; in JupyterLite, `pyodide` in the Pyodide kernel and `xeus` in
+    xeus-python, as `browser_epochs` does for epochs. Convolutional networks take minutes per epoch of the whole
+    training set there. Not in the book."""
+    return browser_epochs(examples, pyodide, xeus)
+
+
+def corr2d(X, K):
+    """The two-dimensional cross-correlation of the array `X` with the kernel `K`, as in the book's section 7.2: a
+    plain loop over the output, for teaching. `nn.conv2d` is the fast, differentiable version."""
+    h, w = K.shape
+    Y = np.zeros((X.shape[0] - h + 1, X.shape[1] - w + 1))
+    for i in range(Y.shape[0]):
+        for j in range(Y.shape[1]):
+            Y[i, j] = (X[i: i + h, j: j + w] * K).sum()
+    return Y
+
+
+def cpu():
+    """The CPU device. A browser kernel has no other: devices are the names 'cpu' and 'cuda:i' only, as in
+    the book's `d2l.cpu()` and `d2l.gpu()`, which are PyTorch devices there."""
+    return 'cpu'
+
+
+def gpu(i=0):
+    """The name of GPU `i`, which a browser kernel does not have."""
+    return f'cuda:{i}'
+
+
+def num_gpus():
+    """The number of GPUs a kernel can use: none in a browser."""
+    return 0
+
+
+def try_gpu(i=0):
+    """`gpu(i)` if it exists, otherwise `cpu()`."""
+    return gpu(i) if num_gpus() >= i + 1 else cpu()
+
+
+def try_all_gpus():
+    """All available GPUs, or `[cpu()]` if there is none."""
+    return [gpu(i) for i in range(num_gpus())] or [cpu()]

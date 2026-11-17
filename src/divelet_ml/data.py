@@ -202,10 +202,13 @@ def load_fashion_mnist(root, resize=(28, 28)):
 
 class FashionMNIST(DataModule):
     """The Fashion-MNIST dataset."""
-    def __init__(self, batch_size=64, resize=(28, 28)):
+    def __init__(self, batch_size=64, resize=(28, 28), num_train=None):
+        """`num_train` keeps only the first training examples (the data is in random order); not in the book."""
         super().__init__()
         self.save_hyperparameters()
         self.train, self.val = load_fashion_mnist(self.root, resize)
+        if num_train is not None:
+            self.train = ArrayDataset(self.train.X[:num_train], self.train.y[:num_train])
 
     def text_labels(self, indices):
         """Return text labels."""

@@ -18,7 +18,8 @@ no plots don't load matplotlib.
 __version__ = "0.5.0"
 
 from divelet_ml import nn, optim
-from divelet_ml.utils import add_to_class, HyperParameters, check_shape, numpy, param_grads, browser_epochs
+from divelet_ml.utils import (add_to_class, HyperParameters, check_shape, numpy, param_grads, browser_epochs,
+                              browser_examples, corr2d, cpu, gpu, num_gpus, try_gpu, try_all_gpus)
 from divelet_ml.plotting import use_svg_display, set_figsize, set_axes, plot, show_heatmaps, show_images, ProgressBoard
 from divelet_ml.data import DataModule, ArrayLoader, ArrayDataset, load_fashion_mnist, download, DATA_URL, SyntheticRegressionData, FashionMNIST
 from divelet_ml.training import Module, Trainer, SGD, LinearRegressionScratch, LinearRegression, Classifier, SoftmaxRegression
@@ -32,6 +33,13 @@ __all__ = [
     'numpy',
     'param_grads',
     'browser_epochs',
+    'browser_examples',
+    'corr2d',
+    'cpu',
+    'gpu',
+    'num_gpus',
+    'try_gpu',
+    'try_all_gpus',
     'use_svg_display',
     'set_figsize',
     'set_axes',

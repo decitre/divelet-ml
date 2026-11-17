@@ -324,25 +324,25 @@ run. Most of it is about PyTorch's `nn.Module` machinery, so the work is to give
 `divelet_ml.nn` the same surface, following the book's JAX and MXNet editions
 where PyTorch has no NumPy equivalent. Little compute: no section trains.
 
-- [ ] 6.1 *Layers and Modules*: `Sequential`, `ReLU` and `LazyLinear` exist. The
+- [x] 6.1 *Layers and Modules*: `Sequential`, `ReLU` and `LazyLinear` exist. The
       book's own `MySequential` registers layers with `add_module` and walks
       `children()`, so `Module` needs those two.
-- [ ] 6.2 *Parameter Management*: needs `state_dict()`, `named_parameters()` and
+- [x] 6.2 *Parameter Management*: needs `state_dict()`, `named_parameters()` and
       a `.data` equivalent (parameters are plain arrays here). Tied parameters
       (the same layer twice): check that `param_grads` counts a shared array once.
-- [ ] 6.3 *Parameter Initialization*: `LazyLinear`'s `weight_init` takes a
+- [x] 6.3 *Parameter Initialization*: `LazyLinear`'s `weight_init` takes a
       function of the shape, like Flax's initializers, so add `normal`,
       `constant`, `zeros` and `xavier_uniform` (the last is also LeNet's, in 7.6)
       and an `apply`.
-- [ ] 6.4 *Lazy Initialization*: `LazyLinear` already waits for its first
+- [x] 6.4 *Lazy Initialization*: `LazyLinear` already waits for its first
       input. Show `weight is None` before the forward pass, in place of
       PyTorch's `UninitializedParameter`.
-- [ ] 6.5 *Custom Layers*: arrays held as attributes are parameters, so
+- [x] 6.5 *Custom Layers*: arrays held as attributes are parameters, so
       `nn.Parameter` is not needed; say so in the notebook.
-- [ ] 6.6 *File I/O*: `torch.save` and `torch.load` become `np.save`, `np.load`
+- [x] 6.6 *File I/O*: `torch.save` and `torch.load` become `np.save`, `np.load`
       and `load_state_dict`. Writing files already works in both kernels (2.2),
       but check that the files survive in the Notebook app's drive.
-- [ ] 6.7 *GPUs*: a browser kernel has no GPU. Decision for review: keep the
+- [x] 6.7 *GPUs*: a browser kernel has no GPU. Decision for review: keep the
       section with `num_gpus()` returning 0 and `cpu`, `gpu`, `try_gpu` shims, so
       the book's code runs unchanged, and say that WebGPU is Phase 6, or drop
       the section and say why.
@@ -366,14 +366,14 @@ layers are not matrix products, and whose training cost is a risk.
   (`RUN_MS_NOTEBOOKS`) will need new values; if even one epoch is too slow in
   Pyodide, train on a subset of Fashion-MNIST there and say so in the notebook.
 
-- [ ] 7.1 *From Fully Connected Layers to Convolutions* (no code).
-- [ ] 7.2 *Convolutions for Images*: `corr2d`, a `Conv2D` from scratch, and the
+- [x] 7.1 *From Fully Connected Layers to Convolutions* (no code).
+- [x] 7.2 *Convolutions for Images*: `corr2d`, a `Conv2D` from scratch, and the
       edge-detection kernel learned by gradient descent, with `param_grads` in
       place of `loss.backward()`.
-- [ ] 7.3 *Padding and Stride*: `LazyConv2d` with `padding` and `stride`.
-- [ ] 7.4 *Multiple Input and Multiple Output Channels*: `corr2d_multi_in`,
+- [x] 7.3 *Padding and Stride*: `LazyConv2d` with `padding` and `stride`.
+- [x] 7.4 *Multiple Input and Multiple Output Channels*: `corr2d_multi_in`,
       `corr2d_multi_in_out`, and the 1×1 convolution.
-- [ ] 7.5 *Pooling*: `pool2d`, `MaxPool2d`, `AvgPool2d`.
+- [x] 7.5 *Pooling*: `pool2d`, `MaxPool2d`, `AvgPool2d`.
 - [ ] 7.6 *Convolutional Neural Networks (LeNet)*: `LeNet(Classifier)`,
       Xavier initialization from 6.3, `layer_summary`. `try_gpu` goes (6.7).
       Needs the spike above and the budget measurement.

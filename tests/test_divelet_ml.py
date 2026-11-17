@@ -287,6 +287,9 @@ def test_browser_epochs(monkeypatch):
     assert d2l.browser_epochs(10) == 1 and d2l.browser_epochs(10, pyodide=4) == 4 and d2l.browser_epochs(2, pyodide=4) == 2
     monkeypatch.setitem(sys.modules, 'pyjs', type(sys)('pyjs'))  # importable: xeus-python
     assert d2l.browser_epochs(10) == 3
+    assert d2l.browser_examples(60000, pyodide=2000, xeus=9000) == 9000
+    monkeypatch.setitem(sys.modules, 'pyjs', None)
+    assert d2l.browser_examples(60000, pyodide=2000, xeus=9000) == 2000
 
 
 def test_download_checks_the_hash_and_reuses_the_file(tmp_path, monkeypatch):
@@ -364,6 +367,8 @@ def test_fashion_mnist(fashion, monkeypatch):
     # The files were downloaded once to the root and are read from there afterwards.
     monkeypatch.setattr(data, 'FASHION_MNIST_URL', 'file:///nonexistent/')
     assert len(d2l.FashionMNIST().train) == 40
+    small = d2l.FashionMNIST(num_train=7)
+    assert len(small.train) == 7 and len(small.val) == 10 and small.train[3][1] == 3
     assert d2l.FashionMNIST(resize=(32, 32)).train[0][0].shape == (1, 32, 32)
     assert sorted(p.name for p in (fashion / 'data' / 'fashion-mnist').iterdir()) == sorted(
         n for names in data.FASHION_MNIST_FILES.values() for n in names)
@@ -461,3 +466,153 @@ def test_show_images(tmp_path):
     assert len(axes) == 6 and axes[4].get_title() == 'e'
     assert len(d2l.show_images(np.zeros((2, 4, 4)), 1, 2)) == 2
     matplotlib.pyplot.close('all')
+
+
+def test_module_tree_methods_state_dict_and_apply():
+    net = nn.Sequential(nn.LazyLinear(3), nn.ReLU(), nn.LazyLinear(2))
+    assert [n for n, _ in net.named_parameters()] == []  # lazy: nothing yet
+    net(np.random.rand(4, 5))
+    assert [type(m) for m in net.children()] == [nn.Linear, nn.ReLU, nn.Linear]  # a lazy layer becomes a Linear
+    assert [(n, p.shape) for n, p in net.named_parameters()] == [('0.weight', (3, 5)), ('0.bias', (3,)),
+                                                                 ('2.weight', (2, 3)), ('2.bias', (2,))]
+    assert net[0] is getattr(net, '0') and net[-1] is net[2]
+
+    clone = nn.Sequential(nn.LazyLinear(3), nn.ReLU(), nn.LazyLinear(2))
+    clone.load_state_dict(net.state_dict())
+    X = np.random.rand(2, 5)
+    assert np.allclose(clone(X), net(X)) and clone[0].weight is not net[0].weight  # a copy
+
+    seen = []
+    net.apply(lambda m: seen.append(type(m).__name__))
+    assert seen == ['Linear', 'ReLU', 'Linear', 'Sequential']  # children first, then the module
+
+    outer = nn.Module()
+    outer.add_module('inner', net)
+    assert outer.inner is net and [n for n, _ in outer.named_parameters()][0] == 'inner.0.weight'
+    with pytest.raises(AssertionError, match='not a Module'):
+        outer.add_module('x', np.ones(1))
+
+
+def test_shared_layer_counts_once_and_gets_its_gradients_added():
+    shared = nn.LazyLinear(2)
+    net = nn.Sequential(shared, nn.ReLU(), shared)
+    X = np.random.rand(3, 2)
+    net(X)
+    assert len(list(net.modules())) == 3 and len(net.parameters()) == 2  # the shared layer is one module
+    assert len(list(net.named_parameters())) == 2 and len(net.state_dict()) == 4  # state_dict has both names
+    loss = lambda: (net(X) ** 2).sum()
+    grad_w, grad_b = d2l.param_grads(loss, net, net.parameters())
+    w, eps = shared.weight, 1e-6
+    w[0, 0] += eps
+    up = loss()
+    w[0, 0] -= 2 * eps
+    down = loss()
+    w[0, 0] += eps
+    numeric = (up - down) / (2 * eps)
+    assert np.isclose(grad_w[0, 0], numeric, rtol=1e-4)  # both uses of the layer count
+
+
+def test_linear_relu_and_initializers():
+    layer = nn.Linear(4, 3)
+    assert layer.weight.shape == (3, 4) and layer.weight.dtype == np.float32 and type(layer) is nn.Linear
+    assert np.allclose(layer(np.ones((2, 4))), np.ones((2, 4)) @ layer.weight.T + layer.bias)
+    assert (nn.relu(np.array([-1.0, 2.0])) == [0, 2]).all()
+    w = np.zeros((6, 4))
+    assert nn.init.normal_(w, 0, 0.01) is w and 0 < np.abs(w).max() < 0.1
+    nn.init.uniform_(w, 5, 6)
+    assert w.min() >= 5 and w.max() <= 6
+    nn.init.constant_(w, 7)
+    assert (w == 7).all()
+    nn.init.zeros_(w)
+    assert (w == 0).all()
+    nn.init.ones_(w)
+    assert (w == 1).all()
+    nn.init.xavier_uniform_(w)
+    assert np.abs(w).max() <= np.sqrt(6 / 10)
+    kernel = np.zeros((6, 4, 3, 3))
+    nn.init.xavier_uniform_(kernel)
+    assert np.abs(kernel).max() <= np.sqrt(6 / (10 * 9))  # the window size is in both fans
+    with pytest.raises(AssertionError, match='two dimensions'):
+        nn.init.xavier_uniform_(np.zeros(3))
+
+
+def test_device_helpers_without_a_gpu():
+    assert (d2l.cpu(), d2l.gpu(1), d2l.num_gpus()) == ('cpu', 'cuda:1', 0)
+    assert (d2l.try_gpu(), d2l.try_gpu(10), d2l.try_all_gpus()) == ('cpu', 'cpu', ['cpu'])
+
+
+def finite_difference(fn, array, index, eps=1e-6):
+    original = array[index]
+    array[index] = original + eps
+    up = fn()
+    array[index] = original - eps
+    down = fn()
+    array[index] = original
+    return (up - down) / (2 * eps)
+
+
+def test_conv2d_values_and_gradients():
+    import autograd
+    X = np.arange(9.0).reshape(1, 1, 3, 3)
+    K = np.array([[0.0, 1.0], [2.0, 3.0]]).reshape(1, 1, 2, 2)
+    assert (nn.conv2d(X, K)[0, 0] == [[19, 25], [37, 43]]).all()  # the book's figure
+    assert nn.conv2d(X, K, bias=np.array([1.0]))[0, 0, 0, 0] == 20
+    assert nn.conv2d(X, K, padding=1).shape == (1, 1, 4, 4) and nn.conv2d(X, K, stride=(2, 1)).shape == (1, 1, 1, 2)
+    rng = np.random.default_rng(0)
+    X, W, b = rng.random((2, 2, 7, 6)), rng.random((3, 2, 3, 2)), rng.random(3)
+    loss = lambda X, W, b: (nn.conv2d(X, W, b, stride=(2, 1), padding=(1, 0)) ** 2).sum()
+    gX, gW, gb = autograd.grad(loss, (0, 1, 2))(X, W, b)
+    assert np.isclose(gX[1, 0, 3, 2], finite_difference(lambda: loss(X, W, b), X, (1, 0, 3, 2)), rtol=1e-5)
+    assert np.isclose(gW[2, 1, 1, 0], finite_difference(lambda: loss(X, W, b), W, (2, 1, 1, 0)), rtol=1e-5)
+    assert np.isclose(gb[1], finite_difference(lambda: loss(X, W, b), b, (1,)), rtol=1e-5)
+
+
+@pytest.mark.parametrize('pool', [nn.max_pool2d, nn.avg_pool2d])
+def test_pooling_values_and_gradients(pool):
+    import autograd
+    X = np.arange(16.0).reshape(1, 1, 4, 4)
+    expected = {'max_pool2d': [[5, 7], [13, 15]], 'avg_pool2d': [[2.5, 4.5], [10.5, 12.5]]}[pool.__name__]
+    assert (pool(X, 2)[0, 0] == expected).all()
+    assert pool(X, 3, stride=2, padding=1).shape == (1, 1, 2, 2) and pool(X, (2, 3), (2, 3), (0, 1)).shape == (1, 1, 2, 2)
+    X = np.random.default_rng(1).random((2, 2, 7, 6))
+    loss = lambda X: (pool(X, (3, 2), (2, 1), (1, 0)) ** 2).sum()
+    g = autograd.grad(loss)(X)
+    assert np.isclose(g[1, 0, 3, 2], finite_difference(lambda: loss(X), X, (1, 0, 3, 2)), rtol=1e-5)
+    assert nn.max_pool2d(np.full((1, 1, 2, 2), -5.0), 3, padding=1)[0, 0, 0, 0] == -5  # padding is minus infinity
+    assert nn.avg_pool2d(np.ones((1, 1, 2, 2)), 2, padding=1)[0, 0, 0, 0] == 0.25  # padding is zeros, counted
+
+
+def test_conv_and_pool_layers_sigmoid_and_sequential_iteration():
+    net = nn.Sequential(nn.LazyConv2d(4, kernel_size=3, padding=1), nn.Sigmoid(), nn.MaxPool2d(2), nn.AvgPool2d(2),
+                        nn.Flatten(), nn.LazyLinear(2))
+    X = np.random.rand(3, 2, 8, 8).astype(np.float32)
+    assert net(X).shape == (3, 2) and net(X).dtype == np.float32
+    conv = net[0]
+    assert type(conv) is nn.Conv2d and conv.weight.shape == (4, 2, 3, 3) and conv.bias.shape == (4,)
+    assert np.abs(conv.weight).max() <= 1 / np.sqrt(18) and len(net) == 6
+    assert [type(layer).__name__ for layer in net][:3] == ['Conv2d', 'Sigmoid', 'MaxPool2d']
+    assert np.allclose(nn.sigmoid(np.array([0.0])), 0.5)
+    eager = nn.Conv2d(2, 3, (1, 2), bias=False)
+    assert eager.weight.shape == (3, 2, 1, 2) and eager.bias is None and eager(X).shape == (3, 3, 8, 7)
+    lazy = nn.LazyConv2d(1, 3, bias=False)
+    assert lazy(np.random.rand(1, 5, 4, 4)).dtype == np.float64 and lazy.weight.dtype == np.float64
+
+
+def test_module_apply_init_creates_lazy_parameters_then_initializes():
+    class Model(d2l.Module):
+        def __init__(self):
+            super().__init__()
+            self.net = nn.Sequential(nn.LazyLinear(3), nn.LazyLinear(1))
+
+    model = Model()
+    model.apply_init([np.ones((2, 4))])
+    assert model.net[0].weight.shape == (3, 4)
+    model.apply_init([np.ones((2, 4))], lambda m: type(m) is nn.Linear and nn.init.constant_(m.weight, 2))
+    assert (model.net[0].weight == 2).all() and (model.net[1].weight == 2).all()
+
+
+def test_corr2d_loop_matches_conv2d():
+    X, K = np.arange(9.0).reshape(3, 3), np.array([[0.0, 1.0], [2.0, 3.0]])
+    assert (d2l.corr2d(X, K) == [[19, 25], [37, 43]]).all()
+    X = np.random.rand(6, 8)
+    assert np.allclose(d2l.corr2d(X, K), nn.conv2d(X[None, None], K[None, None])[0, 0])
