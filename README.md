@@ -118,35 +118,11 @@ lmLite provides Python access to browser-native machine learning inference.
 
 This integration is optional and is not intended to replace the mathematical and algorithmic foundations of the book.
 
-## Compatibility Assessment
+## Compatibility
 
-An initial static audit of the book's source repository has been developed to identify:
+The static audit of the book's source repository is complete and its findings drive the adaptation order. Static analysis does not establish that a chapter runs in JupyterLite: every adapted notebook is validated by a browser smoke test under both kernels, and educational fidelity is reviewed separately.
 
-- Framework-specific implementations and dependencies.
-- Candidate chapters for direct adaptation.
-- Potential incompatibilities with browser-native Python runtimes.
-- Estimated adaptation effort.
-- Opportunities for alternative browser-native implementations.
-
-The audit distinguishes static compatibility estimates from actual execution results.
-
-**Static analysis does not establish that a chapter runs successfully in JupyterLite.** Browser execution and educational fidelity must be validated separately.
-
-The initial audit references the book's commit:
-
-`23d7a5aecceee57d1292c56e90cce307f183bb0a`
-
-## Development Plan
-
-Chapters 2 (*Preliminaries*), 3 (*Linear Neural Networks for Regression*), 4 (*Linear Neural Networks for Classification*) and 5 (*Multilayer Perceptrons*) are adapted in full, together with section 11.3 (*Attention Scoring Functions*), which tested the approach on a later chapter. Chapters 4 and 5 are the first with a real dataset and longer training: Fashion-MNIST is served from the site, and in the browser the notebooks that train multilayer perceptrons run fewer epochs than the book, as each notebook says.
-
-The PyTorch implementations serve as the primary reference.
-
-Each adaptation is reviewed for educational fidelity, browser compatibility, dependencies, and reproducibility, and runs in the browser under both kernels in CI.
-
-Later chapters follow the results of these.
-
-See [ROADMAP.md][roadmap] for further details.
+See [ROADMAP.md][roadmap] for the audit and the adaptation plan.
 
 ## Relationship to Dive into Deep Learning
 
