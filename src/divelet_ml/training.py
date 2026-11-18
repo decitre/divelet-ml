@@ -26,6 +26,13 @@ class Module(nn.Module, HyperParameters):
         assert hasattr(self, 'net'), 'Neural network is defined'
         return self.net(X)
 
+    def apply_init(self, inputs, init=None):
+        """Pass `inputs` through the model once, which creates the parameters of its lazy layers, then call
+        `init` on every module of `net`. Defined in the book's section 6.4."""
+        self.forward(*inputs)
+        if init is not None:
+            self.net.apply(init)
+
     def plot(self, key, value, train):
         """Plot a point in animation."""
         assert hasattr(self, 'trainer'), 'Trainer is not inited'
