@@ -120,7 +120,7 @@ This integration is optional and is not intended to replace the mathematical and
 
 ## Compatibility
 
-The static audit of the book's source repository is complete and its findings drive the adaptation order. Static analysis does not establish that a chapter runs in JupyterLite: every adapted notebook is validated by a browser smoke test under both kernels, and educational fidelity is reviewed separately.
+A static audit of the book's source repository drives the adaptation order; reviewing its remaining parser warnings and publishing it are still open. Static analysis does not establish that a chapter runs in JupyterLite: every adapted notebook is validated by a browser smoke test under both kernels, and educational fidelity is reviewed separately.
 
 See [ROADMAP.md][roadmap] for the audit and the adaptation plan.
 

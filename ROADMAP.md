@@ -5,14 +5,14 @@ accessible through JupyterLite while preserving the educational structure,
 mathematical explanations, learning objectives, and exercises of the original
 textbook.
 
-Development will proceed incrementally, starting with a compatibility
-assessment and a small set of representative chapters.
+Development proceeds incrementally, one chapter at a time.
 
 **Current status:** Early development. Static compatibility analysis has been
 performed. Chapters 2 (*Preliminaries*), 3 (*Linear Neural Networks for
 Regression*), 4 (*Linear Neural Networks for Classification*) and 5
-(*Multilayer Perceptrons*) are adapted in full, along with 11.3 *Attention
-Scoring Functions*. The adapted notebooks run in JupyterLite with both the Pyodide and
+(*Multilayer Perceptrons*) and 6 (*Builders' Guide*) are adapted in full, along
+with 7.1 to 7.5 of Chapter 7 (*Convolutional Neural Networks*) and 11.3
+*Attention Scoring Functions*. The adapted notebooks run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
