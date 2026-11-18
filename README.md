@@ -17,7 +17,7 @@ divelet-ml is an experimental, browser-native adaptation of the Jupyter notebook
 
 The project aims to preserve the book's chapter structure, mathematical explanations, learning objectives, and exercises while adapting its framework-dependent Python implementations for execution directly in the browser.
 
-**Project status:** Early development. Chapters 2 to 5 are adapted in full, and Chapters 6 and 7 are planned next. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
+**Project status:** Early development. Chapters 2 to 6 are adapted in full, and Chapter 7 is adapted except 7.6 (LeNet), which is in progress. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
 
 | Section | Original |
 |---|---|
@@ -50,6 +50,19 @@ The project aims to preserve the book's chapter structure, mathematical explanat
 | [5.5 Generalization in Deep Learning][xeus-5.5] [\[p\]][pyodide-5.5] | [d2l.ai][d2l-5.5] |
 | [5.6 Dropout][xeus-5.6] [\[p\]][pyodide-5.6] | [d2l.ai][d2l-5.6] |
 | [5.7 Predicting House Prices on Kaggle][xeus-5.7] [\[p\]][pyodide-5.7] | [d2l.ai][d2l-5.7] |
+| [6.1 Layers and Modules][xeus-6.1] [\[p\]][pyodide-6.1] | [d2l.ai][d2l-6.1] |
+| [6.2 Parameter Management][xeus-6.2] [\[p\]][pyodide-6.2] | [d2l.ai][d2l-6.2] |
+| [6.3 Parameter Initialization][xeus-6.3] [\[p\]][pyodide-6.3] | [d2l.ai][d2l-6.3] |
+| [6.4 Lazy Initialization][xeus-6.4] [\[p\]][pyodide-6.4] | [d2l.ai][d2l-6.4] |
+| [6.5 Custom Layers][xeus-6.5] [\[p\]][pyodide-6.5] | [d2l.ai][d2l-6.5] |
+| [6.6 File I/O][xeus-6.6] [\[p\]][pyodide-6.6] | [d2l.ai][d2l-6.6] |
+| [6.7 GPUs][xeus-6.7] [\[p\]][pyodide-6.7] | [d2l.ai][d2l-6.7] |
+| [7.1 From Fully Connected Layers to Convolutions][xeus-7.1] [\[p\]][pyodide-7.1] | [d2l.ai][d2l-7.1] |
+| [7.2 Convolutions for Images][xeus-7.2] [\[p\]][pyodide-7.2] | [d2l.ai][d2l-7.2] |
+| [7.3 Padding and Stride][xeus-7.3] [\[p\]][pyodide-7.3] | [d2l.ai][d2l-7.3] |
+| [7.4 Multiple Input and Multiple Output Channels][xeus-7.4] [\[p\]][pyodide-7.4] | [d2l.ai][d2l-7.4] |
+| [7.5 Pooling][xeus-7.5] [\[p\]][pyodide-7.5] | [d2l.ai][d2l-7.5] |
+| [7.6 Convolutional Neural Networks (LeNet)][xeus-7.6] [\[p\]][pyodide-7.6] | [d2l.ai][d2l-7.6] |
 | [11.3 Attention Scoring Functions][xeus-11.3] [\[p\]][pyodide-11.3] | [d2l.ai][d2l-11.3] |
 
 The notebooks' sources are in [`content/`][content].
@@ -256,6 +269,45 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [d2l-5.5]: https://d2l.ai/chapter_multilayer-perceptrons/generalization-deep.html
 [d2l-5.6]: https://d2l.ai/chapter_multilayer-perceptrons/dropout.html
 [d2l-5.7]: https://d2l.ai/chapter_multilayer-perceptrons/kaggle-house-price.html
+[xeus-6.1]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=06_builders-guide/06.01_model-construction.ipynb
+[pyodide-6.1]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=06_builders-guide/06.01_model-construction.ipynb
+[d2l-6.1]: https://d2l.ai/chapter_builders-guide/model-construction.html
+[xeus-6.2]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=06_builders-guide/06.02_parameters.ipynb
+[pyodide-6.2]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=06_builders-guide/06.02_parameters.ipynb
+[d2l-6.2]: https://d2l.ai/chapter_builders-guide/parameters.html
+[xeus-6.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=06_builders-guide/06.03_init-param.ipynb
+[pyodide-6.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=06_builders-guide/06.03_init-param.ipynb
+[d2l-6.3]: https://d2l.ai/chapter_builders-guide/init-param.html
+[xeus-6.4]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=06_builders-guide/06.04_lazy-init.ipynb
+[pyodide-6.4]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=06_builders-guide/06.04_lazy-init.ipynb
+[d2l-6.4]: https://d2l.ai/chapter_builders-guide/lazy-init.html
+[xeus-6.5]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=06_builders-guide/06.05_custom-layer.ipynb
+[pyodide-6.5]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=06_builders-guide/06.05_custom-layer.ipynb
+[d2l-6.5]: https://d2l.ai/chapter_builders-guide/custom-layer.html
+[xeus-6.6]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=06_builders-guide/06.06_read-write.ipynb
+[pyodide-6.6]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=06_builders-guide/06.06_read-write.ipynb
+[d2l-6.6]: https://d2l.ai/chapter_builders-guide/read-write.html
+[xeus-6.7]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=06_builders-guide/06.07_use-gpu.ipynb
+[pyodide-6.7]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=06_builders-guide/06.07_use-gpu.ipynb
+[d2l-6.7]: https://d2l.ai/chapter_builders-guide/use-gpu.html
+[xeus-7.1]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=07_convolutional-neural-networks/07.01_why-conv.ipynb
+[pyodide-7.1]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=07_convolutional-neural-networks/07.01_why-conv.ipynb
+[d2l-7.1]: https://d2l.ai/chapter_convolutional-neural-networks/why-conv.html
+[xeus-7.2]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=07_convolutional-neural-networks/07.02_conv-layer.ipynb
+[pyodide-7.2]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=07_convolutional-neural-networks/07.02_conv-layer.ipynb
+[d2l-7.2]: https://d2l.ai/chapter_convolutional-neural-networks/conv-layer.html
+[xeus-7.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=07_convolutional-neural-networks/07.03_padding-and-strides.ipynb
+[pyodide-7.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=07_convolutional-neural-networks/07.03_padding-and-strides.ipynb
+[d2l-7.3]: https://d2l.ai/chapter_convolutional-neural-networks/padding-and-strides.html
+[xeus-7.4]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=07_convolutional-neural-networks/07.04_channels.ipynb
+[pyodide-7.4]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=07_convolutional-neural-networks/07.04_channels.ipynb
+[d2l-7.4]: https://d2l.ai/chapter_convolutional-neural-networks/channels.html
+[xeus-7.5]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=07_convolutional-neural-networks/07.05_pooling.ipynb
+[pyodide-7.5]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=07_convolutional-neural-networks/07.05_pooling.ipynb
+[d2l-7.5]: https://d2l.ai/chapter_convolutional-neural-networks/pooling.html
+[xeus-7.6]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=07_convolutional-neural-networks/07.06_lenet.ipynb
+[pyodide-7.6]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=07_convolutional-neural-networks/07.06_lenet.ipynb
+[d2l-7.6]: https://d2l.ai/chapter_convolutional-neural-networks/lenet.html
 [xeus-11.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=11_attention-mechanisms-and-transformers/11.03_attention-scoring-functions.ipynb
 [pyodide-11.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=11_attention-mechanisms-and-transformers/11.03_attention-scoring-functions.ipynb
 [d2l-11.3]: https://d2l.ai/chapter_attention-mechanisms-and-transformers/attention-scoring-functions.html
