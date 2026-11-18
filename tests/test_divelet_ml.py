@@ -582,6 +582,15 @@ def test_pooling_values_and_gradients(pool):
     assert nn.avg_pool2d(np.ones((1, 1, 2, 2)), 2, padding=1)[0, 0, 0, 0] == 0.25  # padding is zeros, counted
 
 
+def test_avg_pool2d_tiled_gradient_ignores_the_cropped_border():
+    import autograd
+    X = np.random.default_rng(2).random((2, 2, 7, 6))  # the odd height drops its last row
+    loss = lambda X: (nn.avg_pool2d(X, 2) ** 2).sum()
+    g = autograd.grad(loss)(X)
+    assert np.isclose(g[1, 0, 3, 2], finite_difference(lambda: loss(X), X, (1, 0, 3, 2)), rtol=1e-5)
+    assert (g[:, :, 6] == 0).all()
+
+
 def test_conv_and_pool_layers_sigmoid_and_sequential_iteration():
     net = nn.Sequential(nn.LazyConv2d(4, kernel_size=3, padding=1), nn.Sigmoid(), nn.MaxPool2d(2), nn.AvgPool2d(2),
                         nn.Flatten(), nn.LazyLinear(2))
