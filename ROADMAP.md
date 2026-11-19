@@ -383,16 +383,73 @@ layers are not matrix products, and whose training cost is a risk.
       Xavier initialization from 6.3, `layer_summary`. `try_gpu` goes (6.7).
       Outside the browser it trains on 10,000 images, not the book's 60,000.
 
+### Chapter 8 — Modern Convolutional Neural Networks
+
+Upstream: `chapter_convolutional-modern/`. AlexNet, VGG, NiN, GoogLeNet, batch
+normalization, ResNet, DenseNet and design principles. Builds on Chapter 7's
+convolutions and LeNet.
+
+- **Most of it cannot train in a browser.** The book trains AlexNet and NiN on
+  224 × 224 images and VGG and GoogLeNet on 96 × 96 images. LeNet at 28 × 28 was already
+  at the limit (10,000 images, 2,000 in Pyodide), and these models are far larger.
+  Decision: 8.5 *Batch Normalization* keeps its training, on LeNet at 28 × 28 as in
+  the book; every other section builds its model, runs a forward pass and shows the
+  layer shapes (`layer_summary`), and says in the notebook that training is left out and why.
+- **Spike first.** Time one forward pass of each model in both kernels at the book's input
+  size. If a pass takes more than a few seconds, give `layer_summary` a smaller input
+  and say so. Measure before writing notebooks, as for LeNet.
+- **New in `divelet_ml.nn`:** `BatchNorm` (it needs a training/evaluation switch for its
+  moving averages; see how `Dropout` handles it), global average pooling,
+  channel concatenation, and residual addition. `FashionMNIST` needs a `resize` in
+  NumPy, in place of torchvision's.
+
+- [ ] 8.1 *Deep Convolutional Neural Networks (AlexNet)*.
+- [ ] 8.2 *Networks Using Blocks (VGG)*.
+- [ ] 8.3 *Network in Network (NiN)*.
+- [ ] 8.4 *Multi-Branch Networks (GoogLeNet)*.
+- [ ] 8.5 *Batch Normalization*: trains LeNet with batch norm.
+- [ ] 8.6 *Residual Networks (ResNet) and ResNeXt*.
+- [ ] 8.7 *Densely Connected Networks (DenseNet)*.
+- [ ] 8.8 *Designing Convolution Network Architectures*.
+
+### Chapter 9 — Recurrent Neural Networks
+
+Upstream: `chapter_recurrent-neural-networks/`. Sequences, text, language models and
+recurrent networks. The text models are small enough for a browser; training them is the cost.
+
+- **The text.** Sections 9.2 to 9.6 use *The Time Machine*, which the book downloads
+  from its own S3 bucket, and a browser cannot read that (the problem of 5.7). The book is
+  in the public domain, so the plan is to host the text on the site like Fashion-MNIST:
+  `build.sh` copies it to `data/timemachine/` with a checksum, and `d2l.download` finds it
+  there. Before that, check the license of the copy the book uses (Project Gutenberg's terms,
+  and what the file keeps of them) and record it in `NOTICE.md`.
+- **Training budget.** Not measured. Spike first: time one epoch of the book's recurrent
+  language model (9.5) in both kernels, with the book's batch size and number of steps.
+  Then set `d2l.browser_epochs` and `d2l.browser_examples`, and the smoke test's
+  per-notebook limits (`RUN_MS_NOTEBOOKS`), and say in the notebook that the browser trains
+  less than the book.
+- **New in `divelet_ml`:** an `nn.RNN` layer, written as a loop over time steps that
+  autograd differentiates; `Vocab`, `TimeMachine` and the one-hot encoding; gradient
+  clipping in the `Trainer`; `RNNLMScratch`, `RNNLM` and text generation.
+
+- [ ] 9.1 *Working with Sequences*.
+- [ ] 9.2 *Converting Raw Text into Sequence Data*: needs the hosted text.
+- [ ] 9.3 *Language Models*.
+- [ ] 9.4 *Recurrent Neural Networks*.
+- [ ] 9.5 *Recurrent Neural Network Implementation from Scratch*.
+- [ ] 9.6 *Concise Implementation of Recurrent Neural Networks*.
+- [ ] 9.7 *Backpropagation Through Time* (no code).
+
 ### Later chapters
 
 42 of the book's 165 sections are adapted. The rest, in the book's order, with an
 estimate of how well each suits a browser kernel (a judgement, to revisit when a
-chapter is planned; none is planned in detail):
+chapter is planned; none after Chapter 9 is planned in detail):
 
 | Chapter | Sections | Outlook |
 |---|---:|---|
-| 8 Modern Convolutional Neural Networks | 8 | Next candidate: builds on Chapter 7, but AlexNet, VGG and ResNet are heavy to train; expect subsets and small inputs |
-| 9 Recurrent Neural Networks | 7 | Feasible with small text data; training needs gradients through time |
+| 8 Modern Convolutional Neural Networks | 8 | Planned above: shapes only, except batch normalization |
+| 9 Recurrent Neural Networks | 7 | Planned above |
 | 10 Modern Recurrent Neural Networks | 8 | As 9, with longer training |
 | 11 Attention Mechanisms and Transformers | 8 left (11.3 done) | Builds on the Chapter 3–5 framework; training is the cost |
 | 12 Optimization Algorithms | 11 | Small examples and plots; a good candidate |
