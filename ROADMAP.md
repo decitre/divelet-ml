@@ -164,7 +164,9 @@ Establish a reproducible browser-native learning environment.
 - [x] Integrate the Pyodide kernel.
 - [x] Integrate the xeus-python kernel.
 - [ ] Establish dependency and package-management conventions.
-- [ ] Define dataset-loading and caching strategies.
+- [x] Define dataset-loading and caching strategies (Chapter 4: datasets the site can
+      host are served from its own root and cached by the browser; Kaggle's
+      house-price files, which cannot be hosted, are uploaded by the reader, 5.7).
 - [x] Provide a reproducible local build process (`build.sh`, using
       [jl-forge](https://github.com/decitre/jl-forge)).
 - [x] Publish a browser-accessible demonstration
@@ -358,12 +360,12 @@ layers are not matrix products, and whose training cost is a risk.
   or an im2col matrix product (plain NumPy, uses `@`). Spike first: implement
   both, check the gradients against finite differences, and time them in each
   kernel before writing notebooks.
-- **LeNet's training budget (7.6).** Not measured. A back-of-envelope count: LeNet
-  is about 0.42 M multiply-adds per image, against 0.2 M for Chapter 5's MLP, so
-  an epoch is at least twice as slow, which would be about 70 s per epoch in
-  Pyodide. `d2l.browser_epochs` and the smoke test's per-notebook limits
-  (`RUN_MS_NOTEBOOKS`) will need new values; if even one epoch is too slow in
-  Pyodide, train on a subset of Fashion-MNIST there and say so in the notebook.
+- **LeNet's training budget (7.6).** The notebook trains 10 epochs on 10,000
+  Fashion-MNIST images, not the book's 60,000, outside the browser and in
+  xeus-python, and on 2,000 in Pyodide (`d2l.browser_examples`). The smoke test
+  gives it the default 120 s limit: it passed in CI, but went past it on one
+  developer laptop under load, so raise its `RUN_MS_NOTEBOOKS` entry if it
+  becomes flaky. Per-epoch times in each kernel are not recorded here.
 
 - [x] 7.1 *From Fully Connected Layers to Convolutions* (no code).
 - [x] 7.2 *Convolutions for Images*: `corr2d`, a `Conv2D` from scratch, and the
@@ -379,12 +381,28 @@ layers are not matrix products, and whose training cost is a risk.
 
 ### Later chapters
 
-Not yet planned in detail:
+42 of the book's 165 sections are adapted. The rest, in the book's order, with an
+estimate of how well each suits a browser kernel (a judgement, to revisit when a
+chapter is planned; none is planned in detail):
 
-- Modern convolutional neural networks (Chapter 8).
-- Recurrent neural networks.
-- Attention mechanisms and transformers (11.3 is done; the rest of Chapter 11
-  builds on the Chapter 3–5 framework).
+| Chapter | Sections | Outlook |
+|---|---:|---|
+| 8 Modern Convolutional Neural Networks | 8 | Next candidate: builds on Chapter 7, but AlexNet, VGG and ResNet are heavy to train; expect subsets and small inputs |
+| 9 Recurrent Neural Networks | 7 | Feasible with small text data; training needs gradients through time |
+| 10 Modern Recurrent Neural Networks | 8 | As 9, with longer training |
+| 11 Attention Mechanisms and Transformers | 8 left (11.3 done) | Builds on the Chapter 3–5 framework; training is the cost |
+| 12 Optimization Algorithms | 11 | Small examples and plots; a good candidate |
+| 13 Computational Performance | 7 | Mostly GPUs, hybridization and multi-GPU: little applies to a browser |
+| 14 Computer Vision | 14 | Heavy: large models and pretrained weights |
+| 15 Natural Language Processing: Pretraining | 10 | Heavy: large corpora |
+| 16 Natural Language Processing: Applications | 7 | Heavy; may suit Phase 6 |
+| 17 Reinforcement Learning | 3 | Small environments; unassessed |
+| 18 Gaussian Processes | 3 | Mostly NumPy; unassessed |
+| 19 Hyperparameter Optimization | 5 | Many training runs; unassessed |
+| 20 Generative Adversarial Networks | 2 | Training cost; unassessed |
+| 21 Recommender Systems | 10 | Dataset hosting and size to check |
+| Appendix: Mathematics for Deep Learning | 11 | Mostly equations; a good candidate |
+| Appendix: Tools for Deep Learning | 8 | Jupyter, cloud and GPU setup: little applies |
 
 Adaptation priorities will depend on educational value, browser feasibility,
 implementation complexity, and runtime performance.
