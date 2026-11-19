@@ -17,7 +17,7 @@ divelet-ml is an experimental, browser-native adaptation of the Jupyter notebook
 
 The project aims to preserve the book's chapter structure, mathematical explanations, learning objectives, and exercises while adapting its framework-dependent Python implementations for execution directly in the browser.
 
-**Project status:** Early development. Chapters 2 to 6 are adapted in full, and Chapter 7 is adapted except 7.6 (LeNet), which is in progress. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
+**Project status:** Early development. Chapters 2 to 7 are adapted in full. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
 
 | Section | Original |
 |---|---|

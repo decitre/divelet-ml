@@ -10,9 +10,8 @@ Development proceeds incrementally, one chapter at a time.
 **Current status:** Early development. Static compatibility analysis has been
 performed. Chapters 2 (*Preliminaries*), 3 (*Linear Neural Networks for
 Regression*), 4 (*Linear Neural Networks for Classification*) and 5
-(*Multilayer Perceptrons*) and 6 (*Builders' Guide*) are adapted in full, along
-with 7.1 to 7.5 of Chapter 7 (*Convolutional Neural Networks*) and 11.3
-*Attention Scoring Functions*. The adapted notebooks run in JupyterLite with both the Pyodide and
+(*Multilayer Perceptrons*), 6 (*Builders' Guide*) and 7 (*Convolutional Neural
+Networks*) are adapted in full, along with 11.3 *Attention Scoring Functions*. The adapted notebooks run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -374,9 +373,9 @@ layers are not matrix products, and whose training cost is a risk.
 - [x] 7.4 *Multiple Input and Multiple Output Channels*: `corr2d_multi_in`,
       `corr2d_multi_in_out`, and the 1×1 convolution.
 - [x] 7.5 *Pooling*: `pool2d`, `MaxPool2d`, `AvgPool2d`.
-- [ ] 7.6 *Convolutional Neural Networks (LeNet)*: `LeNet(Classifier)`,
+- [x] 7.6 *Convolutional Neural Networks (LeNet)*: `LeNet(Classifier)`,
       Xavier initialization from 6.3, `layer_summary`. `try_gpu` goes (6.7).
-      Needs the spike above and the budget measurement.
+      Outside the browser it trains on 10,000 images, not the book's 60,000.
 
 ### Later chapters
 
