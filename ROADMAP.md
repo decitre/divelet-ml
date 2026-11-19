@@ -435,8 +435,19 @@ recurrent networks. The text models are small enough for a browser; training the
   from its own S3 bucket, and a browser cannot read that (the problem of 5.7). The book is
   in the public domain, so the plan is to host the text on the site like Fashion-MNIST:
   `build.sh` copies it to `data/timemachine/` with a checksum, and `d2l.download` finds it
-  there. Before that, check the license of the copy the book uses (Project Gutenberg's terms,
-  and what the file keeps of them) and record it in `NOTICE.md`.
+  there. License checked (2026-11-19): the copy is `timemachine.txt`, 179 KB, SHA-1
+  `090b5e7e70c295757f55df93cb0a180b9691891a` (the value the book's `download` checks), titled
+  "The Time Machine, by H. G. Wells [1898]". It contains no Project Gutenberg header, footer,
+  trademark or license text, and it is not byte-identical to Gutenberg's current ebook 35
+  (the two share most passages, at about 32,800 and 32,900 words), so its exact source is unknown.
+  The work is in the public domain: first published in 1895 (the file's title says 1898), and Wells died in 1946. Gutenberg's
+  permissions page says that its public-domain ebooks can be redistributed by anyone, with or
+  without the trademark, and that crediting Gutenberg is optional; only commercial use of the
+  trademark needs royalties, and the file does not use it. Gutenberg follows US law; the
+  UK and EU term (life plus 70 years) also ended on 1 January 2017, which is from general
+  knowledge and not checked against a source here. So hosting the file is fine. Credit
+  H. G. Wells and the book's copy in `NOTICE.md` when the file is added, with a link to Gutenberg's
+  ebook 35 as a place to read the text.
 - **Training budget.** Not measured. Spike first: time one epoch of the book's recurrent
   language model (9.5) in both kernels, with the book's batch size and number of steps.
   Then set `d2l.browser_epochs` and `d2l.browser_examples`, and the smoke test's
