@@ -50,6 +50,9 @@ PYODIDE_DIST=$(jl-forge pyodide-dist --pyproject pyproject.toml --wheels-dir "$W
 (cd "$WORKSPACE" && jupyter lite build "${APPS[@]}" --contents "$WORKSPACE/content-pyodide" --output-dir "$PUBLIC/pyodide" --lite-dir lite-pyodide \
   --pyodide "$PYODIDE_DIST")
 
+# The notebooks' divelet-ml tag (content/tablet.svg): the browser asks each site's root for it before JupyterLab resolves it.
+for site in xeus pyodide; do cp content/tablet.svg "$PUBLIC/$site/"; done
+
 echo "== Fashion-MNIST"
 # The dataset's four original files, served from the site's own host to the notebooks of 4.2 onwards (MIT license,
 # Zalando SE). They stay out of content/, which xeus-python packs into the archive every notebook downloads.
