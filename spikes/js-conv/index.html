@@ -1,0 +1,38 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>divelet-ml spike: convolution in TensorFlow.js</title>
+<!-- Spike for the Chapter 8 plan. Open on the device to test (an iPad) and tap Run. Loads TensorFlow.js from a CDN, so it needs a
+     network; it is not part of the site. The cases match numpy_conv.py: VGG-style 3x3 convolutions, batch 8, float32. -->
+<h1>Convolution in TensorFlow.js</h1>
+<p><button id="run">Run</button> <span id="status"></span></p>
+<pre id="out"></pre>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgpu@4.22.0/dist/tf-backend-webgpu.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@4.22.0/dist/tf-backend-wasm.min.js"></script>
+<script>
+const CASES = [['first   1->16  @96x96', 1, 16, 96], ['middle 64->128 @24x24', 64, 128, 24], ['late  128->128 @12x12', 128, 128, 12]];
+const N = 8, out = document.getElementById('out'), log = s => out.textContent += s + '\n';
+const ms = async (f, n = 3) => { await f(); const t = performance.now(); for (let i = 0; i < n; i++) await f(); return (performance.now() - t) / n; };
+
+async function bench(backend) {
+  try { if (!(await tf.setBackend(backend))) throw new Error('not available'); await tf.ready(); }
+  catch (e) { log(`${backend}: unavailable (${e.message})`); return; }
+  log(`${backend}:`);
+  for (const [name, cin, cout, hw] of CASES) {
+    const X = tf.randomUniform([N, hw, hw, cin]), W = tf.randomUniform([3, 3, cin, cout], -.5, .5);  // TF.js is channels-last
+    const fwd = await ms(async () => { const y = tf.conv2d(X, W, 1, 'same'); await y.data(); y.dispose(); });
+    const gw = tf.grad(w => tf.conv2d(X, w, 1, 'same').sum());
+    let both = 'n/a (no gradient kernel)';
+    try { both = (await ms(async () => { const g = gw(W); await g.data(); g.dispose(); })).toFixed(1).padStart(8) + ' ms'; } catch (e) {}  // forward + backward to the weights; the wasm backend has no Conv2DBackpropFilter
+    log(`  ${name}: forward ${fwd.toFixed(1).padStart(8)} ms, forward+backward ${both}`);
+    X.dispose(); W.dispose();
+  }
+}
+document.getElementById('run').onclick = async () => {
+  out.textContent = `${navigator.userAgent}\nbatch ${N}, float32, 3x3 same padding\n`;
+  tf.wasm.setWasmPaths('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@4.22.0/dist/');
+  for (const b of ['webgpu', 'webgl', 'wasm', 'cpu']) { document.getElementById('status').textContent = `running ${b}…`; await bench(b); }
+  document.getElementById('status').textContent = 'done';
+};
+if (new URLSearchParams(location.search).has('auto')) document.getElementById('run').click();
+</script>
