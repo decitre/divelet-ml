@@ -55,6 +55,8 @@ Before incorporating such materials, divelet-ml will review their applicable lic
 
 The CC BY-SA 4.0 designation for adapted book content does not automatically apply to independently developed software or separately licensed third-party materials.
 
+The extra notebook `02.05_extra-micrograd` adapts code from [micrograd](https://github.com/karpathy/micrograd) by Andrej Karpathy (MIT License, Copyright (c) 2020 Andrej Karpathy); the license text is in that notebook's "Attribution and changes" section.
+
 Code adapted from the book's sample code is used under its MIT-0 license. divelet-ml's own source code (the `divelet_ml` package, build scripts and tests) is licensed under the Apache License 2.0; see `LICENSE`.
 
 ## Independence
