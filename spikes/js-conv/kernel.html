@@ -1,0 +1,16 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>divelet-ml spike 2: TensorFlow.js from a Pyodide worker</title>
+<!-- Needs ./build.sh first (it uses the built site's Pyodide) and a network (TensorFlow.js from a CDN). From the repository root:
+       python3 -m http.server 8000     then open http://<host>:8000/spikes/js-conv/kernel.html (add ?auto to run at once). -->
+<h1>TensorFlow.js from a Pyodide worker</h1>
+<p><button id="run">Run</button> <span id="status"></span></p>
+<pre id="out"></pre>
+<script>
+document.getElementById('run').onclick = () => {
+  const w = new Worker('kernel_worker.js'); document.getElementById('status').textContent = 'running…';
+  w.onmessage = e => { document.getElementById('out').textContent = e.data.text; document.getElementById('status').textContent = e.data.ok ? 'done' : 'failed'; };
+  w.postMessage(0);
+};
+if (new URLSearchParams(location.search).has('auto')) document.getElementById('run').click();
+</script>

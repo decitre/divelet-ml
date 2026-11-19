@@ -403,10 +403,15 @@ convolutions and LeNet.
   an epoch of 60,000 images takes 4 to 31 hours in Pyodide for AlexNet, VGG, NiN, GoogLeNet,
   ResNet-18 and DenseNet, and even RegNetX-32 takes over an hour. Even the batch-normalized LeNet
   of 8.5 takes about 34 s per epoch there, so its notebook uses `d2l.browser_epochs` and
-  `d2l.browser_examples` like 7.6. The same epochs on TensorFlow.js with WebGPU would take
-  about 3 to 19 minutes on one Mac (the iPad is not measured), which keeps a JS-backed `nn`
-  an option for later, not part of this plan. All figures are estimates from one machine,
-  with backward counted as twice the forward pass.
+  `d2l.browser_examples` like 7.6. A model that stayed on the GPU in TensorFlow.js would take
+  about 3 to 19 minutes per epoch on one Mac (the iPad is not measured). A JS-backed `nn` that
+  hands single ops to TensorFlow.js from Python does not get there: the second spike
+  (`kernel_bench.py`, Pyodide in a worker calling TensorFlow.js on WebGL, copies included)
+  sped up Chapter 5's MLP step by 1.8 times and slowed down 7.6's LeNet step (0.7 times),
+  because each call copies its arrays in and out and costs about 0.75 ms. Only tensors that
+  stay on the GPU between ops would gain much, which is a different library from NumPy and
+  is not part of this plan. All figures are estimates from one machine, with backward
+  counted as twice the forward pass.
 - **New in `divelet_ml.nn`:** `BatchNorm` (it needs a training/evaluation switch for its
   moving averages; see how `Dropout` handles it), global average pooling,
   channel concatenation, and residual addition. `FashionMNIST` needs a `resize` in
