@@ -448,11 +448,17 @@ recurrent networks. The text models are small enough for a browser; training the
   knowledge and not checked against a source here. So hosting the file is fine. Credit
   H. G. Wells and the book's copy in `NOTICE.md` when the file is added, with a link to Gutenberg's
   ebook 35 as a place to read the text.
-- **Training budget.** Not measured. Spike first: time one epoch of the book's recurrent
-  language model (9.5) in both kernels, with the book's batch size and number of steps.
-  Then set `d2l.browser_epochs` and `d2l.browser_examples`, and the smoke test's
-  per-notebook limits (`RUN_MS_NOTEBOOKS`), and say in the notebook that the browser trains
-  less than the book.
+- **Training budget.** Measured (`spikes/rnn-epoch/`): one epoch of the book's 9.5 language
+  model (28 characters, 32 hidden units, minibatches of 1024 sequences of 32 steps, 10 training
+  and 5 validation minibatches, forward and backward with autograd, gradient clipping) takes
+  0.2 s in CPython, 0.6 s in xeus-python and 1.9 s in Pyodide, in Chrome on one Mac. The
+  book's 100 epochs would take about 1 minute in xeus-python and 3 minutes in Pyodide, so
+  unlike Chapters 5 and 7 this chapter can keep the book's batch size, steps and probably
+  its epochs. Not measured: the `Trainer`'s per-epoch plot (5.2 found it a real cost), a
+  CI runner, WebKit and the iPad, which are slower: the smoke test gives a notebook 120 s
+  by default, so 9.5 and 9.6 will probably need `d2l.browser_epochs` for Pyodide (about 30
+  epochs is a minute here) and an entry in `RUN_MS_NOTEBOOKS`. Say in the notebook when the
+  browser trains less than the book.
 - **New in `divelet_ml`:** an `nn.RNN` layer, written as a loop over time steps that
   autograd differentiates; `Vocab`, `TimeMachine` and the one-hot encoding; gradient
   clipping in the `Trainer`; `RNNLMScratch`, `RNNLM` and text generation.
