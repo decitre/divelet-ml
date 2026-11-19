@@ -395,9 +395,18 @@ convolutions and LeNet.
   Decision: 8.5 *Batch Normalization* keeps its training, on LeNet at 28 × 28 as in
   the book; every other section builds its model, runs a forward pass and shows the
   layer shapes (`layer_summary`), and says in the notebook that training is left out and why.
-- **Spike first.** Time one forward pass of each model in both kernels at the book's input
-  size. If a pass takes more than a few seconds, give `layer_summary` a smaller input
-  and say so. Measure before writing notebooks, as for LeNet.
+- **Measured, so no spike is needed for the forward pass.** `spikes/js-conv/` times a
+  convolution in Pyodide (about 1.5 GMAC/s) and counts the multiply-adds of every model from
+  the book's layer shapes (`count_macs.py`). One forward pass of one image takes under a second
+  in Pyodide for every model at the book's size, except VGG-11 at full width (7.5 GMAC, about
+  5 s), so `layer_summary` can use the book's input sizes. Training is out of reach in NumPy:
+  an epoch of 60,000 images takes 4 to 31 hours in Pyodide for AlexNet, VGG, NiN, GoogLeNet,
+  ResNet-18 and DenseNet, and even RegNetX-32 takes over an hour. Even the batch-normalized LeNet
+  of 8.5 takes about 34 s per epoch there, so its notebook uses `d2l.browser_epochs` and
+  `d2l.browser_examples` like 7.6. The same epochs on TensorFlow.js with WebGPU would take
+  about 3 to 19 minutes on one Mac (the iPad is not measured), which keeps a JS-backed `nn`
+  an option for later, not part of this plan. All figures are estimates from one machine,
+  with backward counted as twice the forward pass.
 - **New in `divelet_ml.nn`:** `BatchNorm` (it needs a training/evaluation switch for its
   moving averages; see how `Dropout` handles it), global average pooling,
   channel concatenation, and residual addition. `FashionMNIST` needs a `resize` in
