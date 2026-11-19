@@ -227,6 +227,10 @@ Adapting the whole chapter is a condition for the outreach below.
       autograd is a dependency of `divelet_ml`; Pyodide ships version 1.7.0,
       xeus-python gets 1.9.1 from conda-forge. Later chapters that train
       models will compute gradients the same way.
+- [x] *Extra*: Automatic Differentiation from Scratch, after 2.5. Not a section of the
+      book: a divelet-ml notebook that builds a scalar autograd engine and a tiny
+      network, adapted from [micrograd](https://github.com/karpathy/micrograd) (MIT)
+      and checked against autograd's `grad`.
 - [x] 2.6 *Probability and Statistics*. PyTorch's `Multinomial` becomes
       `np.random.multinomial`, as in the book's JAX edition.
 - [x] 2.7 *Documentation*. `dir(torch.distributions)` becomes

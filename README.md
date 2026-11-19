@@ -27,6 +27,7 @@ The project aims to preserve the book's chapter structure, mathematical explanat
 | [2.3 Linear Algebra][xeus-2.3] [\[p\]][pyodide-2.3] | [d2l.ai][d2l-2.3] |
 | [2.4 Calculus][xeus-2.4] [\[p\]][pyodide-2.4] | [d2l.ai][d2l-2.4] |
 | [2.5 Automatic Differentiation][xeus-2.5] [\[p\]][pyodide-2.5] | [d2l.ai][d2l-2.5] |
+| [Extra: Automatic Differentiation from Scratch][xeus-2.5x] [\[p\]][pyodide-2.5x] | Not in the book; adapted from [micrograd][micrograd] |
 | [2.6 Probability and Statistics][xeus-2.6] [\[p\]][pyodide-2.6] | [d2l.ai][d2l-2.6] |
 | [2.7 Documentation][xeus-2.7] [\[p\]][pyodide-2.7] | [d2l.ai][d2l-2.7] |
 | [3.1 Linear Regression][xeus-3.1] [\[p\]][pyodide-3.1] | [d2l.ai][d2l-3.1] |
@@ -200,6 +201,9 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [xeus-2.5]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=02_preliminaries/02.05_automatic-differentiation.ipynb
 [pyodide-2.5]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=02_preliminaries/02.05_automatic-differentiation.ipynb
 [d2l-2.5]: https://d2l.ai/chapter_preliminaries/autograd.html
+[xeus-2.5x]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=02_preliminaries/02.05_extra-micrograd.ipynb
+[pyodide-2.5x]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=02_preliminaries/02.05_extra-micrograd.ipynb
+[micrograd]: https://github.com/karpathy/micrograd
 [xeus-2.6]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=02_preliminaries/02.06_probability.ipynb
 [pyodide-2.6]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=02_preliminaries/02.06_probability.ipynb
 [d2l-2.6]: https://d2l.ai/chapter_preliminaries/probability.html
