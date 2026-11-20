@@ -17,6 +17,7 @@ NOTEBOOKS = sorted((Path(__file__).parent.parent / "content").rglob("*.ipynb"))
 @pytest.mark.parametrize("path", NOTEBOOKS, ids=lambda p: p.stem)
 def test_notebook_runs(path):
     nb = nbformat.read(path, as_version=4)
+    nbformat.validate(nb)  # a cell type such as "md" is not rejected by `read`, and Lab shows that cell as raw text
     NotebookClient(nb, timeout=300, kernel_name="python3").execute()
     stderr = [o["text"] for c in nb.cells if c.cell_type == "code" for o in c.outputs if o.get("name") == "stderr"]
     assert not stderr
