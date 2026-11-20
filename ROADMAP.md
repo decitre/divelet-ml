@@ -230,7 +230,8 @@ Adapting the whole chapter is a condition for the outreach below.
 - [x] *Extra*: Automatic Differentiation from Scratch, after 2.5. Not a section of the
       book: a divelet-ml notebook that builds a scalar autograd engine and a tiny
       network, adapted from [micrograd](https://github.com/karpathy/micrograd) (MIT)
-      and checked against autograd's `grad`.
+      and checked against autograd's `grad` and by numerical differentiation. 2.5, 3.4
+      and 5.3 point to it.
 - [x] 2.6 *Probability and Statistics*. PyTorch's `Multinomial` becomes
       `np.random.multinomial`, as in the book's JAX edition.
 - [x] 2.7 *Documentation*. `dir(torch.distributions)` becomes
