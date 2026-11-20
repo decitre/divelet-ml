@@ -36,7 +36,10 @@ KERNEL_START_MS = 240_000  # first load downloads the kernel and its packages
 RUN_MS = 120_000
 # The two notebooks that train two multilayer perceptrons take 1.5 to 3 minutes in Pyodide on a CI runner, in WebKit; the dropout one has gone past 5.
 RUN_MS_NOTEBOOKS = {"05_multilayer-perceptrons/05.02_mlp-implementation.ipynb": 300_000,
-                    "05_multilayer-perceptrons/05.06_dropout.ipynb": 480_000}
+                    "05_multilayer-perceptrons/05.06_dropout.ipynb": 480_000,
+                    # Training the recurrent language models for the browser's share of the book's 100 epochs: about a minute in Chrome on one Mac.
+                    "09_recurrent-neural-networks/09.05_rnn-scratch.ipynb": 300_000,
+                    "09_recurrent-neural-networks/09.06_rnn-concise.ipynb": 300_000}
 # The kernel name each site's toolbar shows: catches a site built with the other kernel.
 KERNEL_NAMES = {"xeus": "(XPython)", "pyodide": "(Pyodide)"}
 IPAD = "iPad (gen 11)"
