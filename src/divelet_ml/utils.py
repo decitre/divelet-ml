@@ -38,6 +38,11 @@ def check_shape(a, shape):
     assert a.shape == shape, f'array\'s shape {a.shape} != expected shape {shape}'
 
 
+def check_len(a, n):
+    """Check the length of a list."""
+    assert len(a) == n, f'list\'s length {len(a)} != expected length {n}'
+
+
 def numpy(x):
     """`x` as a NumPy array, also inside a function autograd differentiates, where `x` may be autograd's
     tracing box. In place of the book's `d2l.numpy`."""

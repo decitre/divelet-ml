@@ -1,8 +1,8 @@
 """divelet-ml's NumPy counterpart of the `d2l` library, imported as `import divelet_ml as d2l`.
 
 `add_to_class`, `HyperParameters`, `DataModule`, `check_shape`, `use_svg_display`, `set_figsize`, `set_axes`, `plot`,
-`show_heatmaps`, `show_images`, `ProgressBoard`, `FashionMNIST`, `Classifier`, `SoftmaxRegression`, `Module`, `Trainer`, `SyntheticRegressionData`, `SGD`, `LinearRegressionScratch`
-and `LinearRegression` are adapted from `d2l/torch.py` in Dive into Deep Learning
+`show_heatmaps`, `show_images`, `ProgressBoard`, `FashionMNIST`, `Classifier`, `SoftmaxRegression`, `Module`, `Trainer`, `SyntheticRegressionData`, `SGD`, `LinearRegressionScratch`,
+`LinearRegression`, `Vocab`, `TimeMachine`, `RNNScratch`, `RNNLMScratch`, `RNN`, `RNNLM` and `check_len` are adapted from `d2l/torch.py` in Dive into Deep Learning
 (https://github.com/d2l-ai/d2l-en, commit 23d7a5aecceee57d1292c56e90cce307f183bb0a),
 Copyright 2019 Amazon.com, Inc. or its affiliates, MIT-0 license (LICENSE-SAMPLECODE).
 Only what adapted chapters use is here. The code is in submodules (`utils`, `plotting`, `data`, `training`,
@@ -18,11 +18,13 @@ no plots don't load matplotlib.
 __version__ = "0.7.0"
 
 from divelet_ml import nn, optim
-from divelet_ml.utils import (add_to_class, HyperParameters, check_shape, numpy, param_grads, browser_epochs,
+from divelet_ml.utils import (add_to_class, HyperParameters, check_shape, check_len, numpy, param_grads, browser_epochs,
                               browser_examples, corr2d, cpu, gpu, num_gpus, try_gpu, try_all_gpus)
 from divelet_ml.plotting import use_svg_display, set_figsize, set_axes, plot, show_heatmaps, show_images, ProgressBoard
-from divelet_ml.data import DataModule, ArrayLoader, ArrayDataset, load_fashion_mnist, download, DATA_URL, SyntheticRegressionData, FashionMNIST
+from divelet_ml.data import (DataModule, ArrayLoader, ArrayDataset, load_fashion_mnist, download, DATA_URL, SyntheticRegressionData, FashionMNIST,
+                             Vocab, TimeMachine)
 from divelet_ml.training import Module, Trainer, SGD, LinearRegressionScratch, LinearRegression, Classifier, SoftmaxRegression
+from divelet_ml.rnn import RNNScratch, RNNLMScratch, RNN, RNNLM
 
 __all__ = [
     'nn',
@@ -30,6 +32,7 @@ __all__ = [
     'add_to_class',
     'HyperParameters',
     'check_shape',
+    'check_len',
     'numpy',
     'param_grads',
     'browser_epochs',
@@ -51,6 +54,8 @@ __all__ = [
     'ArrayLoader',
     'SyntheticRegressionData',
     'FashionMNIST',
+    'Vocab',
+    'TimeMachine',
     'ArrayDataset',
     'load_fashion_mnist',
     'download',
@@ -62,6 +67,10 @@ __all__ = [
     'LinearRegression',
     'Classifier',
     'SoftmaxRegression',
+    'RNNScratch',
+    'RNNLMScratch',
+    'RNN',
+    'RNNLM',
 ]
 
 

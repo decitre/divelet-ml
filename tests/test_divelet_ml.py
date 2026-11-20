@@ -1,3 +1,5 @@
+import hashlib
+
 import numpy as np
 import pytest
 
@@ -242,7 +244,7 @@ def test_module_base_class():
     assert model(3) == 6
 
 
-def test_trainer_without_validation_data_and_with_gradient_clipping():
+def test_trainer_without_validation_data_and_with_gradient_clipping(monkeypatch):
     class Data(d2l.DataModule):
         def __init__(self):
             super().__init__()
@@ -253,16 +255,11 @@ def test_trainer_without_validation_data_and_with_gradient_clipping():
 
     clipped = []
 
-    @d2l.add_to_class(d2l.Trainer)
-    def clip_gradients(self, grad_clip_val, grads):
-        clipped.append(grad_clip_val)
-        return grads
-
+    monkeypatch.setattr(d2l.Trainer, 'clip_gradients', lambda self, grad_clip_val, grads: clipped.append(grad_clip_val) or grads)
     model = d2l.LinearRegressionScratch(1, lr=0.1)
     model.board.display = False
     trainer = d2l.Trainer(max_epochs=2, gradient_clip_val=1)
     trainer.fit(model, Data())
-    del d2l.Trainer.clip_gradients
     assert trainer.num_val_batches == 0 and trainer.val_batch_idx == 0 and clipped == [1] * 4
 
 
@@ -625,3 +622,94 @@ def test_corr2d_loop_matches_conv2d():
     assert (d2l.corr2d(X, K) == [[19, 25], [37, 43]]).all()
     X = np.random.rand(6, 8)
     assert np.allclose(d2l.corr2d(X, K), nn.conv2d(X[None, None], K[None, None])[0, 0])
+
+
+def test_clip_gradients_scales_to_the_norm_and_leaves_small_gradients_alone():
+    trainer = d2l.Trainer(max_epochs=1, gradient_clip_val=1)
+    grads = [np.array([3.0, 0.0]), np.array([[0.0], [4.0]])]  # joint norm 5
+    clipped = trainer.clip_gradients(1, grads)
+    assert np.isclose(np.sqrt(sum((g ** 2).sum() for g in clipped)), 1) and np.allclose(clipped[0], [0.6, 0.0])
+    assert trainer.clip_gradients(10, grads) is grads
+
+
+def test_vocab_orders_tokens_and_maps_unknown_ones_to_unk():
+    vocab = d2l.Vocab(list('banana'))
+    assert vocab.idx_to_token == ['<unk>', 'a', 'b', 'n'] and len(vocab) == 4
+    assert vocab['n'] == 3 and vocab['z'] == vocab.unk == 0 and vocab[['a', 'b', 'z']] == [1, 2, 0]
+    assert vocab.to_tokens([1, 2]) == ['a', 'b'] and vocab.to_tokens(3) == 'n'
+    assert d2l.Vocab([list('ab'), list('ba')]).idx_to_token == ['<unk>', 'a', 'b']  # a list of lines is flattened
+    assert d2l.Vocab(list('aab'), min_freq=2).idx_to_token == ['<unk>', 'a']
+
+
+def test_time_machine_windows_are_shifted_by_one_and_split_into_train_and_validation(monkeypatch):
+    monkeypatch.setattr(d2l.TimeMachine, '_download', lambda self: 'The Time Traveller (for so it will be) ' * 4)
+    data = d2l.TimeMachine(batch_size=4, num_steps=5, num_train=20, num_val=10)
+    corpus = [data.vocab[t] for t in data._tokenize(data._preprocess('The Time Traveller (for so it will be) ' * 4))]
+    assert data.X.shape == data.Y.shape == (len(corpus) - 5, 5) and not data.X.flags.owndata  # views, not copies
+    assert (data.X[:, 1:] == data.Y[:, :-1]).all() and data.X[3].tolist() == corpus[3:8] and data.Y[3].tolist() == corpus[4:9]
+    train, val = list(data.train_dataloader()), list(data.val_dataloader())
+    assert sum(len(b[0]) for b in train) == 20 and sum(len(b[0]) for b in val) == 10
+    assert sorted(np.concatenate([b[0] for b in val])[:, 0].tolist()) == sorted(data.X[20:30, 0].tolist())
+
+
+def test_time_machine_text_comes_from_the_site_in_jupyterlite_and_is_checked(monkeypatch):
+    from divelet_ml import data
+    text = b'the time machine'
+    monkeypatch.setattr(data, '_site_url', lambda: 'https://site')
+    monkeypatch.setattr(data, '_read_url', lambda url: text if url == 'https://site/data/timemachine/timemachine.txt' else pytest.fail(url))
+    monkeypatch.setattr(data, 'TIME_MACHINE_SHA1', hashlib.sha1(text).hexdigest())
+    assert data._time_machine_text('unused') == 'the time machine'
+    monkeypatch.setattr(data, 'TIME_MACHINE_SHA1', '0' * 40)
+    with pytest.raises(AssertionError, match='SHA-1'):
+        data._time_machine_text('unused')
+
+
+def test_time_machine_text_is_downloaded_outside_jupyterlite(tmp_path, monkeypatch):
+    from divelet_ml import data
+    monkeypatch.setattr(data, '_site_url', lambda: None)
+    monkeypatch.setattr(data, 'download', lambda url, folder, sha1_hash: calls.append((url, folder, sha1_hash)) or str(tmp_path / 'timemachine.txt'))
+    (tmp_path / 'timemachine.txt').write_text('abc def')
+    calls = []
+    assert data.TimeMachine(batch_size=1, num_steps=2, num_train=2, num_val=2).X.shape == (5, 2)  # 'abc def': 7 characters
+    assert calls == [(d2l.DATA_URL + 'timemachine.txt', '../data', data.TIME_MACHINE_SHA1)]
+
+
+def test_nn_rnn_matches_a_loop_and_is_differentiable():
+    rnn = nn.RNN(3, 4)
+    assert all(p.dtype == np.float32 for p in rnn.parameters()) and len(rnn.parameters()) == 4
+    X = np.random.rand(5, 2, 3).astype(np.float32)
+    outputs, state = rnn(X)
+    h = np.zeros((2, 4), np.float32)
+    for t in range(5):
+        h = np.tanh(X[t] @ rnn.weight_ih.T + rnn.bias_ih + h @ rnn.weight_hh.T + rnn.bias_hh)
+        np.testing.assert_allclose(outputs[t], h, rtol=1e-5, atol=1e-6)
+    assert outputs.shape == (5, 2, 4) and state.shape == (1, 2, 4)
+    _, middle = rnn(X[:3])  # continuing from a state is the same as running all the steps at once
+    np.testing.assert_allclose(rnn(X[3:], middle)[0], outputs[3:], rtol=1e-5, atol=1e-6)
+    grads = d2l.param_grads(lambda: (rnn(X)[0] ** 2).sum(), rnn, rnn.parameters())
+    assert [g.shape for g in grads] == [p.shape for p in rnn.parameters()] and all(np.abs(g).sum() > 0 for g in grads)
+
+
+@pytest.mark.parametrize('concise', [False, True])
+def test_rnn_language_model_trains_clips_and_predicts(concise):
+    text = 'the time traveller for so it will be convenient to speak of him ' * 40
+    class Data(d2l.TimeMachine):
+        def _download(self):
+            return text
+    data = Data(batch_size=64, num_steps=8, num_train=300, num_val=100)
+    V = len(data.vocab)
+    model = (d2l.RNNLM(d2l.RNN(V, 16), V, lr=1) if concise else d2l.RNNLMScratch(d2l.RNNScratch(V, 16), V, lr=1))
+    model.board.display = False
+    X, Y = next(iter(data.train_dataloader()))
+    assert model(X).shape == (64, 8, V)
+    before = float(model.loss(model(X), Y))
+    d2l.Trainer(max_epochs=25, gradient_clip_val=1).fit(model, data)
+    assert float(model.loss(model(X), Y)) < before - 0.5
+    out = model.predict('time ', 12, data.vocab)
+    assert len(out) == len('time ') + 12 and out.startswith('time ') and set(out) <= set(data.vocab.idx_to_token)
+
+
+def test_check_len():
+    d2l.check_len([1, 2], 2)
+    with pytest.raises(AssertionError, match='expected length 3'):
+        d2l.check_len([1, 2], 3)
