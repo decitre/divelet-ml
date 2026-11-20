@@ -22,7 +22,7 @@ from divelet_ml.utils import (add_to_class, HyperParameters, check_shape, check_
                               browser_examples, corr2d, cpu, gpu, num_gpus, try_gpu, try_all_gpus)
 from divelet_ml.plotting import use_svg_display, set_figsize, set_axes, plot, show_heatmaps, show_images, ProgressBoard
 from divelet_ml.data import (DataModule, ArrayLoader, ArrayDataset, load_fashion_mnist, download, DATA_URL, SyntheticRegressionData, FashionMNIST,
-                             Vocab, TimeMachine)
+                             Vocab, TimeMachine, time_machine_text)
 from divelet_ml.training import Module, Trainer, SGD, LinearRegressionScratch, LinearRegression, Classifier, SoftmaxRegression
 from divelet_ml.rnn import RNNScratch, RNNLMScratch, RNN, RNNLM
 
@@ -56,6 +56,7 @@ __all__ = [
     'FashionMNIST',
     'Vocab',
     'TimeMachine',
+    'time_machine_text',
     'ArrayDataset',
     'load_fashion_mnist',
     'download',
