@@ -658,10 +658,10 @@ def test_time_machine_text_comes_from_the_site_in_jupyterlite_and_is_checked(mon
     monkeypatch.setattr(data, '_site_url', lambda: 'https://site')
     monkeypatch.setattr(data, '_read_url', lambda url: text if url == 'https://site/data/timemachine/timemachine.txt' else pytest.fail(url))
     monkeypatch.setattr(data, 'TIME_MACHINE_SHA1', hashlib.sha1(text).hexdigest())
-    assert data._time_machine_text('unused') == 'the time machine'
+    assert data.time_machine_text('unused') == 'the time machine'
     monkeypatch.setattr(data, 'TIME_MACHINE_SHA1', '0' * 40)
     with pytest.raises(AssertionError, match='SHA-1'):
-        data._time_machine_text('unused')
+        data.time_machine_text('unused')
 
 
 def test_time_machine_text_is_downloaded_outside_jupyterlite(tmp_path, monkeypatch):

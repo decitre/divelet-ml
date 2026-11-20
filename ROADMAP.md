@@ -11,7 +11,7 @@ Development proceeds incrementally, one chapter at a time.
 performed. Chapters 2 (*Preliminaries*), 3 (*Linear Neural Networks for
 Regression*), 4 (*Linear Neural Networks for Classification*) and 5
 (*Multilayer Perceptrons*), 6 (*Builders' Guide*) and 7 (*Convolutional Neural
-Networks*) are adapted in full, along with 11.3 *Attention Scoring Functions*. The adapted notebooks run in JupyterLite with both the Pyodide and
+Networks*) are adapted in full, along with 9.1 to 9.4 of Chapter 9 (*Recurrent Neural Networks*) and 11.3 *Attention Scoring Functions*. The adapted notebooks run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -459,17 +459,17 @@ recurrent networks. The text models are small enough for a browser; training the
   by default, so 9.5 and 9.6 will probably need `d2l.browser_epochs` for Pyodide (about 30
   epochs is a minute here) and an entry in `RUN_MS_NOTEBOOKS`. Say in the notebook when the
   browser trains less than the book.
-- **New in `divelet_ml`** (added, with tests; no notebook uses them yet): `nn.RNN`, written as a loop
+- **New in `divelet_ml`** (added, with tests; 9.2 to 9.4 use `Vocab`, `TimeMachine` and `time_machine_text`, the models wait for 9.5 and 9.6): `nn.RNN`, written as a loop
   over time steps that autograd differentiates; `Vocab` and `TimeMachine`, which reads the hosted text
   in JupyterLite and downloads the book's copy elsewhere; gradient clipping in the `Trainer`
   (`clip_gradients`); `RNNScratch`, `RNNLMScratch`, `RNN`, `RNNLM` with `predict`; and `check_len`.
   `build.sh` copies the text to `data/timemachine/` with its checksum. Not done: `d2l.browser_epochs`
   values for these notebooks, and the one-hot encoding is NumPy's `eye`, not a layer.
 
-- [ ] 9.1 *Working with Sequences*.
-- [ ] 9.2 *Converting Raw Text into Sequence Data*: needs the hosted text.
-- [ ] 9.3 *Language Models*.
-- [ ] 9.4 *Recurrent Neural Networks*.
+- [x] 9.1 *Working with Sequences*.
+- [x] 9.2 *Converting Raw Text into Sequence Data*: reads the hosted text through `d2l.time_machine_text`.
+- [x] 9.3 *Language Models*.
+- [x] 9.4 *Recurrent Neural Networks*.
 - [ ] 9.5 *Recurrent Neural Network Implementation from Scratch*.
 - [ ] 9.6 *Concise Implementation of Recurrent Neural Networks*.
 - [ ] 9.7 *Backpropagation Through Time* (no code).

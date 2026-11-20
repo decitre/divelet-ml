@@ -233,7 +233,7 @@ class FashionMNIST(DataModule):
 TIME_MACHINE_SHA1 = '090b5e7e70c295757f55df93cb0a180b9691891a'
 
 
-def _time_machine_text(root):
+def time_machine_text(root):
     """The text of H. G. Wells' *The Time Machine* as the book has it: in JupyterLite, from the site's
     `data/timemachine` folder; elsewhere, from `root`, downloaded from the book's host if it is missing."""
     if _site_url() is not None:
@@ -279,7 +279,7 @@ class Vocab:
 class TimeMachine(DataModule):
     """The Time Machine dataset."""
     def _download(self):
-        return _time_machine_text(self.root)
+        return time_machine_text(self.root)
 
     def _preprocess(self, text):
         return re.sub('[^A-Za-z]+', ' ', text).lower()
