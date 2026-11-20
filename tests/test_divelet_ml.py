@@ -713,3 +713,137 @@ def test_check_len():
     d2l.check_len([1, 2], 2)
     with pytest.raises(AssertionError, match='expected length 3'):
         d2l.check_len([1, 2], 3)
+
+
+def test_sequential_add_module_appends_under_a_name_and_keeps_the_order():
+    net = nn.Sequential(nn.Linear(2, 3), nn.ReLU())
+    net.add_module('last', nn.Linear(3, 1))
+    assert len(net) == net.num_layers == 3 and [type(m).__name__ for m in net] == ['Linear', 'ReLU', 'Linear']
+    assert net[2] is net.last and net[-1] is net.last and net.forward(np.ones((4, 2), np.float32)).shape == (4, 1)
+    assert [n for n, _ in net.named_parameters()] == ['0.weight', '0.bias', 'last.weight', 'last.bias']
+    with pytest.raises(AssertionError, match='already'):
+        net.add_module('last', nn.ReLU())
+
+
+def test_grouped_convolution_matches_one_convolution_per_group_and_has_gradients():
+    X, W = np.random.randn(2, 4, 5, 5), np.random.randn(6, 2, 3, 3)
+    Y = nn.conv2d(X, W, padding=1, groups=2)
+    expected = np.concatenate([nn.conv2d(X[:, :2], W[:3], padding=1), nn.conv2d(X[:, 2:], W[3:], padding=1)], axis=1)
+    np.testing.assert_allclose(Y, expected)
+    assert Y.shape == (2, 6, 5, 5) and nn.conv2d(X, W, bias=np.arange(6.0), padding=1, groups=2).shape == Y.shape
+    from autograd import grad
+    g = grad(lambda W: (nn.conv2d(X, W, padding=1, groups=2) ** 2).sum())(W)
+    for index in [(0, 0, 0, 0), (4, 1, 2, 1)]:  # one weight of each group, against a central difference
+        h = 1e-5
+        up, down = W.copy(), W.copy()
+        up[index] += h
+        down[index] -= h
+        numeric = ((nn.conv2d(X, up, padding=1, groups=2) ** 2).sum() - (nn.conv2d(X, down, padding=1, groups=2) ** 2).sum()) / (2 * h)
+        assert np.isclose(g[index], numeric, rtol=1e-4)
+    layer = nn.LazyConv2d(6, 3, padding=1, groups=2)
+    assert layer(X.astype(np.float32)).shape == (2, 6, 5, 5) and layer.weight.shape == (6, 2, 3, 3) and nn.Conv2d(4, 6, 3, groups=2).weight.shape == (6, 2, 3, 3)
+    with pytest.raises(AssertionError, match='not divisible'):
+        nn.Conv2d(4, 6, 3, groups=4)
+    with pytest.raises(AssertionError, match='not divisible'):
+        nn.conv2d(X, W[:5], groups=2)
+
+
+def test_adaptive_average_pooling_averages_each_channel_over_the_image():
+    X = np.random.rand(2, 3, 4, 5)
+    np.testing.assert_allclose(nn.AdaptiveAvgPool2d((1, 1))(X), X.mean(axis=(2, 3), keepdims=True))
+    nn.AdaptiveAvgPool2d(1)
+    with pytest.raises(AssertionError, match='not 1 x 1'):
+        nn.AdaptiveAvgPool2d((2, 2))
+
+
+@pytest.mark.parametrize('layer, shape, axes', [(nn.BatchNorm2d, (6, 3, 4, 4), (0, 2, 3)), (nn.BatchNorm1d, (8, 3), (0,)), (nn.BatchNorm1d, (8, 3, 5), (0, 2))])
+def test_batch_norm_normalizes_in_training_and_uses_running_statistics_in_evaluation(layer, shape, axes):
+    X = (np.random.randn(*shape) * 3 + 2).astype(np.float32)
+    bn = layer(3)
+    Y = bn(X)
+    np.testing.assert_allclose(Y.mean(axis=axes), 0, atol=1e-5)
+    np.testing.assert_allclose(Y.var(axis=axes), 1, rtol=1e-3)
+    n = X.size // 3
+    np.testing.assert_allclose(bn.running_mean, 0.1 * X.mean(axis=axes), rtol=1e-4)
+    np.testing.assert_allclose(bn.running_var, 0.9 + 0.1 * X.var(axis=axes) * n / (n - 1), rtol=1e-4)
+    assert bn.running_mean.dtype == bn.running_var.dtype == np.float32
+    bn.eval()
+    expected = (X - bn.running_mean.reshape((1, -1) + (1,) * (X.ndim - 2))) / np.sqrt(bn.running_var.reshape((1, -1) + (1,) * (X.ndim - 2)) + 1e-5)
+    np.testing.assert_allclose(bn(X), expected, rtol=1e-4, atol=1e-5)
+    before = bn.running_mean.copy()
+    bn(X)
+    assert (bn.running_mean == before).all()  # evaluation leaves the statistics alone
+    with pytest.raises(AssertionError, match='dimensions'):
+        nn.BatchNorm2d(3)(np.ones((2, 3)))
+
+
+def test_batch_norm_buffers_are_not_parameters_and_its_gradients_are_right():
+    bn = nn.BatchNorm2d(3)
+    assert [n for n, _ in bn.named_parameters()] == ['weight', 'bias'] and len(bn.parameters()) == 2
+    assert list(bn.state_dict()) == ['weight', 'bias', 'running_mean', 'running_var']
+    X = np.random.randn(4, 3, 3, 3)
+    bn.weight[:], bn.bias[:] = [1.5, 0.5, 2.0], [0.1, -0.2, 0.3]
+    loss = lambda: (bn(X) ** 2 * np.arange(1, 4).reshape(1, 3, 1, 1)).sum()
+    dw, db = d2l.param_grads(loss, bn, bn.parameters())
+    assert (bn.running_mean != 0).all()  # the running statistics moved during the traced call, and stay moved
+    bn.eval()
+    for array, g in ((bn.weight, dw), (bn.bias, db)):
+        bn.train()
+        for k in range(3):
+            h, saved = 1e-3, array[k]
+            array[k] = saved + h
+            up = float(loss())
+            array[k] = saved - h
+            down = float(loss())
+            array[k] = saved
+            np.testing.assert_allclose(g[k], (up - down) / (2 * h), rtol=1e-2)
+    from autograd import grad
+    Z, W = np.random.randn(3, 2, 2, 2), np.random.randn(3, 2, 2, 2)  # the gradient with respect to the input, through the batch statistics
+    f = lambda Z: (nn.BatchNorm2d(2)(Z) * W).sum()
+    gZ, h = grad(f)(Z), 1e-5
+    for index in [(0, 0, 0, 0), (2, 1, 1, 0)]:
+        up, down = Z.copy(), Z.copy()
+        up[index] += h
+        down[index] -= h
+        np.testing.assert_allclose(gZ[index], (f(up) - f(down)) / (2 * h), rtol=1e-4)
+
+
+def test_lazy_batch_norm_takes_its_size_from_the_first_input_and_works_in_a_sequential():
+    net = nn.Sequential(nn.LazyConv2d(4, 3), nn.LazyBatchNorm2d(), nn.ReLU(), nn.AdaptiveAvgPool2d((1, 1)), nn.Flatten(), nn.LazyLinear(2), nn.LazyBatchNorm1d())
+    X = np.random.rand(5, 1, 6, 6).astype(np.float32)
+    assert net.forward(X).shape == (5, 2)
+    assert type(net[1]) is nn.BatchNorm2d and type(net[6]) is nn.BatchNorm1d and net[1].weight.shape == (4,) and net[1].weight.dtype == np.float32
+    assert len(net.parameters()) == 2 + 2 + 2 + 2
+    net.eval()
+    assert not net[1].training and net.forward(X).shape == (5, 2)
+    lazy = nn.LazyBatchNorm1d(eps=1e-3, momentum=0.5)
+    lazy(np.arange(6).reshape(3, 2))  # integers: the layer is float64
+    assert lazy.weight.dtype == np.float64 and (lazy.eps, lazy.momentum) == (1e-3, 0.5)
+
+
+def test_a_module_can_list_its_own_buffers():
+    class Counter(nn.Module):
+        buffers = ('seen',)
+
+        def __init__(self):
+            self.scale, self.seen = np.ones(2, np.float32), np.zeros(2, np.float32)
+    layer = Counter()
+    assert len(layer.parameters()) == 1 and [n for n, _ in layer.named_parameters()] == ['scale'] and set(layer.state_dict()) == {'scale', 'seen'}
+
+
+def test_layer_summary_prints_each_layer_and_creates_the_lazy_parameters(capsys):
+    model = d2l.Classifier()
+    model.net = nn.Sequential(nn.LazyConv2d(2, 3), nn.ReLU(), nn.Flatten(), nn.LazyLinear(3))
+    model.layer_summary((1, 1, 6, 6))
+    assert capsys.readouterr().out.splitlines() == ['Conv2d output shape:\t (1, 2, 4, 4)', 'ReLU output shape:\t (1, 2, 4, 4)',
+                                                     'Flatten output shape:\t (1, 32)', 'Linear output shape:\t (1, 3)']
+    assert model.net[0].weight.dtype == np.float32
+
+
+def test_init_cnn_sets_xavier_weights_of_linear_and_convolutional_layers_only():
+    conv, linear, bn = nn.Conv2d(2, 3, 3), nn.Linear(4, 5), nn.BatchNorm2d(3)
+    before = bn.weight.copy()
+    for module in (conv, linear, bn, nn.ReLU()):
+        d2l.init_cnn(module)
+    assert np.abs(conv.weight).max() <= np.sqrt(6 / (2 * 9 + 3 * 9)) and np.abs(linear.weight).max() <= np.sqrt(6 / (4 + 5))
+    assert (bn.weight == before).all()

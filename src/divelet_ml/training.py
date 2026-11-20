@@ -124,6 +124,13 @@ class Trainer(HyperParameters):
             self.val_batch_idx += 1
 
 
+def init_cnn(module):
+    """Initialize the weights of the linear and convolutional layers of a CNN with Xavier's uniform initializer, as in the
+    book's 7.6; `net.apply(init_cnn)` calls it on every layer."""
+    if type(module) in (nn.Linear, nn.Conv2d):
+        nn.init.xavier_uniform_(module.weight)
+
+
 class SGD(HyperParameters):
     """Minibatch stochastic gradient descent."""
     def __init__(self, params, lr):
@@ -196,6 +203,14 @@ class Classifier(Module):
         Y_hat = Y_hat.reshape((-1, Y_hat.shape[-1]))
         Y = Y.reshape((-1,))
         return nn.cross_entropy(Y_hat, Y, reduction='mean' if averaged else 'none')
+
+    def layer_summary(self, X_shape):
+        """Print the shape of the output of each layer of `net` for a random input of shape `X_shape`, which also creates the
+        parameters of lazy layers. In `float32`, as PyTorch's default; the book's version is in 7.6."""
+        X = np.random.randn(*X_shape).astype(np.float32)
+        for layer in self.net:
+            X = layer(X)
+            print(layer.__class__.__name__, 'output shape:\t', X.shape)
 
 
 class SoftmaxRegression(Classifier):

@@ -4,7 +4,7 @@
 Forward computation only: there are no devices, and gradients come from autograd through
 `divelet_ml.param_grads`, so code that a model computes its loss with must use autograd's NumPy
 (`import autograd.numpy as np`) or array operators. A module's parameters are its floating-point array
-attributes. `Module.eval()` and `Module.train()` switch layers such as `Dropout` between training and
+attributes, except the ones a module lists in its `buffers`, such as the running statistics of batch normalization. `Module.eval()` and `Module.train()` switch layers such as `Dropout` between training and
 inference behavior, as in PyTorch. `softmax` follows Flax's `nn.softmax(x, axis=-1)`, the JAX
 counterpart of `torch.nn.functional.softmax`.
 """
@@ -41,6 +41,7 @@ class Module:
     `train()` and `eval()` also set the mode of the modules held in its attributes.
     """
     training = True
+    buffers = ()  # names of float arrays that are state, not parameters, such as the running statistics of batch normalization
 
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
@@ -61,10 +62,11 @@ class Module:
                 yield from value.modules(seen)
 
     def parameters(self):
-        """The floating-point arrays held in the attributes of this module and its submodules."""
+        """The floating-point arrays held in the attributes of this module and its submodules, except the ones a module
+        lists in its `buffers`."""
         # shortcut: arrays in lists or dicts are not found; walk them when a model holds layers that way.
-        return [v for m in self.modules() for v in vars(m).values()
-                if isinstance(v, np.ndarray) and v.dtype.kind == 'f']
+        return [v for m in self.modules() for k, v in vars(m).items()
+                if isinstance(v, np.ndarray) and v.dtype.kind == 'f' and k not in m.buffers]
 
     def add_module(self, name, module):
         """Hold `module` as the attribute `name`."""
@@ -83,21 +85,22 @@ class Module:
         """Pairs (name, array) of the parameters, named by the attributes that lead to them, such as
         '0.weight'. An array that several modules share comes once."""
         seen = set()
-        for name, value in self._named_arrays(prefix):
+        for name, value in self._named_arrays(prefix, buffers=False):
             if id(value) not in seen:
                 seen.add(id(value))
                 yield name, value
 
-    def _named_arrays(self, prefix=''):
+    def _named_arrays(self, prefix='', buffers=True):
         for k, v in vars(self).items():
             if isinstance(v, np.ndarray) and v.dtype.kind == 'f':
-                yield prefix + k, v
+                if buffers or k not in self.buffers:
+                    yield prefix + k, v
             elif isinstance(v, Module):
-                yield from v._named_arrays(f'{prefix}{k}.')
+                yield from v._named_arrays(f'{prefix}{k}.', buffers)
 
     def state_dict(self):
-        """A dictionary of the parameters by name, as `named_parameters` gives them, but with an array that
-        several modules share under each of their names, as in PyTorch."""
+        """A dictionary of the parameters and buffers by name, as `named_parameters` gives the parameters, but with an
+        array that several modules share under each of their names, as in PyTorch."""
         return dict(self._named_arrays())
 
     def load_state_dict(self, state_dict):
@@ -262,11 +265,20 @@ def _corr2d_vjp_W(ans, X, W, stride, padding):
 defvjp(_corr2d, _corr2d_vjp_X, _corr2d_vjp_W)
 
 
-def conv2d(X, weight, bias=None, stride=1, padding=0):
-    """The cross-correlation of images `X` of shape (n, c, h, w) with `weight` of shape (o, c, kh, kw), plus
+def conv2d(X, weight, bias=None, stride=1, padding=0, groups=1):
+    """The cross-correlation of images `X` of shape (n, c, h, w) with `weight` of shape (o, c / groups, kh, kw), plus
     `bias`, as `torch.nn.functional.conv2d`, differentiable by autograd. `stride` and `padding` are an integer
-    or a pair (height, width)."""
-    Y = _corr2d(X, weight, _pair(stride), _pair(padding))
+    or a pair (height, width). With `groups` > 1, the channels are split into that many groups, each convolved with
+    its own share of the kernels, and the outputs are joined."""
+    stride, padding = _pair(stride), _pair(padding)
+    if groups == 1:
+        Y = _corr2d(X, weight, stride, padding)
+    else:
+        assert X.shape[1] % groups == 0 and weight.shape[0] % groups == 0, \
+            f'{X.shape[1]} input and {weight.shape[0]} output channels are not divisible by {groups} groups'
+        cin, cout = X.shape[1] // groups, weight.shape[0] // groups
+        Y = anp.concatenate([_corr2d(X[:, g * cin:(g + 1) * cin], weight[g * cout:(g + 1) * cout], stride, padding)
+                             for g in range(groups)], axis=1)
     return Y if bias is None else Y + bias.reshape((1, -1, 1, 1))
 
 
@@ -327,16 +339,20 @@ class Conv2d(Module):
     """A two-dimensional convolutional layer (a cross-correlation, as in the book), in place of
     `torch.nn.Conv2d`: the weight, of shape (out_channels, in_channels, kernel_height, kernel_width), and the
     bias are drawn as in PyTorch, uniformly from (-1/sqrt(f), 1/sqrt(f)) with f = in_channels * kernel_height
-    * kernel_width, unless `weight_init` or `bias_init` is given. They are `float32` unless `dtype` is given."""
+    * kernel_width, unless `weight_init` or `bias_init` is given. They are `float32` unless `dtype` is given. With `groups`
+    > 1, each kernel sees in_channels / groups channels, and f counts those."""
     def __init__(self, in_channels, out_channels, kernel_size, padding=0, stride=1, bias=True,
-                 weight_init=None, bias_init=None, dtype=np.float32):
-        self.out_channels, self.kernel_size = out_channels, _pair(kernel_size)
+                 weight_init=None, bias_init=None, dtype=np.float32, groups=1):
+        self.out_channels, self.kernel_size, self.groups = out_channels, _pair(kernel_size), groups
         self.padding, self.stride, self.has_bias = _pair(padding), _pair(stride), bias
         self.weight_init, self.bias_init = weight_init, bias_init
         self.weight = self.bias = None
         self._materialize(in_channels, dtype)
 
     def _materialize(self, in_channels, dtype):
+        assert in_channels % self.groups == 0 and self.out_channels % self.groups == 0, \
+            f'{in_channels} input and {self.out_channels} output channels are not divisible by {self.groups} groups'
+        in_channels //= self.groups
         bound = 1 / math.sqrt(in_channels * self.kernel_size[0] * self.kernel_size[1])
         uniform = lambda shape: np.random.uniform(-bound, bound, shape)
         self.weight = np.asarray((self.weight_init or uniform)((self.out_channels, in_channels) + self.kernel_size), dtype)
@@ -344,14 +360,14 @@ class Conv2d(Module):
             self.bias = np.asarray((self.bias_init or uniform)((self.out_channels,)), dtype)
 
     def forward(self, X):
-        return conv2d(X, self.weight, self.bias, self.stride, self.padding)
+        return conv2d(X, self.weight, self.bias, self.stride, self.padding, self.groups)
 
 
 class LazyConv2d(Conv2d):
     """A `Conv2d` layer whose number of input channels is set by its first input, in place of
     `torch.nn.LazyConv2d`. It becomes a `Conv2d` once it has its parameters, as in PyTorch."""
-    def __init__(self, out_channels, kernel_size, padding=0, stride=1, bias=True, weight_init=None, bias_init=None):
-        self.out_channels, self.kernel_size = out_channels, _pair(kernel_size)
+    def __init__(self, out_channels, kernel_size, padding=0, stride=1, bias=True, weight_init=None, bias_init=None, groups=1):
+        self.out_channels, self.kernel_size, self.groups = out_channels, _pair(kernel_size), groups
         self.padding, self.stride, self.has_bias = _pair(padding), _pair(stride), bias
         self.weight_init, self.bias_init = weight_init, bias_init
         self.weight = self.bias = None
@@ -376,6 +392,75 @@ class AvgPool2d(MaxPool2d):
     """Average pooling, in place of `torch.nn.AvgPool2d`."""
     def forward(self, X):
         return avg_pool2d(X, self.kernel_size, self.stride, self.padding)
+
+
+class AdaptiveAvgPool2d(Module):
+    """The average of each channel over the whole image, in place of `torch.nn.AdaptiveAvgPool2d((1, 1))`, which is the
+    only output size the book uses."""
+    def __init__(self, output_size):
+        # shortcut: only a 1 x 1 output, the global average pooling of the book; add other sizes when a section needs them.
+        assert _pair(output_size) == (1, 1), f'output size {output_size} is not 1 x 1'
+
+    def forward(self, X):
+        return anp.mean(X, axis=(2, 3), keepdims=True)
+
+
+class BatchNorm1d(Module):
+    """Batch normalization of the channels (axis 1) of inputs of shape (n, c) or (n, c, l), in place of
+    `torch.nn.BatchNorm1d`. In training mode, each channel is normalized with the mean and variance of the batch, and the
+    running statistics move toward them by `momentum` (the variance with the unbiased estimate, as in PyTorch); in
+    evaluation mode, the running statistics are used. The scale `weight` and shift `bias` are parameters; the running
+    statistics are buffers, so they are not parameters but are in `state_dict()`. They are `float32` unless `dtype`
+    is given."""
+    buffers = ('running_mean', 'running_var')
+    ndims = (2, 3)
+
+    def __init__(self, num_features, eps=1e-5, momentum=0.1, dtype=np.float32):
+        self.eps, self.momentum = eps, momentum
+        self._materialize(num_features, dtype)
+
+    def _materialize(self, num_features, dtype):
+        self.weight, self.bias = np.ones(num_features, dtype), np.zeros(num_features, dtype)
+        self.running_mean, self.running_var = np.zeros(num_features, dtype), np.ones(num_features, dtype)
+
+    def forward(self, X):
+        assert X.ndim in self.ndims, f'{type(self).__name__} takes inputs of {self.ndims} dimensions, not {X.ndim}'
+        axes, shape = tuple(i for i in range(X.ndim) if i != 1), (1, -1) + (1,) * (X.ndim - 2)
+        if self.training:
+            mean = anp.mean(X, axis=axes, keepdims=True)
+            var = anp.mean((X - mean) ** 2, axis=axes, keepdims=True)
+            n, m = X.size // X.shape[1], self.momentum
+            self.running_mean = ((1 - m) * self.running_mean + m * getval(mean).reshape(-1)).astype(self.running_mean.dtype)
+            self.running_var = ((1 - m) * self.running_var + m * getval(var).reshape(-1) * n / max(n - 1, 1)).astype(self.running_var.dtype)
+        else:
+            mean, var = self.running_mean.reshape(shape), self.running_var.reshape(shape)
+        return (X - mean) / anp.sqrt(var + self.eps) * self.weight.reshape(shape) + self.bias.reshape(shape)
+
+
+class BatchNorm2d(BatchNorm1d):
+    """Batch normalization of the channels of images of shape (n, c, h, w), in place of `torch.nn.BatchNorm2d`."""
+    ndims = (4,)
+
+
+class LazyBatchNorm1d(BatchNorm1d):
+    """A `BatchNorm1d` whose number of features is set by its first input, in place of `torch.nn.LazyBatchNorm1d`. It becomes
+    a `BatchNorm1d` once it has its parameters, as in PyTorch."""
+    eager = BatchNorm1d
+
+    def __init__(self, eps=1e-5, momentum=0.1):
+        self.eps, self.momentum = eps, momentum
+        self.weight = self.bias = self.running_mean = self.running_var = None
+
+    def forward(self, X):
+        if self.weight is None:
+            self._materialize(X.shape[1], X.dtype if X.dtype.kind == 'f' else np.float64)
+            self.__class__ = self.eager
+        return self.forward(X)
+
+
+class LazyBatchNorm2d(LazyBatchNorm1d, BatchNorm2d):
+    """A `BatchNorm2d` whose number of features is set by its first input, in place of `torch.nn.LazyBatchNorm2d`."""
+    eager = BatchNorm2d
 
 
 def sigmoid(X):
@@ -414,24 +499,34 @@ class Flatten(Module):
 
 class Sequential(Module):
     """Apply the given modules one after the other, in place of `torch.nn.Sequential`. The modules are
-    attributes named '0', '1', ..., as in PyTorch, so `parameters()` finds their arrays."""
+    attributes named '0', '1', ..., as in PyTorch, so `parameters()` finds their arrays. `add_module(name, module)` adds
+    a module at the end, under `name`."""
     def __init__(self, *layers):
-        self.num_layers = len(layers)
-        for i, layer in enumerate(layers):
-            setattr(self, str(i), layer)
+        self.names = [str(i) for i in range(len(layers))]
+        for name, layer in zip(self.names, layers):
+            setattr(self, name, layer)
+
+    @property
+    def num_layers(self):
+        return len(self.names)
+
+    def add_module(self, name, module):
+        assert name not in self.names, f'{name} is already a module of this Sequential'
+        super().add_module(name, module)
+        self.names.append(name)
 
     def __getitem__(self, i):
-        return getattr(self, str(i % self.num_layers))
+        return getattr(self, self.names[i])
 
     def __len__(self):
-        return self.num_layers
+        return len(self.names)
 
     def __iter__(self):
-        return (self[i] for i in range(self.num_layers))
+        return (getattr(self, name) for name in self.names)
 
     def forward(self, X):
-        for i in range(self.num_layers):
-            X = self[i](X)
+        for layer in self:
+            X = layer(X)
         return X
 
 

@@ -413,10 +413,15 @@ convolutions and LeNet.
   stay on the GPU between ops would gain much, which is a different library from NumPy and
   is not part of this plan. All figures are estimates from one machine, with backward
   counted as twice the forward pass.
-- **New in `divelet_ml.nn`:** `BatchNorm` (it needs a training/evaluation switch for its
-  moving averages; see how `Dropout` handles it), global average pooling,
-  channel concatenation, and residual addition. `FashionMNIST` needs a `resize` in
-  NumPy, in place of torchvision's.
+- **New in `divelet_ml`** (added, with tests; no notebook uses them yet): `nn.BatchNorm1d`, `nn.BatchNorm2d` and their lazy
+  versions, with the training/evaluation switch and running statistics that are buffers (a module lists them in `buffers`,
+  so they are not parameters, but they are in `state_dict()`); `nn.AdaptiveAvgPool2d((1, 1))`; `groups` for `conv2d`,
+  `Conv2d` and `LazyConv2d`, which ResNeXt and RegNet need; `Sequential.add_module`, which ResNet and DenseNet use to add
+  named blocks; and `init_cnn` and `Classifier.layer_summary`, which the book saves from its earlier chapters. Channel
+  concatenation and the residual sum are `np.concatenate` and `+` in the notebooks. Checked: AlexNet, VGG-11, GoogLeNet,
+  ResNet-18, RegNetX-32 and DenseNet all build with these layers and give a `(1, 10)` output at the book's sizes; one
+  forward pass takes 0.01 to 0.7 s in CPython. `FashionMNIST(resize=...)` exists, but loading all 60,000 images at
+  224 x 224 takes about 12 GB, so the notebooks cannot load the book's resized data and show shapes only.
 
 - [ ] 8.1 *Deep Convolutional Neural Networks (AlexNet)*.
 - [ ] 8.2 *Networks Using Blocks (VGG)*.
