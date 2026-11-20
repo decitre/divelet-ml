@@ -11,7 +11,7 @@ Development proceeds incrementally, one chapter at a time.
 performed. Chapters 2 (*Preliminaries*), 3 (*Linear Neural Networks for
 Regression*), 4 (*Linear Neural Networks for Classification*) and 5
 (*Multilayer Perceptrons*), 6 (*Builders' Guide*) and 7 (*Convolutional Neural
-Networks*) are adapted in full, along with 9.1 to 9.4 of Chapter 9 (*Recurrent Neural Networks*) and 11.3 *Attention Scoring Functions*. The adapted notebooks run in JupyterLite with both the Pyodide and
+Networks*) are adapted in full, along with 9 (*Recurrent Neural Networks*) and 11.3 *Attention Scoring Functions*. The adapted notebooks run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -455,11 +455,14 @@ recurrent networks. The text models are small enough for a browser; training the
   book's 100 epochs would take about 1 minute in xeus-python and 3 minutes in Pyodide, so
   unlike Chapters 5 and 7 this chapter can keep the book's batch size, steps and probably
   its epochs. Not measured: the `Trainer`'s per-epoch plot (5.2 found it a real cost), a
-  CI runner, WebKit and the iPad, which are slower: the smoke test gives a notebook 120 s
-  by default, so 9.5 and 9.6 will probably need `d2l.browser_epochs` for Pyodide (about 30
-  epochs is a minute here) and an entry in `RUN_MS_NOTEBOOKS`. Say in the notebook when the
-  browser trains less than the book.
-- **New in `divelet_ml`** (added, with tests; 9.2 to 9.4 use `Vocab`, `TimeMachine` and `time_machine_text`, the models wait for 9.5 and 9.6): `nn.RNN`, written as a loop
+  CI runner, WebKit and the iPad, which are slower. With the plot, the notebook as it runs
+  (Run All in the Lab app, Chrome, one Mac) takes 125 s for 100 epochs in xeus-python and 66 s
+  for 30 epochs in Pyodide, about 1.2 s and 2.2 s per epoch. 9.5 and 9.6 therefore use
+  `d2l.browser_epochs(100, pyodide=25, xeus=50)` and a `RUN_MS_NOTEBOOKS` limit of 300 s, and
+  say so. After 20 epochs the validation perplexity is 10.6 against 7.5 after the book's
+  100 epochs (this implementation, seed 0), and the generated text is a few words, not yet
+  sentences.
+- **New in `divelet_ml`** (added, with tests, and used by 9.2 to 9.6): `nn.RNN`, written as a loop
   over time steps that autograd differentiates; `Vocab` and `TimeMachine`, which reads the hosted text
   in JupyterLite and downloads the book's copy elsewhere; gradient clipping in the `Trainer`
   (`clip_gradients`); `RNNScratch`, `RNNLMScratch`, `RNN`, `RNNLM` with `predict`; and `check_len`.
@@ -470,9 +473,9 @@ recurrent networks. The text models are small enough for a browser; training the
 - [x] 9.2 *Converting Raw Text into Sequence Data*: reads the hosted text through `d2l.time_machine_text`.
 - [x] 9.3 *Language Models*.
 - [x] 9.4 *Recurrent Neural Networks*.
-- [ ] 9.5 *Recurrent Neural Network Implementation from Scratch*.
-- [ ] 9.6 *Concise Implementation of Recurrent Neural Networks*.
-- [ ] 9.7 *Backpropagation Through Time* (no code).
+- [x] 9.5 *Recurrent Neural Network Implementation from Scratch*.
+- [x] 9.6 *Concise Implementation of Recurrent Neural Networks*.
+- [x] 9.7 *Backpropagation Through Time* (no code).
 
 ### Later chapters
 
