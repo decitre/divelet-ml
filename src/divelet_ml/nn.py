@@ -184,6 +184,29 @@ class LazyLinear(Linear):
         return Linear.forward(self, X)
 
 
+class RNN(Module):
+    """A one-layer recurrent network with a tanh nonlinearity, in place of `torch.nn.RNN(input_size, hidden_size)`.
+
+    `forward(inputs, state=None)` takes `inputs` of shape (steps, batch, input_size) and a `state` of shape
+    (1, batch, hidden_size), zeros if missing, and returns the outputs, of shape (steps, batch, hidden_size), and the
+    last state. The parameters are drawn as in PyTorch, uniformly from (-1/sqrt(hidden_size), 1/sqrt(hidden_size)),
+    as `float32` unless `dtype` is given. The loop over the steps is Python, which autograd differentiates."""
+    def __init__(self, input_size, hidden_size, dtype=np.float32):
+        self.input_size, self.hidden_size = input_size, hidden_size
+        bound = 1 / math.sqrt(hidden_size)
+        uniform = lambda shape: np.random.uniform(-bound, bound, shape).astype(dtype)
+        self.weight_ih, self.weight_hh = uniform((hidden_size, input_size)), uniform((hidden_size, hidden_size))
+        self.bias_ih, self.bias_hh = uniform((hidden_size,)), uniform((hidden_size,))
+
+    def forward(self, inputs, state=None):
+        h = anp.zeros((inputs.shape[1], self.hidden_size), self.weight_ih.dtype) if state is None else state[0]
+        outputs = []
+        for X in inputs:
+            h = anp.tanh(X @ self.weight_ih.T + self.bias_ih + h @ self.weight_hh.T + self.bias_hh)
+            outputs.append(h)
+        return anp.stack(outputs), anp.expand_dims(h, 0)
+
+
 def _pair(x):
     return (x, x) if isinstance(x, int) else tuple(x)
 

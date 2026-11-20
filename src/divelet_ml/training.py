@@ -101,12 +101,18 @@ class Trainer(HyperParameters):
     def prepare_batch(self, batch):
         return batch
 
+    def clip_gradients(self, grad_clip_val, grads):
+        """`grads` scaled down so that their joint L2 norm is at most `grad_clip_val`. The book's version scales
+        the `grad` of each parameter in place; here the gradients are arrays that `fit_epoch` passes on."""
+        norm = np.sqrt(sum((g ** 2).sum() for g in grads))
+        return [g * (grad_clip_val / norm) for g in grads] if norm > grad_clip_val else grads
+
     def fit_epoch(self):
         self.model.train()
         for batch in self.train_dataloader:
             grads = param_grads(lambda: self.model.training_step(self.prepare_batch(batch)),
                                 self.model, self.optim.params)
-            if self.gradient_clip_val > 0:  # To be discussed later
+            if self.gradient_clip_val > 0:
                 grads = self.clip_gradients(self.gradient_clip_val, grads)
             self.optim.step(grads)
             self.train_batch_idx += 1

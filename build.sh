@@ -71,6 +71,14 @@ SUMS
 [ -f "$CACHE/fashion-mnist/LICENSE" ] || curl -fsSL -o "$CACHE/fashion-mnist/LICENSE" "$FASHION_URL/LICENSE"
 cp "$CACHE/fashion-mnist/LICENSE" "$PUBLIC/data/fashion-mnist/LICENSE"
 
+echo "== The Time Machine"
+# H. G. Wells' text as the book's `timemachine.txt` (public domain), served from the site's own host to Chapter 9's notebooks.
+TIME_MACHINE=timemachine.txt
+mkdir -p "$CACHE/timemachine" "$PUBLIC/data/timemachine"
+[ -f "$CACHE/timemachine/$TIME_MACHINE" ] || curl -fsSL -o "$CACHE/timemachine/$TIME_MACHINE" "https://d2l-data.s3.amazonaws.com/$TIME_MACHINE"
+echo "8424dbd9532ac81f7e5f0b6add90e6952baea29158309d7d1bf3884f4e12c516  $CACHE/timemachine/$TIME_MACHINE" | sha256sum -c --quiet -
+cp "$CACHE/timemachine/$TIME_MACHINE" "$PUBLIC/data/timemachine/"
+
 cat > "$PUBLIC/index.html" <<'HTML'
 <!doctype html>
 <meta charset="utf-8">

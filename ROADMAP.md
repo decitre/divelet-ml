@@ -459,9 +459,12 @@ recurrent networks. The text models are small enough for a browser; training the
   by default, so 9.5 and 9.6 will probably need `d2l.browser_epochs` for Pyodide (about 30
   epochs is a minute here) and an entry in `RUN_MS_NOTEBOOKS`. Say in the notebook when the
   browser trains less than the book.
-- **New in `divelet_ml`:** an `nn.RNN` layer, written as a loop over time steps that
-  autograd differentiates; `Vocab`, `TimeMachine` and the one-hot encoding; gradient
-  clipping in the `Trainer`; `RNNLMScratch`, `RNNLM` and text generation.
+- **New in `divelet_ml`** (added, with tests; no notebook uses them yet): `nn.RNN`, written as a loop
+  over time steps that autograd differentiates; `Vocab` and `TimeMachine`, which reads the hosted text
+  in JupyterLite and downloads the book's copy elsewhere; gradient clipping in the `Trainer`
+  (`clip_gradients`); `RNNScratch`, `RNNLMScratch`, `RNN`, `RNNLM` with `predict`; and `check_len`.
+  `build.sh` copies the text to `data/timemachine/` with its checksum. Not done: `d2l.browser_epochs`
+  values for these notebooks, and the one-hot encoding is NumPy's `eye`, not a layer.
 
 - [ ] 9.1 *Working with Sequences*.
 - [ ] 9.2 *Converting Raw Text into Sequence Data*: needs the hosted text.
