@@ -35,6 +35,16 @@ The CPython run is a fast first check. Only the smoke test shows that a notebook
 
 To browse the built sites, serve `workspace/public/` over HTTP, for example with `python -m http.server -d workspace/public`, and open `/xeus/` or `/pyodide/`.
 
+## Full-run figures
+
+Notebooks that train less in the browser than the book (those that call `d2l.browser_epochs` or `d2l.browser_examples`) show, after each training cell, a figure of what the book's full training gives. `tools/full_run_figures.py` makes them: it runs each notebook in CPython, where those functions return the book's numbers, draws the model's progress board once, and writes it into a markdown cell tagged `full-run`, with the final values. The random start is seeded, so the same code gives the same figures.
+
+```bash
+uv run --group test python tools/full_run_figures.py [notebook ...]
+```
+
+Run it again after changing the library or a training cell of those notebooks, and commit what it changes. `tests/test_full_run_figures.py` checks that every such notebook has its figures. A new notebook that trains less in the browser goes into `TARGETS` in the script.
+
 ## Changes
 
 Work on a branch and open a pull request against `main`. A pull request must pass the "Build site" workflow. A push to `main` deploys the site to GitHub Pages.
