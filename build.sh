@@ -10,7 +10,7 @@ PUBLIC="$WORKSPACE/public"
 # Kept between builds (CI caches it): xeus environments and Pyodide/self-hosted downloads.
 CACHE="${JL_FORGE_CACHE:-$HOME/.cache/jl-forge}"
 APPS=(--apps lab --apps notebooks --apps tree)
-JL_FORGE="jl-forge==0.7.0"
+JL_FORGE="jl-forge==0.8.0"
 
 venv() {  # venv <dir> <packages...>: create a build venv with jl-forge and jupyterlite
   local dir="$1"; shift
