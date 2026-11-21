@@ -10,3 +10,5 @@ submission.csv
 /x-files.npz
 /mydict.npz
 /mlp.params.npz
+# The datasets the notebooks download when they run outside JupyterLite (`../data`), which the build would pack into the xeus-python archive
+content/data/

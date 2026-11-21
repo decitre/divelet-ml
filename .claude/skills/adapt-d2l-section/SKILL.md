@@ -32,7 +32,7 @@ Header credit cell, previous/next cell (top and bottom; link the neighbouring ch
 
 ## Check before the pull request
 
-1. `uv run --group test pytest tests/test_notebooks.py tests/test_full_run_figures.py` runs the notebooks, validates the notebook schema, and fails on markers, directives and tab leftovers. A notebook listed in `NOT_YET_CLEAN` is known debt; do not add to it.
+1. `uv run --group test pytest tests/test_notebooks.py tests/test_full_run_figures.py` runs the notebooks, validates the notebook schema, and fails on markers, directives and tab leftovers.
 2. `./build.sh` (minutes; wait for its own exit line, not for the launcher's notification), then `uv run --group browser pytest tests/smoke_test.py -k "chrome and 08."` and `"ipad and 08."` with the chapter's number. The smoke test runs code cells only: it passed with prose shown as raw text and with stray markers.
 3. **Look at the rendered notebook.** Screenshot, from the built site with Playwright, the top, a figure, a tablet-marked cell and the bottom. The notebook scrolls inside `.jp-WindowedPanel-outer`, and cells outside the window are not in the DOM until scrolled to.
 4. Commit messages and pull request descriptions carry no attribution lines. The description lists what was checked and what was not.
