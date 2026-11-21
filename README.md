@@ -17,7 +17,7 @@ divelet-ml is an experimental, browser-native adaptation of the Jupyter notebook
 
 The project aims to preserve the book's chapter structure, mathematical explanations, learning objectives, and exercises while adapting its framework-dependent Python implementations for execution directly in the browser.
 
-**Project status:** Early development. Chapters 2 to 7 and 9 are adapted in full. In Chapter 8, the models are built and their layer shapes shown, and only 8.5 (batch normalization) trains in the browser. Chapter 12 is planned next. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
+**Project status:** Early development. Chapters 2 to 7 and 9 are adapted in full. In Chapter 8, the models are built and their layer shapes shown, and only 8.5 (batch normalization) trains in the browser. Chapter 12 is in progress (12.1 to 12.4 so far). Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
 
 | Section | Original |
 |---|---|
@@ -80,6 +80,10 @@ The project aims to preserve the book's chapter structure, mathematical explanat
 | [9.6 Concise Implementation of Recurrent Neural Networks][xeus-9.6] [\[p\]][pyodide-9.6] | [d2l.ai][d2l-9.6] |
 | [9.7 Backpropagation Through Time][xeus-9.7] [\[p\]][pyodide-9.7] | [d2l.ai][d2l-9.7] |
 | [11.3 Attention Scoring Functions][xeus-11.3] [\[p\]][pyodide-11.3] | [d2l.ai][d2l-11.3] |
+| [12.1 Optimization and Deep Learning][xeus-12.1] [\[p\]][pyodide-12.1] | [d2l.ai][d2l-12.1] |
+| [12.2 Convexity][xeus-12.2] [\[p\]][pyodide-12.2] | [d2l.ai][d2l-12.2] |
+| [12.3 Gradient Descent][xeus-12.3] [\[p\]][pyodide-12.3] | [d2l.ai][d2l-12.3] |
+| [12.4 Stochastic Gradient Descent][xeus-12.4] [\[p\]][pyodide-12.4] | [d2l.ai][d2l-12.4] |
 
 The notebooks' sources are in [`content/`][content].
 
@@ -375,6 +379,18 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [xeus-11.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=11_attention-mechanisms-and-transformers/11.03_attention-scoring-functions.ipynb
 [pyodide-11.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=11_attention-mechanisms-and-transformers/11.03_attention-scoring-functions.ipynb
 [d2l-11.3]: https://d2l.ai/chapter_attention-mechanisms-and-transformers/attention-scoring-functions.html
+[xeus-12.1]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=12_optimization/12.01_optimization-intro.ipynb
+[pyodide-12.1]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=12_optimization/12.01_optimization-intro.ipynb
+[d2l-12.1]: https://d2l.ai/chapter_optimization/optimization-intro.html
+[xeus-12.2]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=12_optimization/12.02_convexity.ipynb
+[pyodide-12.2]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=12_optimization/12.02_convexity.ipynb
+[d2l-12.2]: https://d2l.ai/chapter_optimization/convexity.html
+[xeus-12.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=12_optimization/12.03_gd.ipynb
+[pyodide-12.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=12_optimization/12.03_gd.ipynb
+[d2l-12.3]: https://d2l.ai/chapter_optimization/gd.html
+[xeus-12.4]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=12_optimization/12.04_sgd.ipynb
+[pyodide-12.4]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=12_optimization/12.04_sgd.ipynb
+[d2l-12.4]: https://d2l.ai/chapter_optimization/sgd.html
 [transformers-js]: https://huggingface.co/docs/transformers.js/
 [lmlite]: https://github.com/decitre/lmlite
 [roadmap]: https://github.com/decitre/divelet-ml/blob/main/ROADMAP.md
