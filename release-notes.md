@@ -1,8 +1,10 @@
 ### Added
 
-- The code of the book's Chapter 9: `Vocab`, `TimeMachine` (it reads the book's copy of *The Time Machine*, from the site in JupyterLite) and `time_machine_text`; the recurrent language models `RNNScratch`, `RNNLMScratch`, `RNN` and `RNNLM`, with `predict`; and `check_len`.
-- `nn.RNN`: a one-layer tanh recurrent network with `torch.nn.RNN`'s interface, differentiable by autograd.
+- The code of the book's Chapter 8: `nn.BatchNorm1d`, `nn.BatchNorm2d` and their lazy versions `nn.LazyBatchNorm1d` and `nn.LazyBatchNorm2d` (batch statistics in training mode, running statistics in evaluation mode); `nn.AdaptiveAvgPool2d((1, 1))`; the `groups` argument of `nn.conv2d`, `nn.Conv2d` and `nn.LazyConv2d`; and `ResNeXtBlock`.
+- `init_cnn` and `Classifier.layer_summary`, which the book saves from its earlier chapters.
+- `nn.Sequential.add_module(name, module)`, which appends a named module, as in PyTorch.
+- A module can list `buffers`: arrays that are state and not parameters, such as the running statistics of batch normalization. `parameters()` and `named_parameters()` leave them out, and `state_dict()` includes them.
 
-### Fixed
+### Changed
 
-- `Trainer(..., gradient_clip_val=...)` called a `clip_gradients` method that did not exist; it clips the gradients to their joint L2 norm now.
+- `nn.Sequential[i]` raises `IndexError` when `i` is out of range; it used to wrap around.
