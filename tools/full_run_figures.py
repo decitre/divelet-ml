@@ -28,6 +28,9 @@ TARGETS = {
     "07_convolutional-neural-networks/07.06_lenet.ipynb": (
         "10 epochs on all 60,000 training images, as in the book",
         [("num_train=d2l.browser_examples(10000, pyodide=2000, xeus=10000)", "num_train=None")]),
+    "08_convolutional-modern/08.05_batch-norm.ipynb": (
+        "10 epochs on all 60,000 training images, as in the book",
+        [("num_train=d2l.browser_examples(10000, pyodide=2000, xeus=10000)", "num_train=None")]),
     "09_recurrent-neural-networks/09.05_rnn-scratch.ipynb": ("100 epochs, as in the book", []),
     "09_recurrent-neural-networks/09.06_rnn-concise.ipynb": ("100 epochs, as in the book", []),
 }

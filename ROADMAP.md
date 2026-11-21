@@ -11,7 +11,7 @@ Development proceeds incrementally, one chapter at a time.
 performed. Chapters 2 (*Preliminaries*), 3 (*Linear Neural Networks for
 Regression*), 4 (*Linear Neural Networks for Classification*) and 5
 (*Multilayer Perceptrons*), 6 (*Builders' Guide*) and 7 (*Convolutional Neural
-Networks*) are adapted in full, along with 9 (*Recurrent Neural Networks*) and 11.3 *Attention Scoring Functions*. The adapted notebooks run in JupyterLite with both the Pyodide and
+Networks*) are adapted in full, along with 9 (*Recurrent Neural Networks*), 8 (*Modern Convolutional Neural Networks*, whose models are built and shown but trained only in 8.5) and 11.3 *Attention Scoring Functions*. The adapted notebooks run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -413,7 +413,7 @@ convolutions and LeNet.
   stay on the GPU between ops would gain much, which is a different library from NumPy and
   is not part of this plan. All figures are estimates from one machine, with backward
   counted as twice the forward pass.
-- **New in `divelet_ml`** (added, with tests; no notebook uses them yet): `nn.BatchNorm1d`, `nn.BatchNorm2d` and their lazy
+- **New in `divelet_ml`** (added, with tests, and used by 8.1 to 8.8): `nn.BatchNorm1d`, `nn.BatchNorm2d` and their lazy
   versions, with the training/evaluation switch and running statistics that are buffers (a module lists them in `buffers`,
   so they are not parameters, but they are in `state_dict()`); `nn.AdaptiveAvgPool2d((1, 1))`; `groups` for `conv2d`,
   `Conv2d` and `LazyConv2d`, which ResNeXt and RegNet need; `Sequential.add_module`, which ResNet and DenseNet use to add
@@ -423,14 +423,14 @@ convolutions and LeNet.
   forward pass takes 0.01 to 0.7 s in CPython. `FashionMNIST(resize=...)` exists, but loading all 60,000 images at
   224 x 224 takes about 12 GB, so the notebooks cannot load the book's resized data and show shapes only.
 
-- [ ] 8.1 *Deep Convolutional Neural Networks (AlexNet)*.
-- [ ] 8.2 *Networks Using Blocks (VGG)*.
-- [ ] 8.3 *Network in Network (NiN)*.
-- [ ] 8.4 *Multi-Branch Networks (GoogLeNet)*.
-- [ ] 8.5 *Batch Normalization*: trains LeNet with batch norm.
-- [ ] 8.6 *Residual Networks (ResNet) and ResNeXt*.
-- [ ] 8.7 *Densely Connected Networks (DenseNet)*.
-- [ ] 8.8 *Designing Convolution Network Architectures*.
+- [x] 8.1 *Deep Convolutional Neural Networks (AlexNet)*.
+- [x] 8.2 *Networks Using Blocks (VGG)*.
+- [x] 8.3 *Network in Network (NiN)*.
+- [x] 8.4 *Multi-Branch Networks (GoogLeNet)*.
+- [x] 8.5 *Batch Normalization*: trains LeNet with batch norm.
+- [x] 8.6 *Residual Networks (ResNet) and ResNeXt*.
+- [x] 8.7 *Densely Connected Networks (DenseNet)*.
+- [x] 8.8 *Designing Convolution Network Architectures*.
 
 ### Chapter 9 — Recurrent Neural Networks
 
