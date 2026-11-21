@@ -475,9 +475,15 @@ class Sigmoid(Module):
 
 
 class MSELoss(Module):
-    """The mean of the squared differences between `input` and `target`, in place of `torch.nn.MSELoss`."""
+    """The squared differences between `input` and `target`, averaged (`reduction='mean'`), summed (`'sum'`) or kept
+    one by one (`'none'`), in place of `torch.nn.MSELoss`."""
+    def __init__(self, reduction='mean'):
+        assert reduction in ('mean', 'sum', 'none'), f'unknown reduction {reduction!r}'
+        self.reduction = reduction
+
     def forward(self, input, target):
-        return anp.mean((input - target) ** 2)
+        l = (input - target) ** 2
+        return {'mean': anp.mean, 'sum': anp.sum, 'none': lambda x: x}[self.reduction](l)
 
 
 def relu(X):

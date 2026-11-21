@@ -79,6 +79,14 @@ mkdir -p "$CACHE/timemachine" "$PUBLIC/data/timemachine"
 echo "8424dbd9532ac81f7e5f0b6add90e6952baea29158309d7d1bf3884f4e12c516  $CACHE/timemachine/$TIME_MACHINE" | sha256sum -c --quiet -
 cp "$CACHE/timemachine/$TIME_MACHINE" "$PUBLIC/data/timemachine/"
 
+echo "== Airfoil self-noise"
+# The NASA data set of the UCI repository (CC BY 4.0), in the book's copy `airfoil_self_noise.dat`, served from the site's own host to Chapter 12's notebooks.
+AIRFOIL=airfoil_self_noise.dat
+mkdir -p "$CACHE/airfoil" "$PUBLIC/data/airfoil"
+[ -f "$CACHE/airfoil/$AIRFOIL" ] || curl -fsSL -o "$CACHE/airfoil/$AIRFOIL" "https://d2l-data.s3.amazonaws.com/$AIRFOIL"
+echo "74c75fd71783f1e6b71f8a622b993dc592897a97cd689c5090a07147a1b097b3  $CACHE/airfoil/$AIRFOIL" | sha256sum -c --quiet -
+cp "$CACHE/airfoil/$AIRFOIL" "$PUBLIC/data/airfoil/"
+
 cat > "$PUBLIC/index.html" <<'HTML'
 <!doctype html>
 <meta charset="utf-8">

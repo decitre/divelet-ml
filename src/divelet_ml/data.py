@@ -11,6 +11,7 @@ read from the site in JupyterLite.
 import collections
 import gzip
 import hashlib
+import io
 import os
 import re
 import urllib.request
@@ -305,3 +306,37 @@ class TimeMachine(DataModule):
     def get_dataloader(self, train):
         idx = slice(0, self.num_train) if train else slice(self.num_train, self.num_train + self.num_val)
         return self.get_tensorloader([self.X, self.Y], train, idx)
+
+
+AIRFOIL_SHA1 = '76e5be1548fd8222e5074cf0faae75edff8cf93f'
+
+
+def airfoil_self_noise(root='../data'):
+    """The bytes of the airfoil self-noise data set (NASA, from the UCI repository, CC BY 4.0) as the book has it: in JupyterLite,
+    from the site's `data/airfoil` folder; elsewhere, from `root`, downloaded from the book's host if it is missing. The SHA-1 hash
+    of the book's copy is checked."""
+    if _site_url() is not None:
+        data = _read_url(f'{_site_data_url()}airfoil/airfoil_self_noise.dat')
+        assert hashlib.sha1(data).hexdigest() == AIRFOIL_SHA1, 'airfoil_self_noise.dat does not have the expected SHA-1 hash'
+        return data
+    with open(download(DATA_URL + 'airfoil_self_noise.dat', root, AIRFOIL_SHA1), 'rb') as f:
+        return f.read()
+
+
+def load_array(data_arrays, batch_size, is_train=True):
+    """Minibatches of the arrays, shuffled when training, in place of the book's PyTorch data iterator."""
+    return ArrayLoader(tuple(data_arrays), batch_size, shuffle=is_train)
+
+
+def get_data_ch11(batch_size=10, n=1500):
+    """The first `n` examples of the airfoil data, standardized, in minibatches; and the number of features."""
+    data = np.genfromtxt(io.BytesIO(airfoil_self_noise()), dtype=np.float32, delimiter='\t')
+    data = ((data - data.mean(axis=0)) / data.std(axis=0)).astype(np.float32)
+    data_iter = load_array((data[:n, :-1], data[:n, -1]), batch_size, is_train=True)
+    return data_iter, data.shape[1] - 1
+
+
+def load_data_fashion_mnist(batch_size, resize=None, root='../data'):
+    """The training and validation minibatches of Fashion-MNIST: images of shape (1, h, w) in [0, 1], and their labels."""
+    train, val = load_fashion_mnist(root, resize or (28, 28))
+    return ArrayLoader((train.X, train.y), batch_size, shuffle=True), ArrayLoader((val.X, val.y), batch_size)

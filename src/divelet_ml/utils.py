@@ -7,9 +7,11 @@ Copyright 2019 Amazon.com, Inc. or its affiliates, MIT-0 license.
 """
 
 import inspect
+import time
 import sys
 
 import autograd
+import autograd.numpy as anp
 import numpy as np
 from autograd.tracer import getval
 
@@ -129,3 +131,84 @@ def try_gpu(i=0):
 def try_all_gpus():
     """All available GPUs, or `[cpu()]` if there is none."""
     return [gpu(i) for i in range(num_gpus())] or [cpu()]
+
+
+class Timer:
+    """Record multiple running times."""
+    def __init__(self):
+        self.times = []
+        self.start()
+
+    def start(self):
+        """Start the timer."""
+        self.tik = time.time()
+
+    def stop(self):
+        """Stop the timer and record the time in a list."""
+        self.times.append(time.time() - self.tik)
+        return self.times[-1]
+
+    def avg(self):
+        """Return the average time."""
+        return sum(self.times) / len(self.times)
+
+    def sum(self):
+        """Return the sum of time."""
+        return sum(self.times)
+
+    def cumsum(self):
+        """Return the accumulated time."""
+        return np.array(self.times).cumsum().tolist()
+
+
+class Accumulator:
+    """For accumulating sums over `n` variables."""
+    def __init__(self, n):
+        self.data = [0.0] * n
+
+    def add(self, *args):
+        self.data = [a + float(b) for a, b in zip(self.data, args)]
+
+    def reset(self):
+        self.data = [0.0] * len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx]
+
+
+def linreg(X, w, b):
+    """The linear regression model."""
+    return anp.matmul(X, w) + b
+
+
+def squared_loss(y_hat, y):
+    """Squared loss."""
+    return (y_hat - anp.reshape(y, y_hat.shape)) ** 2 / 2
+
+
+def evaluate_loss(net, data_iter, loss):
+    """Evaluate the loss of a model on the given dataset."""
+    metric = Accumulator(2)  # Sum of losses, no. of examples
+    for X, y in data_iter:
+        out = net(X)
+        l = loss(out, anp.reshape(y, out.shape))
+        metric.add(anp.sum(l), l.size)
+    return metric[0] / metric[1]
+
+
+def accuracy(y_hat, y):
+    """Compute the number of correct predictions."""
+    if len(y_hat.shape) > 1 and y_hat.shape[1] > 1:
+        y_hat = y_hat.argmax(axis=1)
+    return float((y_hat.astype(y.dtype) == y).sum())
+
+
+def evaluate_accuracy_gpu(net, data_iter, device=None):
+    """Compute the accuracy of a model on a dataset. In evaluation mode; `device` is ignored, as a browser kernel has no GPU: the
+    name is the book's."""
+    if hasattr(net, 'eval'):
+        net.eval()
+    metric = Accumulator(2)  # No. of correct predictions, no. of predictions
+    for X, y in data_iter:
+        metric.add(accuracy(net(X), y), y.size)
+    return metric[0] / metric[1]
