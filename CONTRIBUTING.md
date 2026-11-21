@@ -33,6 +33,8 @@ uv run --group browser pytest tests/smoke_test.py -v
 
 The CPython run is a fast first check. Only the smoke test shows that a notebook runs in JupyterLite.
 
+In CI, a smoke job whose tests fail runs the failed ones once more, with a warning, because the Pyodide kernel in WebKit sometimes does not start on the runner. A test that fails twice fails the job, which blocks the deployment. When the kernel does not become ready, the test fails with the state of the page and a screenshot, which the job uploads as an artifact even if the second run passes.
+
 To browse the built sites, serve `workspace/public/` over HTTP, for example with `python -m http.server -d workspace/public`, and open `/xeus/` or `/pyodide/`.
 
 ## Full-run figures

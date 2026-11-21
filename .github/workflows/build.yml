@@ -104,10 +104,18 @@ jobs:
         if: matrix.browser == 'ipad'
         run: uv run --group browser playwright install --with-deps webkit
       - name: Browser smoke test
-        # Desktop Chrome is preinstalled on the runner; WebKit emulates an iPad.
-        run: uv run --group browser pytest tests/smoke_test.py -v -k "${{ matrix.browser }} and ${{ matrix.site }} and (${{ matrix.group.k }})"
+        # Desktop Chrome is preinstalled on the runner; WebKit emulates an iPad. The Pyodide kernel in WebKit sometimes does not
+        # start on the runner, in a different notebook each time: the tests that failed run once more (a fresh browser context,
+        # and the same screenshots are kept), and a warning says so. A test that fails twice fails the job.
+        run: |
+          k="${{ matrix.browser }} and ${{ matrix.site }} and (${{ matrix.group.k }})"
+          uv run --group browser pytest tests/smoke_test.py -v -k "$k" || {
+            echo "::warning::Some smoke tests failed in ${{ matrix.browser }}, ${{ matrix.site }}, ${{ matrix.group.name }}; running the failed ones once more"
+            uv run --group browser pytest tests/smoke_test.py -v -k "$k" --last-failed --last-failed-no-failures none
+          }
       - name: Upload screenshots of notebooks that did not finish
-        if: failure()
+        # Also when the second run passes, so that the first failure can be looked at.
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: smoke-failures-${{ matrix.browser }}-${{ matrix.site }}-${{ matrix.group.name }}

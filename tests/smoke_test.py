@@ -128,7 +128,10 @@ def test_notebook(new_context, upload_files, base_url, browser, site, app, noteb
     page.wait_for_selector(".jp-CodeCell" if has_code else ".jp-MarkdownCell", timeout=KERNEL_START_MS)
     # Run All while the kernel is still starting can lose the session in WebKit: nothing runs, or Lab
     # shows a "Select Kernel" dialog. A tablet user who taps Run All right away sees the same.
-    page.wait_for_function(KERNEL_READY_JS, timeout=KERNEL_START_MS, polling=100)
+    try:
+        page.wait_for_function(KERNEL_READY_JS, timeout=KERNEL_START_MS, polling=100)
+    except PlaywrightTimeoutError:
+        _fail_kernel_start(page, browser, site, app, notebook, page_errors, console_errors)
     errors = page.locator(".jp-OutputArea-output[data-mime-type='application/vnd.jupyter.stderr']")
     if notebook in UPLOADS:
         with page.expect_file_chooser() as chooser:
@@ -146,6 +149,19 @@ def test_notebook(new_context, upload_files, base_url, browser, site, app, noteb
     assert not [(u, s) for u, s in responses if u.startswith(base_url) and s >= 400 and not FOLDER_LISTING.search(u)]
     assert not console_errors
     context.close()
+
+
+def _fail_kernel_start(page, browser, site, app, notebook, page_errors, console_errors):
+    """The kernel did not become ready: keep a screenshot and what the page shows about the kernel, so that a failure that
+    recurs on the CI runners (the Pyodide kernel in WebKit has timed out here) says whether the kernel is stuck, slow or lost."""
+    FAILURES.mkdir(parents=True, exist_ok=True)
+    shot = FAILURES / f"{browser}-{site}-{app}-{Path(notebook).stem}-kernel.png"
+    page.screenshot(path=shot)
+    status = page.locator(".jp-Notebook-ExecutionIndicator").first.get_attribute("data-status")
+    kernel = page.locator(".jp-Toolbar-kernelName").first.inner_text()
+    started = page.evaluate("window.__kernelStarting === true")
+    pytest.fail(f"kernel not ready after {KERNEL_START_MS // 1000} s: execution indicator {status!r}, status seen to change: {started}, "
+                f"kernel {kernel!r}, page errors {page_errors}, console errors {console_errors}, screenshot {shot}")
 
 
 def _run_all(page, errors, browser, site, app, notebook, page_errors, console_errors):
