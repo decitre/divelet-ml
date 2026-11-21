@@ -847,3 +847,14 @@ def test_init_cnn_sets_xavier_weights_of_linear_and_convolutional_layers_only():
         d2l.init_cnn(module)
     assert np.abs(conv.weight).max() <= np.sqrt(6 / (2 * 9 + 3 * 9)) and np.abs(linear.weight).max() <= np.sqrt(6 / (4 + 5))
     assert (bn.weight == before).all()
+
+
+def test_resnext_block_keeps_the_shape_or_halves_it_with_a_strided_projection():
+    X = np.random.rand(2, 8, 6, 6).astype(np.float32)
+    block = d2l.ResNeXtBlock(8, groups=2, bot_mul=1)
+    assert block(X).shape == (2, 8, 6, 6) and block.conv4 is None
+    assert block.conv2.groups == 4 and block.conv2.weight.shape == (8, 2, 3, 3)  # bot_channels // groups groups, each seeing 2 channels
+    projected = d2l.ResNeXtBlock(12, groups=2, bot_mul=0.5, use_1x1conv=True, strides=2)
+    assert projected(X).shape == (2, 12, 3, 3) and projected.conv2.weight.shape == (6, 2, 3, 3)
+    grads = d2l.param_grads(lambda: (projected(X) ** 2).sum(), projected, projected.parameters())
+    assert all(g.shape == p.shape for g, p in zip(grads, projected.parameters())) and np.abs(grads[0]).sum() > 0

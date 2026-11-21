@@ -17,7 +17,7 @@ divelet-ml is an experimental, browser-native adaptation of the Jupyter notebook
 
 The project aims to preserve the book's chapter structure, mathematical explanations, learning objectives, and exercises while adapting its framework-dependent Python implementations for execution directly in the browser.
 
-**Project status:** Early development. Chapters 2 to 7 are adapted in full, Chapter 9 is adapted in full, and Chapter 8 is planned. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
+**Project status:** Early development. Chapters 2 to 7 and 9 are adapted in full. In Chapter 8, the models are built and their layer shapes shown, and only 8.5 (batch normalization) trains in the browser. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
 
 | Section | Original |
 |---|---|
@@ -64,6 +64,14 @@ The project aims to preserve the book's chapter structure, mathematical explanat
 | [7.4 Multiple Input and Multiple Output Channels][xeus-7.4] [\[p\]][pyodide-7.4] | [d2l.ai][d2l-7.4] |
 | [7.5 Pooling][xeus-7.5] [\[p\]][pyodide-7.5] | [d2l.ai][d2l-7.5] |
 | [7.6 Convolutional Neural Networks (LeNet)][xeus-7.6] [\[p\]][pyodide-7.6] | [d2l.ai][d2l-7.6] |
+| [8.1 Deep Convolutional Neural Networks (AlexNet)][xeus-8.1] [\[p\]][pyodide-8.1] | [d2l.ai][d2l-8.1] |
+| [8.2 Networks Using Blocks (VGG)][xeus-8.2] [\[p\]][pyodide-8.2] | [d2l.ai][d2l-8.2] |
+| [8.3 Network in Network (NiN)][xeus-8.3] [\[p\]][pyodide-8.3] | [d2l.ai][d2l-8.3] |
+| [8.4 Multi-Branch Networks (GoogLeNet)][xeus-8.4] [\[p\]][pyodide-8.4] | [d2l.ai][d2l-8.4] |
+| [8.5 Batch Normalization][xeus-8.5] [\[p\]][pyodide-8.5] | [d2l.ai][d2l-8.5] |
+| [8.6 Residual Networks (ResNet) and ResNeXt][xeus-8.6] [\[p\]][pyodide-8.6] | [d2l.ai][d2l-8.6] |
+| [8.7 Densely Connected Networks (DenseNet)][xeus-8.7] [\[p\]][pyodide-8.7] | [d2l.ai][d2l-8.7] |
+| [8.8 Designing Convolution Network Architectures][xeus-8.8] [\[p\]][pyodide-8.8] | [d2l.ai][d2l-8.8] |
 | [9.1 Working with Sequences][xeus-9.1] [\[p\]][pyodide-9.1] | [d2l.ai][d2l-9.1] |
 | [9.2 Converting Raw Text into Sequence Data][xeus-9.2] [\[p\]][pyodide-9.2] | [d2l.ai][d2l-9.2] |
 | [9.3 Language Models][xeus-9.3] [\[p\]][pyodide-9.3] | [d2l.ai][d2l-9.3] |
@@ -319,6 +327,30 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [xeus-7.6]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=07_convolutional-neural-networks/07.06_lenet.ipynb
 [pyodide-7.6]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=07_convolutional-neural-networks/07.06_lenet.ipynb
 [d2l-7.6]: https://d2l.ai/chapter_convolutional-neural-networks/lenet.html
+[xeus-8.1]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=08_convolutional-modern/08.01_alexnet.ipynb
+[pyodide-8.1]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=08_convolutional-modern/08.01_alexnet.ipynb
+[d2l-8.1]: https://d2l.ai/chapter_convolutional-modern/alexnet.html
+[xeus-8.2]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=08_convolutional-modern/08.02_vgg.ipynb
+[pyodide-8.2]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=08_convolutional-modern/08.02_vgg.ipynb
+[d2l-8.2]: https://d2l.ai/chapter_convolutional-modern/vgg.html
+[xeus-8.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=08_convolutional-modern/08.03_nin.ipynb
+[pyodide-8.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=08_convolutional-modern/08.03_nin.ipynb
+[d2l-8.3]: https://d2l.ai/chapter_convolutional-modern/nin.html
+[xeus-8.4]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=08_convolutional-modern/08.04_googlenet.ipynb
+[pyodide-8.4]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=08_convolutional-modern/08.04_googlenet.ipynb
+[d2l-8.4]: https://d2l.ai/chapter_convolutional-modern/googlenet.html
+[xeus-8.5]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=08_convolutional-modern/08.05_batch-norm.ipynb
+[pyodide-8.5]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=08_convolutional-modern/08.05_batch-norm.ipynb
+[d2l-8.5]: https://d2l.ai/chapter_convolutional-modern/batch-norm.html
+[xeus-8.6]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=08_convolutional-modern/08.06_resnet.ipynb
+[pyodide-8.6]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=08_convolutional-modern/08.06_resnet.ipynb
+[d2l-8.6]: https://d2l.ai/chapter_convolutional-modern/resnet.html
+[xeus-8.7]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=08_convolutional-modern/08.07_densenet.ipynb
+[pyodide-8.7]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=08_convolutional-modern/08.07_densenet.ipynb
+[d2l-8.7]: https://d2l.ai/chapter_convolutional-modern/densenet.html
+[xeus-8.8]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=08_convolutional-modern/08.08_cnn-design.ipynb
+[pyodide-8.8]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=08_convolutional-modern/08.08_cnn-design.ipynb
+[d2l-8.8]: https://d2l.ai/chapter_convolutional-modern/cnn-design.html
 [xeus-9.1]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=09_recurrent-neural-networks/09.01_sequence.ipynb
 [pyodide-9.1]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=09_recurrent-neural-networks/09.01_sequence.ipynb
 [d2l-9.1]: https://d2l.ai/chapter_recurrent-neural-networks/sequence.html
