@@ -57,6 +57,8 @@ The CC BY-SA 4.0 designation for adapted book content does not automatically app
 
 The text of H. G. Wells' *The Time Machine* that Chapter 9's notebooks read is the copy the book uses (`timemachine.txt`, SHA-1 `090b5e7e70c295757f55df93cb0a180b9691891a`, from the book's data host). The work is in the public domain; the file carries no Project Gutenberg notice, and its exact source edition is unknown. It can also be read at [Project Gutenberg](https://www.gutenberg.org/ebooks/35). The site serves it from `data/timemachine/`.
 
+The airfoil self-noise data set that Chapter 12's notebooks read is the NASA data set of the [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/291/airfoil+self+noise) (Thomas Brooks, D. Pope and Michael Marcolini), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), in the copy the book uses (`airfoil_self_noise.dat`, SHA-1 `76e5be1548fd8222e5074cf0faae75edff8cf93f`, from the book's data host). The site serves it from `data/airfoil/`.
+
 The extra notebook `02.05_extra-micrograd` adapts code from [micrograd](https://github.com/karpathy/micrograd) by Andrej Karpathy (MIT License, Copyright (c) 2020 Andrej Karpathy); the license text is in that notebook's "Attribution and changes" section.
 
 Code adapted from the book's sample code is used under its MIT-0 license. divelet-ml's own source code (the `divelet_ml` package, build scripts and tests) is licensed under the Apache License 2.0; see `LICENSE`.

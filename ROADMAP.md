@@ -510,7 +510,7 @@ linear regression on 1,500 examples with five features. The exception is 12.11.
   creators and the CC BY 4.0 license in `NOTICE.md` and in the notebooks that use it.
 - **Tab syntax.** All eleven sections mark their cells with `#@tab pytorch`, `#@tab mxnet`, `#@tab all` and similar, not the
   `%%tab` of the earlier chapters: the conversion has to read both.
-- **New in `divelet_ml`:** the book's older helpers that these sections use and save for each other: `train_2d`, `show_trace_2d`,
+- **New in `divelet_ml`** (added, with tests, and run in Pyodide with synthetic data; no notebook uses them yet): the book's older helpers that these sections use and save for each other: `train_2d`, `show_trace_2d`,
   `annotate`; `Timer`, `Animator`, `Accumulator`; `linreg`, `squared_loss`, `evaluate_loss`, `load_array`, `get_data_ch11`,
   `train_ch11`, `train_concise_ch11`; and for 12.11 `load_data_fashion_mnist` and the training function, which becomes the
   `Trainer`'s autograd loop. The book's optimizer functions read `p.grad`; the adapted ones take the gradients as an argument, as
@@ -518,8 +518,10 @@ linear regression on 1,500 examples with five features. The exception is 12.11.
   `lr_scheduler.MultiStepLR` with `get_last_lr()` (12.11 also changes `param_groups[0]["lr"]` by hand, so the optimizers need
   `param_groups`). 12.5 times loops against matrix products with `Timer`: the notebook says that the times in a browser differ from
   the book's.
-- **Before the notebooks:** the library work (the helpers and optimizers, with tests), the hosted data (`build.sh`, `NOTICE.md`), and
-  the measurement for 12.11.
+- **Done before the notebooks:** the library work above, the hosted data (`build.sh` copies `airfoil_self_noise.dat` to `data/airfoil/` with its
+  checksum, `d2l.airfoil_self_noise` reads it in JupyterLite, and `NOTICE.md` credits it), and `nn.MSELoss(reduction=...)`. In the
+  adapted optimizer functions, the signature is `trainer_fn(params, grads, states, hyperparams)`. Left: the measurement for 12.11 and
+  the notebooks.
 
 - [ ] 12.1 *Optimization and Deep Learning*.
 - [ ] 12.2 *Convexity*.

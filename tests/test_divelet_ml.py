@@ -858,3 +858,238 @@ def test_resnext_block_keeps_the_shape_or_halves_it_with_a_strided_projection():
     assert projected(X).shape == (2, 12, 3, 3) and projected.conv2.weight.shape == (6, 2, 3, 3)
     grads = d2l.param_grads(lambda: (projected(X) ** 2).sum(), projected, projected.parameters())
     assert all(g.shape == p.shape for g, p in zip(grads, projected.parameters())) and np.abs(grads[0]).sum() > 0
+
+
+def test_optimizer_groups_state_and_the_learning_rate_property():
+    w, b = np.zeros(2, np.float32), np.zeros(1, np.float32)
+    opt = optim.SGD([{'params': w, 'lr': 0.5}, {'params': [b]}], lr=0.1, momentum=0.9, weight_decay=0.1)
+    assert [g['lr'] for g in opt.param_groups] == [0.5, 0.1] and opt.lr == 0.5 and opt.params == [w, b] and opt.state == [{}, {}]
+    opt.lr = 0.2
+    assert [g['lr'] for g in opt.param_groups] == [0.2, 0.2]
+    with pytest.raises(NotImplementedError):
+        type('Bad', (optim.Optimizer,), {})([w], weight_decay=0).step([np.ones(2)])
+
+
+def test_sgd_with_momentum_uses_a_velocity_that_starts_as_the_first_gradient():
+    w = np.array([1.0, -1.0], np.float32)
+    opt = optim.SGD([w], lr=0.1, momentum=0.9)
+    g1, g2 = np.array([1.0, 2.0], np.float32), np.array([0.5, -1.0], np.float32)
+    opt.step([g1])
+    np.testing.assert_allclose(w, [0.9, -1.2], rtol=1e-6)  # w - lr * g1
+    opt.step([g2])
+    np.testing.assert_allclose(w, np.array([0.9, -1.2]) - 0.1 * (0.9 * g1 + g2), rtol=1e-6)  # w - lr * (momentum * v + g2)
+
+
+def _reference_steps(update, grads, w0):
+    """Apply `update(w, g, state)` for each gradient, with plain NumPy float64."""
+    w, state = np.array(w0, np.float64), {}
+    for g in grads:
+        update(w, np.asarray(g, np.float64), state)
+    return w
+
+
+def test_adaptive_optimizers_follow_pytorchs_formulas():
+    grads = [np.array([0.3, -0.7], np.float32), np.array([0.1, 0.4], np.float32), np.array([-0.2, 0.2], np.float32)]
+    w0 = np.array([1.0, -2.0])
+
+    def adagrad(w, g, s):
+        s['sum'] = s.get('sum', 0) + g ** 2
+        w -= 0.1 * g / (np.sqrt(s['sum']) + 1e-10)
+
+    def rmsprop(w, g, s):
+        s['v'] = 0.9 * s.get('v', 0) + 0.1 * g ** 2
+        w -= 0.01 * g / (np.sqrt(s['v']) + 1e-8)
+
+    def adadelta(w, g, s):
+        s['v'] = 0.9 * s.get('v', 0) + 0.1 * g ** 2
+        delta = np.sqrt(s.get('d', 0) + 1e-6) / np.sqrt(s['v'] + 1e-6) * g
+        s['d'] = 0.9 * s.get('d', 0) + 0.1 * delta ** 2
+        w -= 1.0 * delta
+
+    def adam(w, g, s):
+        s['t'] = s.get('t', 0) + 1
+        s['m'] = 0.9 * s.get('m', 0) + 0.1 * g
+        s['v'] = 0.999 * s.get('v', 0) + 0.001 * g ** 2
+        w -= 0.01 / (1 - 0.9 ** s['t']) * s['m'] / (np.sqrt(s['v']) / np.sqrt(1 - 0.999 ** s['t']) + 1e-8)
+
+    for cls, kwargs, reference in [(optim.Adagrad, {'lr': 0.1}, adagrad), (optim.RMSprop, {'lr': 0.01, 'alpha': 0.9}, rmsprop),
+                                   (optim.Adadelta, {'rho': 0.9}, adadelta), (optim.Adam, {'lr': 0.01}, adam)]:
+        w = w0.astype(np.float32)
+        opt = cls([w], **kwargs)
+        for g in grads:
+            opt.step([g])
+        np.testing.assert_allclose(w, _reference_steps(reference, grads, w0), rtol=1e-4, err_msg=cls.__name__)
+        assert w.dtype == np.float32
+    w = w0.astype(np.float32)
+    optim.Adam([w], lr=0.01, weight_decay=0.5).step([np.zeros(2, np.float32)])  # weight decay adds weight_decay * w to the gradient
+    assert (np.abs(w - w0) > 0).all()
+
+
+def test_multi_step_lr_multiplies_at_each_milestone():
+    opt = optim.SGD([np.zeros(1, np.float32)], lr=0.5)
+    scheduler = optim.lr_scheduler.MultiStepLR(opt, milestones=[2, 4, 4], gamma=0.5)
+    seen = []
+    for _ in range(5):
+        seen.append(scheduler.get_last_lr()[0])
+        scheduler.step()
+    assert seen == [0.5, 0.5, 0.25, 0.25, 0.0625] and scheduler.get_last_lr() == [0.0625]  # the milestone 4 is listed twice
+
+
+def test_mse_loss_reductions():
+    a, b = np.array([1.0, 3.0]), np.array([0.0, 1.0])
+    assert nn.MSELoss()(a, b) == 2.5 and nn.MSELoss('sum')(a, b) == 5.0 and nn.MSELoss(reduction='none')(a, b).tolist() == [1.0, 4.0]
+    with pytest.raises(AssertionError, match='unknown reduction'):
+        nn.MSELoss('max')
+
+
+def test_timer_and_accumulator():
+    timer = d2l.Timer()
+    first = timer.stop()
+    timer.start()
+    second = timer.stop()
+    assert timer.times == [first, second] and timer.sum() == first + second and timer.avg() == (first + second) / 2
+    assert timer.cumsum() == [first, first + second]
+    acc = d2l.Accumulator(2)
+    acc.add(1, np.float32(2.5))
+    acc.add(3, 4)
+    assert (acc[0], acc[1]) == (4.0, 6.5)
+    acc.reset()
+    assert acc.data == [0.0, 0.0]
+
+
+def test_linreg_squared_loss_evaluate_loss_and_accuracy():
+    X, w, b = np.arange(6.0).reshape(3, 2), np.array([[1.0], [2.0]]), np.array([0.5])
+    y_hat = d2l.linreg(X, w, b)
+    assert y_hat.tolist() == [[2.5], [8.5], [14.5]]
+    np.testing.assert_allclose(d2l.squared_loss(y_hat, np.array([2.5, 6.5, 14.5])), [[0.0], [2.0], [0.0]])
+    assert d2l.evaluate_loss(lambda X: d2l.linreg(X, w, b), [(X, np.array([2.5, 6.5, 14.5]))], d2l.squared_loss) == 2 / 3
+    assert d2l.accuracy(np.array([[0.1, 0.9], [0.8, 0.2]]), np.array([1, 1])) == 1.0 and d2l.accuracy(np.array([1, 0]), np.array([1, 1])) == 1.0
+
+
+def test_evaluate_accuracy_puts_the_model_in_evaluation_mode():
+    model = nn.Sequential(nn.Flatten(), nn.Linear(4, 2))
+    model[1].weight[:], model[1].bias[:] = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], np.float32), 0
+    batches = [(np.eye(4, dtype=np.float32)[[0, 1]], np.array([0, 1])), (np.eye(4, dtype=np.float32)[[1, 0]], np.array([0, 1]))]
+    assert d2l.evaluate_accuracy_gpu(model, batches) == 0.5 and not model.training
+    assert d2l.evaluate_accuracy_gpu(lambda X: np.array([[1.0, 0.0]] * len(X)), [(np.zeros((3, 1)), np.array([0, 0, 1]))]) == 2 / 3
+
+
+def test_annotate_and_the_animator_plot_points_and_show_them_only_in_jupyter(monkeypatch):
+    import sys
+    from divelet_ml import plotting
+    d2l.plt.figure()
+    d2l.annotate('here', (0.5, 0.5), (0.1, 0.1))
+    assert [t.get_text() for t in d2l.plt.gca().texts] == ['here']
+    shown = []
+    monkeypatch.setattr(plotting, '_show', shown.append)
+    animator = d2l.Animator(xlabel='epoch', legend=['a', 'b'], xlim=[0, 3], ylim=[0, 3])
+    animator.add(1, (1.0, None))
+    animator.add([2, 2], [2.0, 3.0])
+    animator.add(3, 2.5)  # a scalar is one line
+    assert animator.X == [[1, 2, 3], [2]] and animator.Y == [[1.0, 2.0, 2.5], [3.0]] and len(shown) == 3
+    d2l.plt.close('all')
+    monkeypatch.undo()
+    monkeypatch.setitem(sys.modules, 'IPython', None)  # no IPython: nothing is shown
+    plotting._show(d2l.plt.figure())
+    monkeypatch.undo()
+    import IPython
+    monkeypatch.setattr(IPython, 'get_ipython', lambda: None)  # IPython but no shell
+    plotting._show(d2l.plt.figure())
+    calls = []
+    monkeypatch.setattr(IPython, 'get_ipython', lambda: object())
+    monkeypatch.setattr(IPython.display, 'display', lambda fig: calls.append('display'))
+    monkeypatch.setattr(IPython.display, 'clear_output', lambda wait: calls.append('clear'))
+    plotting._show(d2l.plt.figure())
+    assert calls == ['display', 'clear']
+    d2l.plt.close('all')
+
+
+def test_airfoil_data_comes_from_the_site_in_jupyterlite_and_is_checked(tmp_path, monkeypatch):
+    from divelet_ml import data
+    text = b'800\t0\t0.3048\t71.3\t0.0026\t126.2\n1000\t0\t0.3048\t71.3\t0.0026\t125.2\n'
+    monkeypatch.setattr(data, 'AIRFOIL_SHA1', hashlib.sha1(text).hexdigest())
+    monkeypatch.setattr(data, '_site_url', lambda: 'https://site')
+    monkeypatch.setattr(data, '_read_url', lambda url: text if url == 'https://site/data/airfoil/airfoil_self_noise.dat' else pytest.fail(url))
+    assert data.airfoil_self_noise() == text
+    monkeypatch.setattr(data, 'AIRFOIL_SHA1', '0' * 40)
+    with pytest.raises(AssertionError, match='SHA-1'):
+        data.airfoil_self_noise()
+    monkeypatch.setattr(data, '_site_url', lambda: None)  # outside JupyterLite: downloaded to `root`, with the book's hash
+    calls = []
+    (tmp_path / 'airfoil_self_noise.dat').write_bytes(text)
+    monkeypatch.setattr(data, 'download', lambda url, folder, sha1_hash: calls.append((url, folder, sha1_hash)) or str(tmp_path / 'airfoil_self_noise.dat'))
+    assert data.airfoil_self_noise(str(tmp_path)) == text and calls == [(d2l.DATA_URL + 'airfoil_self_noise.dat', str(tmp_path), '0' * 40)]
+
+
+def test_get_data_ch11_standardizes_and_load_array_batches(monkeypatch):
+    from divelet_ml import data
+    rows = np.random.rand(30, 6) * 100
+    monkeypatch.setattr(data, 'airfoil_self_noise', lambda root='../data': '\n'.join('\t'.join(str(v) for v in r) for r in rows).encode())
+    data_iter, features = d2l.get_data_ch11(batch_size=8, n=20)
+    batches = list(data_iter)
+    assert features == 5 and len(data_iter) == 3 and batches[0][0].shape == (8, 5) and batches[0][1].shape == (8,) and batches[0][0].dtype == np.float32
+    allX = np.concatenate([X for X, _ in batches])
+    expected = (rows - rows.mean(axis=0)) / rows.std(axis=0)  # the statistics of all 30 rows, as in the book
+    np.testing.assert_allclose(sorted(allX[:, 0]), sorted(expected[:20, 0]), atol=1e-5)
+    assert not d2l.load_array((np.arange(4), np.arange(4)), 2, is_train=False).shuffle
+
+
+def test_load_data_fashion_mnist_gives_training_and_validation_loaders(monkeypatch):
+    from divelet_ml import data
+    sets = [data.ArrayDataset(np.zeros((5, 1, 4, 4), np.float32), np.arange(5)), data.ArrayDataset(np.ones((3, 1, 4, 4), np.float32), np.arange(3))]
+    seen = []
+    monkeypatch.setattr(data, 'load_fashion_mnist', lambda root, resize: seen.append((root, resize)) or sets)
+    train, val = d2l.load_data_fashion_mnist(2, resize=(4, 4))
+    assert seen == [('../data', (4, 4))] and len(train) == 3 and len(val) == 2 and train.shuffle and not val.shuffle
+    d2l.load_data_fashion_mnist(2)
+    assert seen[-1] == ('../data', (28, 28))
+
+
+def test_train_2d_and_show_trace_2d():
+    d2l.plt.close('all')
+
+    def gd(x1, x2, s1, s2):
+        return x1 - 0.1 * x1, x2 - 0.1 * x2, 0, 0
+    results = d2l.train_2d(gd, steps=3)
+    assert results[0] == (-5, -2) and np.allclose(results[-1], (-5 * 0.9 ** 3, -2 * 0.9 ** 3))
+    def with_gradient(x1, x2, s1, s2, f_grad):
+        g1, g2 = f_grad(x1, x2)
+        return x1 - g1, x2 - g2, 0, 0
+    assert d2l.train_2d(with_gradient, steps=2, f_grad=lambda x1, x2: (0.5 * x1, 0.5 * x2))[-1] == (-5 * 0.25, -2 * 0.25)
+    d2l.show_trace_2d(lambda x1, x2: x1 ** 2 + 2 * x2 ** 2, results)
+    assert len(d2l.plt.gca().lines) == 1 and d2l.plt.gca().get_xlabel() == 'x1'
+    d2l.plt.close('all')
+
+
+def _quiet_animator(monkeypatch):
+    from divelet_ml import plotting
+    monkeypatch.setattr(plotting, '_show', lambda fig: None)
+
+
+def test_train_ch11_updates_the_parameters_with_the_trainers_gradients(monkeypatch):
+    _quiet_animator(monkeypatch)
+    rng = np.random.RandomState(0)
+    X = rng.randn(200, 5).astype(np.float32)
+    y = (X @ np.array([1, -2, 0.5, 0, 3], np.float32)).astype(np.float32)
+    data_iter = d2l.load_array((X, y), 10)
+    seen = []
+
+    def sgd(params, grads, states, hyperparams):
+        seen.append((len(params), states, hyperparams))
+        for p, g in zip(params, grads):
+            p -= hyperparams['lr'] * g
+    times, losses = d2l.train_ch11(sgd, 'state', {'lr': 0.1}, data_iter, 5, num_epochs=2)
+    assert seen[0] == (2, 'state', {'lr': 0.1}) and len(seen) == 40 and len(times) == len(losses) == 2 and losses[-1] < losses[0]  # a point every 200 examples
+
+
+@pytest.mark.parametrize('trainer_fn, hyperparams', [(optim.SGD, {'lr': 0.05, 'momentum': 0.5}), (optim.Adam, {'lr': 0.05})])
+def test_train_concise_ch11_trains_a_linear_layer_with_an_optimizer(monkeypatch, trainer_fn, hyperparams):
+    _quiet_animator(monkeypatch)
+    rng = np.random.RandomState(0)
+    X = rng.randn(200, 5).astype(np.float32)
+    y = (X @ np.array([1, -2, 0.5, 0, 3], np.float32)).astype(np.float32)
+    animators = []
+    original = d2l.Animator
+    monkeypatch.setattr('divelet_ml.optimization.Animator', lambda **kw: animators.append(original(**kw)) or animators[-1])
+    d2l.train_concise_ch11(trainer_fn, hyperparams, d2l.load_array((X, y), 10), num_epochs=3)
+    assert animators[0].Y[0][-1] < animators[0].Y[0][0]
