@@ -5,6 +5,7 @@
 A fast check before the browser smoke test; it does not show that a notebook runs in JupyterLite.
 """
 
+import re
 from pathlib import Path
 
 import nbformat
@@ -21,3 +22,25 @@ def test_notebook_runs(path):
     NotebookClient(nb, timeout=300, kernel_name="python3").execute()
     stderr = [o["text"] for c in nb.cells if c.cell_type == "code" for o in c.outputs if o.get("name") == "stderr"]
     assert not stderr
+
+
+# Book markup that a conversion can leave behind. The highlight markers `[**...**]` and `(**...**)` and the d2lbook directives show as
+# literal text in JupyterLab. Notebooks of Chapters 6, 7 and 9 still have some: clean one and remove its name here (strict xfail: a clean
+# notebook that is still listed fails).
+HIGHLIGHT = [re.compile(r"\[\*\*.+?\*\*\](?!\()", re.S), re.compile(r"\(\*\*.+?\*\*\)", re.S)]
+DIRECTIVE = re.compile(r":(numref|eqref|label|cite|citet|begin_tab|end_tab|width|height|eqlabel):|\.\./img/|\[\[CITE")
+CODE_LEFTOVER = re.compile(r"tab\.selected|%%tab|^from d2l import|^import torch|^from torch", re.M)
+NOT_YET_CLEAN = {"06.01_model-construction", "06.05_custom-layer", "06.06_read-write", "06.07_use-gpu", "07.02_conv-layer", "07.05_pooling",
+                 "07.06_lenet", "09.01_sequence", "09.02_text-sequence", "09.03_language-model", "09.04_rnn", "09.05_rnn-scratch",
+                 "09.06_rnn-concise"}
+
+
+@pytest.mark.parametrize("path", NOTEBOOKS, ids=lambda p: p.stem)
+def test_notebook_has_no_book_markup_left(path, request):
+    if path.stem in NOT_YET_CLEAN:
+        request.applymarker(pytest.mark.xfail(strict=True, reason="highlight markers or directives to strip, see NOT_YET_CLEAN"))
+    nb = nbformat.read(path, as_version=4)
+    prose = [re.sub(r"```.*?```", "", c.source, flags=re.S) for c in nb.cells if c.cell_type == "markdown"]  # code shown in a note is left alone
+    left = [m.group(0)[:70] for text in prose for rx in HIGHLIGHT + [DIRECTIVE] for m in rx.finditer(text)]
+    left += [m.group(0) for c in nb.cells if c.cell_type == "code" for m in CODE_LEFTOVER.finditer(c.source)]
+    assert not left, left
