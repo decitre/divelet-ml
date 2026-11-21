@@ -483,19 +483,67 @@ recurrent networks. The text models are small enough for a browser; training the
 - [x] 9.6 *Concise Implementation of Recurrent Neural Networks*.
 - [x] 9.7 *Backpropagation Through Time* (no code).
 
+### Chapter 12 — Optimization Algorithms
+
+Upstream: `chapter_optimization/`. Eleven sections: optimization and deep learning, convexity, gradient descent,
+stochastic and minibatch gradient descent, momentum, Adagrad, RMSProp, Adadelta, Adam, and learning rate scheduling.
+Compute is small: most sections minimize one- and two-variable functions and plot the paths, and 12.5 to 12.10 train a
+linear regression on 1,500 examples with five features. The exception is 12.11.
+
+- **Measured** (one epoch of the book's minibatch loop on 1,500 examples, forward and backward by autograd, batch size 1, the
+  slowest case): 0.17 s in CPython and 0.26 s in Pyodide, about 0.11 and 0.17 ms per step. The book's two epochs per run cost
+  well under a second in either, so 12.1 to 12.10 need no cut. 3D plots (`plot_wireframe`, used in 12.1 and 12.2) work in
+  Pyodide's matplotlib.
+- **12.11 is the cost.** It trains LeNet on Fashion-MNIST for 30 epochs in six runs (constant rate, a rate changed by hand,
+  square-root, factor, multi-step and cosine schedules, with and without warmup). At 0.42 million multiply-adds per image, one
+  epoch of 60,000 images is about 50 s in Pyodide (an estimate, as for 8.5), so the book's budget is about 2.5 hours there, and it
+  would also exceed the 300 s the CPython notebook test gives a notebook. Decision: use `d2l.browser_epochs` and
+  `d2l.browser_examples` as in 7.6, with values measured when the notebook is written so that the CPython test runs in minutes, a
+  `RUN_MS_NOTEBOOKS` limit, and a figure of the book's full runs for each training cell (about an hour of CPython for the six
+  runs, made once with `tools/full_run_figures.py`; CI does not run it).
+- **The data** of 12.5 to 12.10 is the airfoil self-noise data set (NASA; UCI), which the book downloads from its own bucket, and
+  a browser cannot read that (the problem of 5.7 and 9.2). License checked (2026-11-21): UCI's page for the data set says CC BY 4.0
+  (its API leaves the field empty); the creators are Thomas Brooks, D. Pope and Michael Marcolini. The book's copy,
+  `airfoil_self_noise.dat`, is 59,984 bytes with 1,503 rows of six numbers and SHA-1 `76e5be1548fd8222e5074cf0faae75edff8cf93f`,
+  the value the book's `download` checks; it has the same number of rows as UCI's, but I did not compare the two byte for byte.
+  Plan: host the file on the site like Fashion-MNIST (`build.sh` copies it to `data/airfoil/` with its checksum) and credit its
+  creators and the CC BY 4.0 license in `NOTICE.md` and in the notebooks that use it.
+- **Tab syntax.** All eleven sections mark their cells with `#@tab pytorch`, `#@tab mxnet`, `#@tab all` and similar, not the
+  `%%tab` of the earlier chapters: the conversion has to read both.
+- **New in `divelet_ml`:** the book's older helpers that these sections use and save for each other: `train_2d`, `show_trace_2d`,
+  `annotate`; `Timer`, `Animator`, `Accumulator`; `linreg`, `squared_loss`, `evaluate_loss`, `load_array`, `get_data_ch11`,
+  `train_ch11`, `train_concise_ch11`; and for 12.11 `load_data_fashion_mnist` and the training function, which becomes the
+  `Trainer`'s autograd loop. The book's optimizer functions read `p.grad`; the adapted ones take the gradients as an argument, as
+  `optim.SGD.step(grads)` does. The concise versions need `optim.SGD` with momentum, `Adagrad`, `RMSprop`, `Adadelta` and `Adam`, and
+  `lr_scheduler.MultiStepLR` with `get_last_lr()` (12.11 also changes `param_groups[0]["lr"]` by hand, so the optimizers need
+  `param_groups`). 12.5 times loops against matrix products with `Timer`: the notebook says that the times in a browser differ from
+  the book's.
+- **Before the notebooks:** the library work (the helpers and optimizers, with tests), the hosted data (`build.sh`, `NOTICE.md`), and
+  the measurement for 12.11.
+
+- [ ] 12.1 *Optimization and Deep Learning*.
+- [ ] 12.2 *Convexity*.
+- [ ] 12.3 *Gradient Descent*.
+- [ ] 12.4 *Stochastic Gradient Descent*.
+- [ ] 12.5 *Minibatch Stochastic Gradient Descent*: needs the hosted data.
+- [ ] 12.6 *Momentum*.
+- [ ] 12.7 *Adagrad*.
+- [ ] 12.8 *RMSProp*.
+- [ ] 12.9 *Adadelta*.
+- [ ] 12.10 *Adam*.
+- [ ] 12.11 *Learning Rate Scheduling*: reduced training and figures of the full runs.
+
 ### Later chapters
 
-42 of the book's 165 sections are adapted. The rest, in the book's order, with an
+57 of the book's 165 sections are adapted (Chapters 2 to 9, and 11.3). The rest, in the book's order, with an
 estimate of how well each suits a browser kernel (a judgement, to revisit when a
-chapter is planned; none after Chapter 9 is planned in detail):
+chapter is planned; none besides Chapter 12, above, is planned in detail):
 
 | Chapter | Sections | Outlook |
 |---|---:|---|
-| 8 Modern Convolutional Neural Networks | 8 | Planned above: shapes only, except batch normalization |
-| 9 Recurrent Neural Networks | 7 | Planned above |
 | 10 Modern Recurrent Neural Networks | 8 | As 9, with longer training |
 | 11 Attention Mechanisms and Transformers | 8 left (11.3 done) | Builds on the Chapter 3–5 framework; training is the cost |
-| 12 Optimization Algorithms | 11 | Small examples and plots; a good candidate |
+| 12 Optimization Algorithms | 11 | Planned above |
 | 13 Computational Performance | 7 | Mostly GPUs, hybridization and multi-GPU: little applies to a browser |
 | 14 Computer Vision | 14 | Heavy: large models and pretrained weights |
 | 15 Natural Language Processing: Pretraining | 10 | Heavy: large corpora |
