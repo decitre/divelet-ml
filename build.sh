@@ -87,6 +87,15 @@ mkdir -p "$CACHE/airfoil" "$PUBLIC/data/airfoil"
 echo "74c75fd71783f1e6b71f8a622b993dc592897a97cd689c5090a07147a1b097b3  $CACHE/airfoil/$AIRFOIL" | sha256sum -c --quiet -
 cp "$CACHE/airfoil/$AIRFOIL" "$PUBLIC/data/airfoil/"
 
+echo "== English-French sentence pairs"
+# The Tatoeba Project's English to French pairs (CC BY 2.0 France) in ManyThings' file `fra-eng.zip`, as the book has it (its `_about.txt` carries the credit
+# and the terms), served from the site's own host to Chapter 10's notebooks. The zip has no per-sentence authors: the credit is to the Tatoeba contributors.
+FRA_ENG=fra-eng.zip
+mkdir -p "$CACHE/fra-eng" "$PUBLIC/data/fra-eng"
+[ -f "$CACHE/fra-eng/$FRA_ENG" ] || curl -fsSL -o "$CACHE/fra-eng/$FRA_ENG" "https://d2l-data.s3.amazonaws.com/$FRA_ENG"
+echo "fa96382b2c8b609e1662654c1e6e6baeb8d30b3bf63dfb4a5a261cc36347df13  $CACHE/fra-eng/$FRA_ENG" | sha256sum -c --quiet -
+cp "$CACHE/fra-eng/$FRA_ENG" "$PUBLIC/data/fra-eng/"
+
 cat > "$PUBLIC/index.html" <<'HTML'
 <!doctype html>
 <meta charset="utf-8">

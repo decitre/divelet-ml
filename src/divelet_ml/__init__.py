@@ -2,7 +2,7 @@
 
 `add_to_class`, `HyperParameters`, `DataModule`, `check_shape`, `use_svg_display`, `set_figsize`, `set_axes`, `plot`,
 `show_heatmaps`, `show_images`, `ProgressBoard`, `FashionMNIST`, `Classifier`, `SoftmaxRegression`, `Module`, `Trainer`, `SyntheticRegressionData`, `SGD`, `LinearRegressionScratch`,
-`LinearRegression`, `Vocab`, `TimeMachine`, `RNNScratch`, `RNNLMScratch`, `RNN`, `RNNLM`, `ResNeXtBlock`, `check_len`, `init_cnn`, and the helpers of Chapter 12 (`Timer`, `Animator`, `train_2d`, `train_ch11` and others) are adapted from `d2l/torch.py` in Dive into Deep Learning
+`LinearRegression`, `Vocab`, `TimeMachine`, `RNNScratch`, `RNNLMScratch`, `RNN`, `RNNLM`, `ResNeXtBlock`, `check_len`, `init_cnn`, the helpers of Chapter 12 (`Timer`, `Animator`, `train_2d`, `train_ch11` and others), and those of Chapter 10 (`GRU`, `MTFraEng`, `Encoder`, `Decoder`, `EncoderDecoder`, `Seq2Seq`, `bleu` and others) are adapted from `d2l/torch.py` in Dive into Deep Learning
 (https://github.com/d2l-ai/d2l-en, commit 23d7a5aecceee57d1292c56e90cce307f183bb0a),
 Copyright 2019 Amazon.com, Inc. or its affiliates, MIT-0 license (LICENSE-SAMPLECODE).
 Only what adapted chapters use is here. The code is in submodules (`utils`, `plotting`, `data`, `training`,
@@ -21,11 +21,12 @@ from divelet_ml import nn, optim
 from divelet_ml.utils import (add_to_class, HyperParameters, check_shape, check_len, numpy, Timer, Accumulator, linreg, squared_loss,
                               evaluate_loss, accuracy, evaluate_accuracy_gpu, param_grads, browser_epochs,
                               browser_examples, corr2d, cpu, gpu, num_gpus, try_gpu, try_all_gpus)
-from divelet_ml.plotting import use_svg_display, set_figsize, set_axes, plot, show_heatmaps, show_images, ProgressBoard, annotate, Animator
-from divelet_ml.data import (DataModule, ArrayLoader, ArrayDataset, load_fashion_mnist, download, DATA_URL, SyntheticRegressionData, FashionMNIST,
-                             Vocab, TimeMachine, time_machine_text, airfoil_self_noise, load_array, get_data_ch11, load_data_fashion_mnist)
+from divelet_ml.plotting import use_svg_display, set_figsize, set_axes, plot, show_heatmaps, show_images, ProgressBoard, annotate, Animator, show_list_len_pair_hist
+from divelet_ml.data import (DataModule, ArrayLoader, ArrayDataset, load_fashion_mnist, download, extract, DATA_URL, SyntheticRegressionData, FashionMNIST,
+                             Vocab, TimeMachine, time_machine_text, fra_eng_text, MTFraEng, airfoil_self_noise, load_array, get_data_ch11, load_data_fashion_mnist)
 from divelet_ml.training import Module, Trainer, SGD, LinearRegressionScratch, LinearRegression, Classifier, SoftmaxRegression, init_cnn
-from divelet_ml.rnn import RNNScratch, RNNLMScratch, RNN, RNNLM
+from divelet_ml.rnn import RNNScratch, RNNLMScratch, RNN, RNNLM, GRU
+from divelet_ml.seq2seq import Encoder, Decoder, EncoderDecoder, Seq2SeqEncoder, Seq2Seq, init_seq2seq, bleu
 from divelet_ml.cnn import ResNeXtBlock
 from divelet_ml.optimization import train_2d, show_trace_2d, train_ch11, train_concise_ch11
 
@@ -94,6 +95,18 @@ __all__ = [
     'show_trace_2d',
     'train_ch11',
     'train_concise_ch11',
+    'extract',
+    'fra_eng_text',
+    'MTFraEng',
+    'show_list_len_pair_hist',
+    'GRU',
+    'Encoder',
+    'Decoder',
+    'EncoderDecoder',
+    'Seq2SeqEncoder',
+    'Seq2Seq',
+    'init_seq2seq',
+    'bleu',
 ]
 
 

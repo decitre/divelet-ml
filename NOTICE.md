@@ -59,6 +59,8 @@ The text of H. G. Wells' *The Time Machine* that Chapter 9's notebooks read is t
 
 The airfoil self-noise data set that Chapter 12's notebooks read is the NASA data set of the [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/291/airfoil+self+noise) (Thomas Brooks, D. Pope and Michael Marcolini), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), in the copy the book uses (`airfoil_self_noise.dat`, SHA-1 `76e5be1548fd8222e5074cf0faae75edff8cf93f`, from the book's data host). The site serves it from `data/airfoil/`.
 
+The English to French sentence pairs that Chapter 10's notebooks read are the [Tatoeba Project](https://tatoeba.org)'s, in the file that [ManyThings](https://www.manythings.org/anki/) publishes for Anki and the book uses (`fra-eng.zip`, SHA-1 `94646ad1522d915e7b0f9296181140edcf86a4f5`, from the book's data host), licensed under [CC BY 2.0 France](https://creativecommons.org/licenses/by/2.0/fr/). They are the work of the Tatoeba contributors; the file does not carry the names of the authors of the sentences, which Tatoeba's terms ask to be credited, so the credit is to the project (www.manythings.org/anki and tatoeba.org, as the file's own `_about.txt` asks). The site serves the zip from `data/fra-eng/`.
+
 The extra notebook `02.05_extra-micrograd` adapts code from [micrograd](https://github.com/karpathy/micrograd) by Andrej Karpathy (MIT License, Copyright (c) 2020 Andrej Karpathy); the license text is in that notebook's "Attribution and changes" section.
 
 Code adapted from the book's sample code is used under its MIT-0 license. divelet-ml's own source code (the `divelet_ml` package, build scripts and tests) is licensed under the Apache License 2.0; see `LICENSE`.

@@ -147,6 +147,18 @@ class ProgressBoard(HyperParameters):
         display.clear_output(wait=True)
 
 
+def show_list_len_pair_hist(legend, xlabel, ylabel, xlist, ylist):
+    """Plot the histogram for list length pairs."""
+    set_figsize()
+    plt = _pyplot()
+    _, _, patches = plt.hist([[len(l) for l in xlist], [len(l) for l in ylist]])
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    for patch in patches[1].patches:
+        patch.set_hatch('/')
+    plt.legend(legend)
+
+
 def annotate(text, xy, xytext):
     """Annotate the current axes with an arrow from `xytext` to `xy`."""
     _pyplot().gca().annotate(text, xy=xy, xytext=xytext, arrowprops=dict(arrowstyle='->'))
