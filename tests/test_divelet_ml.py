@@ -1095,3 +1095,274 @@ def test_train_concise_ch11_trains_a_linear_layer_with_an_optimizer(monkeypatch,
     monkeypatch.setattr('divelet_ml.optimization.Animator', lambda **kw: animators.append(original(**kw)) or animators[-1])
     d2l.train_concise_ch11(trainer_fn, hyperparams, d2l.load_array((X, y), 10), num_epochs=3)
     assert animators[0].Y[0][-1] < animators[0].Y[0][0]
+
+
+# ---- Chapter 10: nn.Linear on sequences, nn.Embedding, nn.LSTM, nn.GRU, the data and the encoder--decoder
+
+def test_linear_flattens_leading_dimensions_and_keeps_its_gradients():
+    linear = nn.Linear(3, 2)
+    X = np.random.rand(4, 5, 3).astype(np.float32)
+    np.testing.assert_allclose(linear(X), X @ linear.weight.T + linear.bias, rtol=1e-5, atol=1e-6)
+    assert linear(X).shape == (4, 5, 2) and linear(X[0, 0]).shape == (2,) and linear(X[0]).shape == (5, 2)
+    grads = d2l.param_grads(lambda: (linear(X) ** 2).sum(), linear, linear.parameters())
+    Y = X @ linear.weight.T + linear.bias
+    np.testing.assert_allclose(grads[0], 2 * np.einsum('bto,bti->oi', Y, X), rtol=1e-4)
+    np.testing.assert_allclose(grads[1], 2 * Y.sum((0, 1)), rtol=1e-4)
+    assert nn.Linear(3, 2, bias=False)(X).shape == (4, 5, 2)
+
+
+def test_embedding_looks_up_rows_and_has_a_dense_gradient():
+    emb = nn.Embedding(6, 4)
+    assert emb.weight.dtype == np.float32 and emb.weight.shape == (6, 4) and len(emb.parameters()) == 1
+    X = np.array([[0, 2, 2], [5, 0, 1]])
+    out = emb(X)
+    assert out.shape == (2, 3, 4) and np.array_equal(out[0, 1], emb.weight[2])
+    grad, = d2l.param_grads(lambda: emb(X).sum(), emb, emb.parameters())
+    counts = np.bincount(X.reshape(-1), minlength=6)
+    np.testing.assert_allclose(grad, np.repeat(counts[:, None], 4, 1))  # each row's gradient is how often it was used
+    assert emb(X.astype(np.int32)).shape == (2, 3, 4)
+
+
+def _sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+
+def test_nn_lstm_matches_a_loop_with_pytorchs_gates_and_state_shapes():
+    lstm = nn.LSTM(3, 4, num_layers=2)
+    assert len(lstm.parameters()) == 8 and all(p.dtype == np.float32 for p in lstm.parameters())
+    assert lstm.weight_ih_l0.shape == (16, 3) and lstm.weight_ih_l1.shape == (16, 4)
+    X = np.random.rand(5, 2, 3).astype(np.float32)
+    outputs, (H, C) = lstm(X)
+    assert outputs.shape == (5, 2, 4) and H.shape == C.shape == (2, 2, 4)
+    x = X
+    for k in range(2):
+        W_ih, W_hh, b_ih, b_hh = (getattr(lstm, f'{n}_l{k}') for n in ('weight_ih', 'weight_hh', 'bias_ih', 'bias_hh'))
+        h = c = np.zeros((2, 4), np.float32)
+        out = []
+        for t in range(5):
+            g = x[t] @ W_ih.T + b_ih + h @ W_hh.T + b_hh
+            i, f, gg, o = _sigmoid(g[:, :4]), _sigmoid(g[:, 4:8]), np.tanh(g[:, 8:12]), _sigmoid(g[:, 12:])
+            c = f * c + i * gg
+            h = o * np.tanh(c)
+            out.append(h)
+        x = np.stack(out)
+        np.testing.assert_allclose(H[k], h, rtol=1e-5, atol=1e-6)
+        np.testing.assert_allclose(C[k], c, rtol=1e-5, atol=1e-6)
+    np.testing.assert_allclose(outputs, x, rtol=1e-5, atol=1e-6)
+    _, middle = lstm(X[:3])  # continuing from a state is the same as running all the steps at once
+    np.testing.assert_allclose(lstm(X[3:], middle)[0], outputs[3:], rtol=1e-5, atol=1e-6)
+
+
+def test_nn_gru_matches_a_loop_with_pytorchs_gates_and_state_shapes():
+    gru = nn.GRU(3, 4, num_layers=2)
+    assert len(gru.parameters()) == 8 and gru.weight_ih_l0.shape == (12, 3) and gru.weight_hh_l1.shape == (12, 4)
+    X = np.random.rand(5, 2, 3).astype(np.float32)
+    outputs, H = gru(X)
+    assert outputs.shape == (5, 2, 4) and H.shape == (2, 2, 4)
+    x = X
+    for k in range(2):
+        W_ih, W_hh, b_ih, b_hh = (getattr(gru, f'{n}_l{k}') for n in ('weight_ih', 'weight_hh', 'bias_ih', 'bias_hh'))
+        h = np.zeros((2, 4), np.float32)
+        out = []
+        for t in range(5):
+            gi, gh = x[t] @ W_ih.T + b_ih, h @ W_hh.T + b_hh
+            r, z = _sigmoid(gi[:, :4] + gh[:, :4]), _sigmoid(gi[:, 4:8] + gh[:, 4:8])
+            n = np.tanh(gi[:, 8:] + r * gh[:, 8:])  # the reset gate multiplies the hidden part only, as in PyTorch
+            h = (1 - z) * n + z * h
+            out.append(h)
+        x = np.stack(out)
+        np.testing.assert_allclose(H[k], h, rtol=1e-5, atol=1e-6)
+    np.testing.assert_allclose(outputs, x, rtol=1e-5, atol=1e-6)
+    _, middle = gru(X[:3])
+    np.testing.assert_allclose(gru(X[3:], middle)[0], outputs[3:], rtol=1e-5, atol=1e-6)
+
+
+def test_nn_gru_and_lstm_gradients_match_finite_differences():
+    for rnn in (nn.GRU(2, 3, num_layers=2), nn.LSTM(2, 3, num_layers=2)):
+        rnn.weight_hh_l0, rnn.weight_ih_l1 = rnn.weight_hh_l0.astype(np.float64), rnn.weight_ih_l1.astype(np.float64)
+        for name in rnn._flat_weights_names:
+            setattr(rnn, name, getattr(rnn, name).astype(np.float64))
+        X = np.random.rand(4, 2, 2)
+        f = lambda: (rnn(X)[0] ** 2).sum()
+        grads = d2l.param_grads(f, rnn, rnn.parameters())
+        for g, p in zip(grads, rnn.parameters()):
+            i = (0,) * p.ndim
+            old = p[i]
+            p[i] = old + 1e-6
+            up = f()
+            p[i] = old - 1e-6
+            down = f()
+            p[i] = old
+            np.testing.assert_allclose(g[i], (up - down) / 2e-6, rtol=1e-4, atol=1e-8)
+
+
+def test_nn_gru_dropout_acts_between_layers_in_training_mode_only():
+    gru = nn.GRU(3, 4, num_layers=2, dropout=1.0)
+    X = np.random.rand(5, 2, 3).astype(np.float32)
+    gru.eval()
+    assert np.abs(gru(X)[0]).sum() > 0 and np.array_equal(gru(X)[0], gru(X)[0])
+    reference, _ = nn.GRU._layer(gru, 1, np.zeros((5, 2, 4), np.float32), None)
+    gru.train()
+    np.testing.assert_allclose(gru(X)[0], reference, rtol=1e-6)  # dropout of 1 gives the second layer a zero input
+    assert not np.allclose(gru.eval()(X)[0], reference)
+    one = nn.GRU(3, 4, num_layers=1, dropout=1.0)
+    np.testing.assert_allclose(one.train()(X)[0], one.eval()(X)[0])  # not after the last layer
+
+
+def test_extract_unpacks_zip_and_tar_files(tmp_path):
+    import tarfile
+    import zipfile
+    (tmp_path / 'a.txt').write_text('hello')
+    with zipfile.ZipFile(tmp_path / 'a.zip', 'w') as z:
+        z.write(tmp_path / 'a.txt', 'folder/a.txt')
+    d2l.extract(str(tmp_path / 'a.zip'))
+    assert (tmp_path / 'folder' / 'a.txt').read_text() == 'hello'
+    with tarfile.open(tmp_path / 'b.tar', 'w') as t:
+        t.add(tmp_path / 'a.txt', 'b/a.txt')
+    out = tmp_path / 'out'
+    d2l.extract(str(tmp_path / 'b.tar'), str(out))
+    assert (out / 'b' / 'a.txt').read_text() == 'hello'
+    with pytest.raises(AssertionError, match='zip/tar'):
+        d2l.extract(str(tmp_path / 'a.txt'))
+
+
+def _fra_zip(text):
+    import io
+    import zipfile
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, 'w') as z:
+        z.writestr('fra-eng/fra.txt', text)
+    return buffer.getvalue()
+
+
+def test_fra_eng_text_comes_from_the_site_in_jupyterlite_and_is_checked(monkeypatch):
+    from divelet_ml import data
+    blob = _fra_zip('Go.\tVa !\n')
+    monkeypatch.setattr(data, '_site_url', lambda: 'https://site')
+    monkeypatch.setattr(data, '_read_url', lambda url: blob if url == 'https://site/data/fra-eng/fra-eng.zip' else pytest.fail(url))
+    monkeypatch.setattr(data, 'FRA_ENG_SHA1', hashlib.sha1(blob).hexdigest())
+    assert data.fra_eng_text('unused') == 'Go.\tVa !\n'
+    monkeypatch.setattr(data, 'FRA_ENG_SHA1', '0' * 40)
+    with pytest.raises(AssertionError, match='SHA-1'):
+        data.fra_eng_text('unused')
+
+
+def test_fra_eng_text_is_downloaded_and_extracted_outside_jupyterlite(tmp_path, monkeypatch):
+    from divelet_ml import data
+    (tmp_path / 'fra-eng.zip').write_bytes(_fra_zip('Hi.\tSalut !\n'))
+    calls = []
+    monkeypatch.setattr(data, '_site_url', lambda: None)
+    monkeypatch.setattr(data, 'download', lambda url, folder, sha1_hash: calls.append((url, folder, sha1_hash)) or str(tmp_path / 'fra-eng.zip'))
+    assert data.fra_eng_text(str(tmp_path)) == 'Hi.\tSalut !\n'
+    assert calls == [(d2l.DATA_URL + 'fra-eng.zip', str(tmp_path), data.FRA_ENG_SHA1)]
+
+
+FRA = 'Go.\tVa !\nGo.\tAllez !\nHi.\tSalut !\nRun!\tCours !\nRun!\tCourez !\nWho?\tQui ?\nWow!\tÇa alors !\nFire!\tAu feu !\n'
+
+
+def test_mtfraeng_arrays_vocabularies_and_batches(monkeypatch):
+    from divelet_ml import data
+    monkeypatch.setattr(data, 'fra_eng_text', lambda root: FRA)
+    mt = d2l.MTFraEng(batch_size=2, num_steps=4, num_train=4, num_val=2)
+    src, tgt, src_valid_len, label = mt.arrays
+    assert src.shape == tgt.shape == label.shape == (7, 4) and src_valid_len.shape == (7,)
+    assert mt._preprocess('Go. now!').startswith('go . now !') and mt._tokenize('a b\tc d\n\ne', None)[0] == [['a', 'b', '<eos>']]
+    tgt_tokens = mt.tgt_vocab.to_tokens(tgt[0])
+    assert tgt_tokens[0] == '<bos>' and mt.tgt_vocab.to_tokens(label[0])[-1] == '<pad>'  # the decoder's input starts with <bos>, the label is shifted
+    assert np.array_equal(label[0][:-1], tgt[0][1:])
+    assert src_valid_len[0] == 3 and mt.src_vocab.to_tokens(src[0])[:3] == ['go', '.', '<eos>'] and mt.tgt_vocab.to_tokens(tgt[0])[1] == '<unk>'  # 'va' occurs once
+    batches = list(mt.train_dataloader())
+    assert len(batches) == 2 and len(batches[0]) == 4 and batches[0][0].shape == (2, 4) and len(mt.val_dataloader()) == 2
+    built = mt.build(['go .', 'zzz .'], ['va !', 'qui ?'])
+    assert built[0].shape == (2, 4) and built[0][1][0] == mt.src_vocab['<unk>'] and built[2].tolist() == [3, 3]
+
+
+def test_bleu_scores_overlap_with_a_brevity_penalty():
+    assert d2l.bleu('il est calme', 'il est calme', k=2) == pytest.approx(1.0)
+    assert d2l.bleu('a b', 'a b c d', k=2) == pytest.approx(np.exp(-1))  # all n-grams match, the prediction is half as long
+    assert d2l.bleu('x y', 'a b', k=2) == 0
+
+
+def test_init_seq2seq_initializes_linear_and_gru_weights_not_biases():
+    gru = nn.GRU(3, 4, num_layers=2)
+    biases = [getattr(gru, n).copy() for n in gru._flat_weights_names if 'bias' in n]
+    d2l.init_seq2seq(gru)
+    for name in gru._flat_weights_names:
+        a = getattr(gru, name)
+        if 'weight' in name:
+            assert np.abs(a).max() <= np.sqrt(6 / (a.shape[0] + a.shape[1])) + 1e-6
+    assert all(np.array_equal(b, getattr(gru, n)) for b, n in zip(biases, [n for n in gru._flat_weights_names if 'bias' in n]))
+    linear = nn.Linear(3, 4)
+    d2l.init_seq2seq(linear)
+    assert np.abs(linear.weight).max() <= np.sqrt(6 / 7) + 1e-6
+    d2l.init_seq2seq(nn.LazyLinear(4))  # a lazy layer has no weight yet and is left alone
+
+
+class _Seq2SeqDecoder(d2l.Decoder):
+    """The book's decoder of section 10.7."""
+    def __init__(self, vocab_size, embed_size, num_hiddens, num_layers, dropout=0):
+        super().__init__()
+        import autograd.numpy as anp
+        self.anp = anp
+        self.embedding = nn.Embedding(vocab_size, embed_size)
+        self.rnn = d2l.GRU(embed_size + num_hiddens, num_hiddens, num_layers, dropout)
+        self.dense = nn.LazyLinear(vocab_size)
+        self.apply(d2l.init_seq2seq)
+
+    def init_state(self, enc_all_outputs, *args):
+        return enc_all_outputs
+
+    def forward(self, X, state):
+        anp = self.anp
+        embs = self.embedding(X.T.astype(np.int32))
+        enc_output, hidden_state = state
+        context = anp.tile(enc_output[-1], (embs.shape[0], 1, 1))
+        outputs, hidden_state = self.rnn(anp.concatenate((embs, context), -1), hidden_state)
+        return anp.swapaxes(self.dense(outputs), 0, 1), [enc_output, hidden_state]
+
+
+def test_seq2seq_shapes_loss_mask_training_and_greedy_translation():
+    np.random.seed(0)
+    vocab, embed, hidden, layers, batch, steps = 10, 8, 16, 2, 4, 9
+    encoder = d2l.Seq2SeqEncoder(vocab, embed, hidden, layers)
+    outputs, state = encoder(np.zeros((batch, steps)))
+    assert outputs.shape == (steps, batch, hidden) and state.shape == (layers, batch, hidden)
+    decoder = _Seq2SeqDecoder(vocab, embed, hidden, layers)
+    dec_outputs, dec_state = decoder(np.zeros((batch, steps)), decoder.init_state(encoder(np.zeros((batch, steps)))))
+    assert dec_outputs.shape == (batch, steps, vocab) and dec_state[1].shape == (layers, batch, hidden)
+    # A copy task: the label is the source, which the model can learn in a few steps; the padding does not count in the loss.
+    model = d2l.Seq2Seq(encoder, decoder, tgt_pad=0, lr=0.01)
+    src = np.random.randint(1, vocab, (16, 5))
+    tgt_in = np.concatenate([np.full((16, 1), 1), src[:, :-1]], 1)
+    batch_ = (src, tgt_in, np.full(16, 5), src)
+    model(*batch_[:-1])
+    Y_hat = model(*batch_[:-1])
+    padded = src.copy()
+    padded[:, 3:] = 0
+    l = model.loss(Y_hat, padded)
+    ce = d2l.Classifier.loss(model, Y_hat, padded, averaged=False)
+    np.testing.assert_allclose(l, (ce * (padded.reshape(-1) != 0)).sum() / (padded != 0).sum(), rtol=1e-5)
+    optimizer = model.configure_optimizers()
+    assert isinstance(optimizer, d2l.optim.Adam) and len(optimizer.params) == len(model.parameters())
+    first = None
+    for _ in range(60):
+        grads = d2l.param_grads(lambda: model.loss(model(*batch_[:-1]), batch_[-1]), model, optimizer.params)
+        first = first if first is not None else float(model.loss(model(*batch_[:-1]), batch_[-1]))
+        optimizer.step(grads)
+    model.eval()
+    assert float(model.loss(model(*batch_[:-1]), batch_[-1])) < first / 2
+    preds, weights = model.predict_step(batch_, None, 5)
+    assert preds.shape == (16, 5) and weights == []
+    assert (preds == src).mean() > 0.5  # greedy decoding from <bos> reproduces most of the copy
+
+
+def test_show_list_len_pair_hist_draws_two_histograms():
+    d2l.plt.close('all')
+    d2l.show_list_len_pair_hist(['source', 'target'], 'tokens', 'count', [[1], [1, 2]], [[1, 2, 3], [1]])
+    assert d2l.plt.gca().get_xlabel() == 'tokens' and len(d2l.plt.gca().patches) > 0
+
+
+def test_d2l_gru_wraps_a_multilayer_nn_gru():
+    gru = d2l.GRU(3, 4, 2, dropout=0.1)
+    outputs, state = gru(np.random.rand(5, 2, 3).astype(np.float32))
+    assert outputs.shape == (5, 2, 4) and state.shape == (2, 2, 4) and gru.num_layers == 2 and gru.rnn.dropout.p == 0.1

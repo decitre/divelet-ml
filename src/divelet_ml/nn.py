@@ -166,7 +166,9 @@ class Linear(Module):
             self.bias = np.asarray((self.bias_init or uniform)((self.out_features,)), dtype)
 
     def forward(self, X):
-        Y = X @ self.weight.T
+        # Leading dimensions are flattened: autograd's backward of a matrix product of a three-dimensional array and a matrix builds an
+        # intermediate of shape (batch, in, out), 2.5 to 4 times slower than this and, for a large output layer, gigabytes.
+        Y = anp.reshape(anp.reshape(X, (-1, X.shape[-1])) @ self.weight.T, X.shape[:-1] + (self.weight.shape[0],))
         return Y if self.bias is None else Y + self.bias
 
 
@@ -208,6 +210,110 @@ class RNN(Module):
             h = anp.tanh(X @ self.weight_ih.T + self.bias_ih + h @ self.weight_hh.T + self.bias_hh)
             outputs.append(h)
         return anp.stack(outputs), anp.expand_dims(h, 0)
+
+
+class Embedding(Module):
+    """A lookup table of vectors, in place of `torch.nn.Embedding(num_embeddings, embedding_dim)`: `forward` takes an array of
+    integer indices of any shape and returns the rows of `weight` they name, with a trailing dimension `embedding_dim`.
+    The weight is drawn from the standard normal distribution, as in PyTorch, as `float32` unless `dtype` is given. Autograd gives the
+    weight a dense gradient of its own shape."""
+    def __init__(self, num_embeddings, embedding_dim, dtype=np.float32):
+        self.num_embeddings, self.embedding_dim = num_embeddings, embedding_dim
+        self.weight = np.random.normal(0, 1, (num_embeddings, embedding_dim)).astype(dtype)
+
+    def forward(self, X):
+        return self.weight[np.asarray(X, dtype=np.int64)]
+
+
+class _RecurrentLayers(Module):
+    """What `LSTM` and `GRU` share: the parameters of `num_layers` layers, named as in PyTorch (`weight_ih_l0`, `weight_hh_l0`,
+    `bias_ih_l0`, `bias_hh_l0`, `weight_ih_l1`, ...), drawn uniformly from (-1/sqrt(hidden_size), 1/sqrt(hidden_size)), and the loop
+    over the layers, with dropout on the outputs of every layer but the last in training mode."""
+    gates = 0  # the number of gates, which sets the height of the weights
+
+    def __init__(self, input_size, hidden_size, num_layers=1, dropout=0, dtype=np.float32):
+        self.input_size, self.hidden_size, self.num_layers = input_size, hidden_size, num_layers
+        self.dropout = Dropout(dropout)
+        bound = 1 / math.sqrt(hidden_size)
+        uniform = lambda shape: np.random.uniform(-bound, bound, shape).astype(dtype)
+        h = self.gates * hidden_size
+        self._flat_weights_names = []
+        for k in range(num_layers):
+            for name, shape in ((f'weight_ih_l{k}', (h, input_size if k == 0 else hidden_size)), (f'weight_hh_l{k}', (h, hidden_size)),
+                                (f'bias_ih_l{k}', (h,)), (f'bias_hh_l{k}', (h,))):
+                setattr(self, name, uniform(shape))
+                self._flat_weights_names.append(name)
+
+    def _project(self, X, k):
+        """The input of layer `k`, all steps at once: (steps, batch, in) to (steps, batch, gates * hidden)."""
+        W, b = getattr(self, f'weight_ih_l{k}'), getattr(self, f'bias_ih_l{k}')
+        return anp.reshape(anp.reshape(X, (-1, X.shape[-1])) @ W.T + b, X.shape[:-1] + (W.shape[0],))
+
+    def _run(self, inputs, state):
+        outputs, finals = inputs, []
+        for k in range(self.num_layers):
+            outputs, final = self._layer(k, outputs, None if state is None else tuple(s[k] for s in state))
+            finals.append(final)
+            if k < self.num_layers - 1:
+                outputs = self.dropout(outputs)
+        return outputs, tuple(anp.stack([f[i] for f in finals]) for i in range(len(finals[0])))
+
+
+class LSTM(_RecurrentLayers):
+    """A long short-term memory network, in place of `torch.nn.LSTM(input_size, hidden_size, num_layers, dropout=...)`.
+
+    `forward(inputs, state=None)` takes `inputs` of shape (steps, batch, input_size) and a `state` `(H, C)` of two arrays of shape
+    (num_layers, batch, hidden_size), zeros if missing, and returns the outputs of the last layer, of shape (steps, batch,
+    hidden_size), and the last state `(H, C)`. The gates are in PyTorch's order, input, forget, cell and output. The loop over the steps is Python,
+    which autograd differentiates."""
+    gates = 4
+
+    def _layer(self, k, X, state):
+        hidden = self.hidden_size
+        W, b = getattr(self, f'weight_hh_l{k}'), getattr(self, f'bias_hh_l{k}')
+        zeros = anp.zeros((X.shape[1], hidden), W.dtype)
+        H, C = (zeros, zeros) if state is None else state
+        X = self._project(X, k)
+        outputs = []
+        for x in X:
+            g = x + H @ W.T + b
+            I, F = sigmoid(g[:, :hidden]), sigmoid(g[:, hidden:2 * hidden])
+            C = F * C + I * anp.tanh(g[:, 2 * hidden:3 * hidden])
+            H = sigmoid(g[:, 3 * hidden:]) * anp.tanh(C)
+            outputs.append(H)
+        return anp.stack(outputs), (H, C)
+
+    def forward(self, inputs, state=None):
+        return self._run(inputs, state)
+
+
+class GRU(_RecurrentLayers):
+    """A gated recurrent unit network, in place of `torch.nn.GRU(input_size, hidden_size, num_layers, dropout=...)`.
+
+    `forward(inputs, state=None)` takes `inputs` of shape (steps, batch, input_size) and a `state` of shape (num_layers, batch,
+    hidden_size), zeros if missing, and returns the outputs of the last layer, of shape (steps, batch, hidden_size), and the last
+    state. The gates are in PyTorch's order, reset, update and new, and the new gate resets the hidden part as PyTorch does:
+    n = tanh(W_in x + b_in + r * (W_hn h + b_hn)). Unlike PyTorch's, it is not bidirectional."""
+    gates = 3
+
+    def _layer(self, k, X, state):
+        hidden = self.hidden_size
+        W, b = getattr(self, f'weight_hh_l{k}'), getattr(self, f'bias_hh_l{k}')
+        H = anp.zeros((X.shape[1], hidden), W.dtype) if state is None else state[0]
+        X = self._project(X, k)
+        outputs = []
+        for x in X:
+            h = H @ W.T + b
+            R = sigmoid(x[:, :hidden] + h[:, :hidden])
+            Z = sigmoid(x[:, hidden:2 * hidden] + h[:, hidden:2 * hidden])
+            N = anp.tanh(x[:, 2 * hidden:] + R * h[:, 2 * hidden:])
+            H = (1 - Z) * N + Z * H
+            outputs.append(H)
+        return anp.stack(outputs), (H,)
+
+    def forward(self, inputs, state=None):
+        outputs, (state,) = self._run(inputs, None if state is None else (state,))
+        return outputs, state
 
 
 def _pair(x):

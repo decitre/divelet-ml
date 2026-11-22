@@ -5,7 +5,7 @@
 Copyright 2019 Amazon.com, Inc. or its affiliates, MIT-0 license.
 `ArrayLoader` stands in for PyTorch's `DataLoader`. `FashionMNIST` reads the dataset's four idx files with NumPy,
 in place of torchvision. `Vocab` and `TimeMachine` are the book's, with the text of H. G. Wells' *The Time Machine*
-read from the site in JupyterLite.
+read from the site in JupyterLite; so is `MTFraEng`, with the English to French sentence pairs of the Tatoeba Project.
 """
 
 import collections
@@ -14,7 +14,9 @@ import hashlib
 import io
 import os
 import re
+import tarfile
 import urllib.request
+import zipfile
 
 import numpy as np
 
@@ -146,6 +148,18 @@ def download(url, folder, sha1_hash=None):
     os.replace(partial, path)
     assert sha1_hash is None or _sha1(path) == sha1_hash, f'{path} does not have the SHA-1 hash {sha1_hash}'
     return path
+
+
+def extract(filename, folder=None):
+    """Extract a zip or tar file into `folder`, by default the folder it is in. In place of the book's `d2l.extract`."""
+    base_dir = os.path.dirname(filename)
+    _, ext = os.path.splitext(filename)
+    assert ext in ('.zip', '.tar', '.gz'), 'Only support zip/tar files.'
+    fp = zipfile.ZipFile(filename, 'r') if ext == '.zip' else tarfile.open(filename, 'r')
+    # A tar file may name paths outside the folder: the 'data' filter, where this Python has it, refuses those.
+    options = {'filter': 'data'} if ext != '.zip' and hasattr(tarfile, 'data_filter') else {}
+    with fp:
+        fp.extractall(base_dir if folder is None else folder, **options)
 
 
 def _sha1(path):
@@ -306,6 +320,83 @@ class TimeMachine(DataModule):
     def get_dataloader(self, train):
         idx = slice(0, self.num_train) if train else slice(self.num_train, self.num_train + self.num_val)
         return self.get_tensorloader([self.X, self.Y], train, idx)
+
+
+FRA_ENG_SHA1 = '94646ad1522d915e7b0f9296181140edcf86a4f5'
+
+
+def fra_eng_text(root):
+    """The English to French sentence pairs of the Tatoeba Project (CC BY 2.0 France), in ManyThings' file `fra.txt` as the book has
+    it, one `English<TAB>French` pair per line: in JupyterLite, from the zip file in the site's `data/fra-eng` folder; elsewhere, extracted
+    from the zip file in `root`, downloaded from the book's host if it is missing. The SHA-1 hash of the zip file is checked."""
+    if _site_url() is not None:
+        data = _read_url(f'{_site_data_url()}fra-eng/fra-eng.zip')
+        assert hashlib.sha1(data).hexdigest() == FRA_ENG_SHA1, 'fra-eng.zip does not have the expected SHA-1 hash'
+        with zipfile.ZipFile(io.BytesIO(data)) as z:
+            return z.read('fra-eng/fra.txt').decode('utf-8')
+    extract(download(DATA_URL + 'fra-eng.zip', root, FRA_ENG_SHA1))
+    with open(os.path.join(root, 'fra-eng', 'fra.txt'), encoding='utf-8') as f:
+        return f.read()
+
+
+class MTFraEng(DataModule):
+    """The English-French dataset: the first `num_train + num_val` sentence pairs as arrays of token indices, `num_steps` long.
+
+    A batch is `(src, tgt, src_valid_len, label)`: the source sentences, the target sentences with `<bos>` in front (the decoder's
+    input), the number of source tokens that are not padding, and the target sentences shifted by one (what the decoder should
+    output). The vocabularies are built from those pairs only, with the tokens that occur at least twice."""
+    def _download(self):
+        return fra_eng_text(self.root)
+
+    def _preprocess(self, text):
+        # Replace non-breaking space with space
+        text = text.replace('\u202f', ' ').replace('\xa0', ' ')
+        # Insert space between words and punctuation marks
+        no_space = lambda char, prev_char: char in ',.!?' and prev_char != ' '
+        out = [' ' + char if i > 0 and no_space(char, text[i - 1]) else char for i, char in enumerate(text.lower())]
+        return ''.join(out)
+
+    def _tokenize(self, text, max_examples=None):
+        src, tgt = [], []
+        for i, line in enumerate(text.split('\n')):
+            if max_examples and i > max_examples:
+                break
+            parts = line.split('\t')
+            if len(parts) == 2:
+                # Skip empty tokens
+                src.append([t for t in f'{parts[0]} <eos>'.split(' ') if t])
+                tgt.append([t for t in f'{parts[1]} <eos>'.split(' ') if t])
+        return src, tgt
+
+    def __init__(self, batch_size, num_steps=9, num_train=512, num_val=128):
+        super().__init__()
+        self.save_hyperparameters()
+        self.arrays, self.src_vocab, self.tgt_vocab = self._build_arrays(self._download())
+
+    def _build_arrays(self, raw_text, src_vocab=None, tgt_vocab=None):
+        def _build_array(sentences, vocab, is_tgt=False):
+            pad_or_trim = lambda seq, t: seq[:t] if len(seq) > t else seq + ['<pad>'] * (t - len(seq))
+            sentences = [pad_or_trim(s, self.num_steps) for s in sentences]
+            if is_tgt:
+                sentences = [['<bos>'] + s for s in sentences]
+            if vocab is None:
+                vocab = Vocab(sentences, min_freq=2)
+            array = np.array([vocab[s] for s in sentences])
+            valid_len = (array != vocab['<pad>']).astype(np.int32).sum(1)
+            return array, vocab, valid_len
+        src, tgt = self._tokenize(self._preprocess(raw_text), self.num_train + self.num_val)
+        src_array, src_vocab, src_valid_len = _build_array(src, src_vocab)
+        tgt_array, tgt_vocab, _ = _build_array(tgt, tgt_vocab, True)
+        return (src_array, tgt_array[:, :-1], src_valid_len, tgt_array[:, 1:]), src_vocab, tgt_vocab
+
+    def get_dataloader(self, train):
+        idx = slice(0, self.num_train) if train else slice(self.num_train, None)
+        return self.get_tensorloader(self.arrays, train, idx)
+
+    def build(self, src_sentences, tgt_sentences):
+        raw_text = '\n'.join([src + '\t' + tgt for src, tgt in zip(src_sentences, tgt_sentences)])
+        arrays, _, _ = self._build_arrays(raw_text, self.src_vocab, self.tgt_vocab)
+        return arrays
 
 
 AIRFOIL_SHA1 = '76e5be1548fd8222e5074cf0faae75edff8cf93f'

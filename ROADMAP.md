@@ -526,6 +526,13 @@ architecture, sequence-to-sequence learning and beam search. Builds on Chapter 9
   `#@save` and move to the library when a later section uses them (`d2l.GRU` in 10.7). The `Trainer` already passes `batch[:-1]` to the model, which the
   four-tensor translation batches fit. An embedding that autograd indexes has a dense gradient of vocabulary size by width: harmless at 200 tokens.
 
+- **Done before the notebooks** (this PR): `nn.Linear` and `nn.LazyLinear` flatten the leading dimensions; `nn.Embedding`, `nn.LSTM` and `nn.GRU` (PyTorch's parameter names and gate
+  order, `num_layers` and `dropout`; not bidirectional, which 10.4's `BiGRU` only declares and never builds); `d2l.extract`, `fra_eng_text` and `MTFraEng` (checked on the real file: 194 and
+  214 tokens, 641 pairs including the one the book's `max_examples` test lets through); `Encoder`, `Decoder`, `EncoderDecoder` with `predict_step`, `Seq2SeqEncoder`, `Seq2Seq`,
+  `init_seq2seq`, `bleu`, `d2l.GRU` and `show_list_len_pair_hist`; and `build.sh` hosts `fra-eng.zip` with its checksum, credited in `NOTICE.md` to the Tatoeba contributors (the file has no
+  per-sentence authors: see the data note above). The book's 10.7, written with these classes, trains its 30 epochs in 16 s in CPython and translates 'go .', 'i lost .' and "i'm home ." as the book does.
+  `Seq2SeqDecoder` is not saved by the book, so it stays in the 10.7 notebook. Not done: the notebooks, and running these classes in the browser kernels.
+
 - [ ] 10.1 *Long Short-Term Memory (LSTM)*: reduced epochs, two trainings.
 - [ ] 10.2 *Gated Recurrent Units (GRU)*: as 10.1.
 - [ ] 10.3 *Deep Recurrent Neural Networks*: reduced epochs.

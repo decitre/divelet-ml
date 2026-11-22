@@ -100,3 +100,11 @@ class RNNLM(RNNLMScratch):
 
     def output_layer(self, hiddens):
         return anp.swapaxes(self.linear(hiddens), 0, 1)
+
+
+class GRU(RNN):
+    """The multilayer GRU model."""
+    def __init__(self, num_inputs, num_hiddens, num_layers, dropout=0):
+        Module.__init__(self)
+        self.save_hyperparameters()
+        self.rnn = nn.GRU(num_inputs, num_hiddens, num_layers, dropout=dropout)
