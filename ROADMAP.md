@@ -547,9 +547,9 @@ chapter is planned; none besides Chapter 12, above, is planned in detail):
 | 11 Attention Mechanisms and Transformers | 8 left (11.3 done) | Builds on the Chapter 3–5 framework; training is the cost |
 | 12 Optimization Algorithms | 1 left (12.1 to 12.10 done) | Planned above |
 | 13 Computational Performance | 7 | Mostly GPUs, hybridization and multi-GPU: little applies to a browser |
-| 14 Computer Vision | 14 | Heavy: large models and pretrained weights |
-| 15 Natural Language Processing: Pretraining | 10 | Heavy: large corpora |
-| 16 Natural Language Processing: Applications | 7 | Heavy; may suit Phase 6 |
+| 14 Computer Vision | 14 | Heavy: large models and pretrained weights. Detection, segmentation and classification of given images can use lmLite's pretrained pipelines (Phase 6); training and fine-tuning cannot run |
+| 15 Natural Language Processing: Pretraining | 10 | Heavy: large corpora. Pretrained embeddings and tokenizers can come from lmLite; pretraining cannot run |
+| 16 Natural Language Processing: Applications | 7 | Heavy; suits Phase 6 for the parts that apply a pretrained model |
 | 17 Reinforcement Learning | 3 | Small environments; unassessed |
 | 18 Gaussian Processes | 3 | Mostly NumPy; unassessed |
 | 19 Hyperparameter Optimization | 5 | Many training runs; unassessed |
@@ -580,6 +580,25 @@ Potential technologies include:
 
 These technologies will be considered where they support the educational
 objectives of a chapter.
+
+**lmLite, state on 2026-11-22** (inference only, no training; `main` is ahead of release 0.12.1). It runs pretrained
+models in the browser, from xeus-python and Pyodide, through Transformers.js and ONNX Runtime Web (WASM or WebGPU), with a
+native onnxruntime backend for headless runs. Chat, embeddings and tokenizers; task pipelines (zero-shot classification,
+speech recognition, translation, text to speech); images as inputs, with image classification, zero-shot image classification,
+image features and object detection; image outputs (background removal, depth estimation, segmentation, image-to-image);
+bare ONNX models through `OnnxModel`, NumPy in and NumPy out; and `pipe.map()` over many inputs with progress and
+cancellation. Open on its side: text-to-audio generation, a diffusion spike, docs, `OnnxModel.map()` progress.
+
+What it offers divelet-ml: the parts of Chapters 14 to 16 that apply a pretrained model to given data, and any model
+exported to ONNX run from NumPy. What it does not: training, so Chapters 8, 11 and 12 stay as they are. No notebook uses it yet.
+Constraints: models must be self-hosted (the smoke test rejects other hosts, and the site is about 290 MB of GitHub Pages'
+1 GB), and the native backend lets `tests/test_notebooks.py` run such a notebook in CPython.
+
+**Spike (next): 14.3 *Object Detection and Bounding Boxes*.** The section draws the bounding boxes of a dog and a cat on a
+photo by hand. Question: can `LLM.pipeline("object-detection")` or an `OnnxModel` detect them, in both kernels and natively,
+with a hosted model small enough for the site, and does it fit the section without replacing the book's foundation? The
+answer decides whether Chapter 14 sections that apply pretrained models are adapted, and how a notebook hosts and tests its
+model.
 
 They are not intended to replace foundational implementations with opaque
 pretrained models.
