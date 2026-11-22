@@ -11,7 +11,7 @@ Development proceeds incrementally, one chapter at a time.
 performed. Chapters 2 (*Preliminaries*), 3 (*Linear Neural Networks for
 Regression*), 4 (*Linear Neural Networks for Classification*) and 5
 (*Multilayer Perceptrons*), 6 (*Builders' Guide*) and 7 (*Convolutional Neural
-Networks*) are adapted in full, along with 9 (*Recurrent Neural Networks*), 8 (*Modern Convolutional Neural Networks*, whose models are built and shown but trained only in 8.5) and 11.3 *Attention Scoring Functions*. The adapted notebooks run in JupyterLite with both the Pyodide and
+Networks*) are adapted in full, along with 9 (*Recurrent Neural Networks*), 8 (*Modern Convolutional Neural Networks*, whose models are built and shown but trained only in 8.5) 11.3 *Attention Scoring Functions* and 12.1 to 12.7 (*Optimization Algorithms*, first seven sections). The adapted notebooks run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -523,13 +523,13 @@ linear regression on 1,500 examples with five features. The exception is 12.11.
   adapted optimizer functions, the signature is `trainer_fn(params, grads, states, hyperparams)`. Left: the measurement for 12.11 and
   the notebooks.
 
-- [ ] 12.1 *Optimization and Deep Learning*.
-- [ ] 12.2 *Convexity*.
-- [ ] 12.3 *Gradient Descent*.
-- [ ] 12.4 *Stochastic Gradient Descent*.
-- [ ] 12.5 *Minibatch Stochastic Gradient Descent*: needs the hosted data.
-- [ ] 12.6 *Momentum*.
-- [ ] 12.7 *Adagrad*.
+- [x] 12.1 *Optimization and Deep Learning*.
+- [x] 12.2 *Convexity*.
+- [x] 12.3 *Gradient Descent*.
+- [x] 12.4 *Stochastic Gradient Descent*.
+- [x] 12.5 *Minibatch Stochastic Gradient Descent*.
+- [x] 12.6 *Momentum*.
+- [x] 12.7 *Adagrad*.
 - [ ] 12.8 *RMSProp*.
 - [ ] 12.9 *Adadelta*.
 - [ ] 12.10 *Adam*.
@@ -537,7 +537,7 @@ linear regression on 1,500 examples with five features. The exception is 12.11.
 
 ### Later chapters
 
-57 of the book's 165 sections are adapted (Chapters 2 to 9, and 11.3). The rest, in the book's order, with an
+64 of the book's 165 sections are adapted (Chapters 2 to 9, 11.3 and 12.1 to 12.7). The rest, in the book's order, with an
 estimate of how well each suits a browser kernel (a judgement, to revisit when a
 chapter is planned; none besides Chapter 12, above, is planned in detail):
 
@@ -545,7 +545,7 @@ chapter is planned; none besides Chapter 12, above, is planned in detail):
 |---|---:|---|
 | 10 Modern Recurrent Neural Networks | 8 | As 9, with longer training |
 | 11 Attention Mechanisms and Transformers | 8 left (11.3 done) | Builds on the Chapter 3–5 framework; training is the cost |
-| 12 Optimization Algorithms | 11 | Planned above |
+| 12 Optimization Algorithms | 4 left (12.1 to 12.7 done) | Planned above |
 | 13 Computational Performance | 7 | Mostly GPUs, hybridization and multi-GPU: little applies to a browser |
 | 14 Computer Vision | 14 | Heavy: large models and pretrained weights |
 | 15 Natural Language Processing: Pretraining | 10 | Heavy: large corpora |
