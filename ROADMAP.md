@@ -496,20 +496,21 @@ architecture, sequence-to-sequence learning and beam search. Builds on Chapter 9
   `MTFraEng` keeps **512 training and 128 validation sentence pairs and builds the vocabularies from those 640 pairs only**
   (195 source and 213 target tokens with `min_freq=2`), so 30 epochs at batch size 128 are 120 steps. The whole data set (167,130 pairs,
   vocabularies of 10,012 and 17,851 tokens) is not what the book trains on, and could not be: see below.
-- **Measured** (`spikes/seq-cost/`, plain NumPy and autograd, forward and backward, CPython on one Mac that another job was also using, so
-  upper bounds). One epoch of the character model (1024 x 32, 10 training and 5 validation minibatches, 32 hidden units): tanh RNN 0.40 s,
-  LSTM 0.81 s, GRU 0.84 s, two-layer GRU 1.52 s, that is 2.0, 2.1 and 3.8 times the RNN. 9.5 and 9.6 measured the RNN in the browser
-  (xeus-python 0.6 s, Pyodide 1.9 s per epoch without the progress plot; 1.2 s and 2.2 s as the notebook runs), so the estimates for the
-  browser are, per epoch with the plot: LSTM and GRU about 1.9 s in xeus-python and 4.3 s in Pyodide, the two-layer GRU about 2.9 s and 7.5 s.
-  One training step of the book's GRU encoder-decoder (256 embedding and hidden units, two layers, batch 128, 9 steps, 195 and 213 tokens)
-  takes 0.105 s, so the book's 120 steps are 13 s in CPython, and an estimated 40 s in xeus-python and 130 s in Pyodide (3 and 10 times, the
-  ratios of Chapter 9). With the whole data set's vocabularies a step takes 2.8 s and an epoch (1,306 steps) about an hour. **Not measured: any
-  of this in a browser.** The browser numbers are estimates from Chapter 9's ratios; a spike in a quiet window should replace them before the
-  notebooks set `d2l.browser_epochs`.
-- **Decisions.** 10.1 and 10.2 use `d2l.browser_epochs(50, pyodide=25, xeus=50)` and 10.3 `d2l.browser_epochs(100, pyodide=20, xeus=50)`
-  for each of their two trainings, with a tablet-marked note and a `RUN_MS_NOTEBOOKS` limit of 480 s (the estimate for 10.1 and 10.2 is about 190 s
-  in xeus-python and 215 s in Pyodide); the figures of the full runs come from `tools/full_run_figures.py` as in 9.5 and 9.6. 10.7 keeps the
-  book's data, sizes and 30 epochs. The translations are poor, as in the book, because 512 sentences is all it trains on.
+- **Measured** (`spikes/seq-cost/`: plain NumPy and autograd, forward and backward; one Mac, Chrome, one run each, on a machine with little else
+  running; xeus-python has NumPy 2.5.4 and Pyodide 2.2.5). One epoch of the character model (1024 x 32, 10 training and 5 validation minibatches, 32 hidden units)
+  without the progress plot, in CPython, xeus-python and Pyodide: tanh RNN 0.60, 1.24 and 2.25 s; LSTM 1.05, 2.72 and 6.11 s; GRU 1.09, 2.64 and 5.14 s; two-layer GRU
+  1.77, 4.67 and 9.56 s. The spike's RNN is about 2 times slower than the library's in xeus-python (1.24 s against the 0.6 s of 9.5, whose `nn.RNN` is tuned) and 1.2 times in
+  Pyodide (2.25 s against 1.9 s), so the library's epoch with the plot (about +0.6 s in xeus-python and +0.3 s in Pyodide, from 9.5) is about 1.9 s for the LSTM and the GRU and 2.9 s for the two-layer GRU in
+  xeus-python, and 5.5, 4.7 and 8.4 s in Pyodide. One training step of the book's GRU encoder-decoder (256 embedding and hidden units, two layers, batch 128, 9 steps, 195 and 213 tokens)
+  takes 94 ms in CPython, 0.58 s in xeus-python and **3.8 s in Pyodide**: the book's 120 steps are 11 s, 70 s and **7.6 minutes**. With 128 units it is 52 ms, 0.21 s and 0.90 s (108 s in Pyodide). The ratio to CPython is 2 to 3
+  times in xeus-python and 4 to 6 times in Pyodide for the small character models, but 6 times and **41 times** for the 256-unit encoder-decoder: Pyodide's NumPy has no BLAS, and
+  a model with wide matrices pays for it (`d2l.browser_epochs`' docstring says 8 times; the wide models are far worse). With the whole data set's vocabularies a step takes 1.1 s in CPython (the
+  browser kernels cannot hold its output layer: a WebAssembly array is limited to 2 GB), so an epoch of 1,306 steps is about 23 minutes in CPython and out of reach in a browser.
+- **Decisions.** 10.1 and 10.2 use `d2l.browser_epochs(50, pyodide=20, xeus=50)` for each of their two trainings: about 190 s in xeus-python and 190 to 220 s in Pyodide per notebook.
+  10.3 uses `d2l.browser_epochs(100, pyodide=15, xeus=40)`: about 230 s and 250 s. 10.7 keeps the book's data and sizes and uses `d2l.browser_epochs(30, pyodide=15, xeus=30)`: 70 s in
+  xeus-python and about 230 s in Pyodide (15 epochs are 60 steps; the alternative, 128 units for all 30 epochs, is 108 s in Pyodide and a different model). Each gets a tablet-marked note, a
+  `RUN_MS_NOTEBOOKS` limit of 480 s, and, for 10.1 to 10.3, the figures of the full runs from `tools/full_run_figures.py` as in 9.5 and 9.6. The translations are poor, as in the book, because
+  512 sentences is all it trains on. These are estimates for the library's classes from the spike's numbers: confirm each notebook's time in the browser when it is written.
 - **The data.** `fra-eng.zip` is the Tatoeba English to French file of ManyThings' Anki pairs, which the book downloads from its own bucket
   and a browser cannot read (the problem of 5.7). 3,420,152 bytes (11.7 MB as `fra.txt`, 167,130 lines), SHA-1
   `94646ad1522d915e7b0f9296181140edcf86a4f5` (the value the book's `download` checks), SHA-256 `fa96382b2c8b609e1662654c1e6e6baeb8d30b3bf63dfb4a5a261cc36347df13`.
@@ -519,7 +520,10 @@ architecture, sequence-to-sequence learning and beam search. Builds on Chapter 9
   can only be to the Tatoeba contributors and ManyThings, as the book does: **to settle before hosting** (host it with that credit, or keep the
   download-and-upload route of 5.7). Plan: `build.sh` copies the zip to `data/fra-eng/` with its checksum (3.4 MB of the site's 1 GB), `MTFraEng` reads it
   in JupyterLite and downloads it elsewhere, and `NOTICE.md` and the notebooks credit Tatoeba, ManyThings and CC BY 2.0 FR.
-- **New in `divelet_ml`** (to add, each with a test, and run in Pyodide before a notebook uses it): `nn.Embedding`; `nn.LSTM` and `nn.GRU` as
+- **New in `divelet_ml`** (to add, each with a test, and run in Pyodide before a notebook uses it): **`nn.Linear` and `nn.LazyLinear` flatten the leading dimensions before the product**
+  (`(X.reshape(-1, in) @ W.T).reshape(...)`): autograd's backward of a `matmul` of a three-dimensional array and a matrix builds a (batch, in, out) intermediate, which the spike measured as 2.5 to 4 times
+  slower than the flattened product at the book's sizes, and as 2.3 GB for the whole data set's output layer, over WebAssembly's limit (CPython has the memory, so only the browser fails); it speeds up the
+  sequence models of Chapters 9 to 11 too, and `d2l.MultiHeadAttention`'s projections need the same care; `nn.Embedding`; `nn.LSTM` and `nn.GRU` as
   loops over time steps like `nn.RNN` (with `num_layers` and `dropout`, and `bidirectional` if 10.4 needs it); `d2l.extract` (a zip); `MTFraEng` with
   `build`, `truncate_pad` and `get_dataloader`; `Encoder`, `Decoder`, `EncoderDecoder`, `Seq2SeqEncoder`, `Seq2Seq` (loss with the padding mask,
   `predict_step`), `init_seq2seq` (Xavier on the GRU weights) and `bleu`. The notebooks' `LSTMScratch`, `GRUScratch`, `StackedRNNScratch` and `BiRNNScratch` are
@@ -544,19 +548,16 @@ large-scale pretraining. Builds on Chapter 10's sequence-to-sequence code and on
 - **What the book trains.** 11.1 to 11.3, 11.5 and 11.6 only compute forward passes and plot them (11.2 is Nadaraya-Watson kernel regression on 40 points). 11.4
   trains the GRU encoder-decoder with Bahdanau attention and 11.7 the Transformer, both on the 512 pairs of Chapter 10's `MTFraEng` for 30 epochs
   at batch size 128. 11.8 trains a vision Transformer on Fashion-MNIST resized to 96 x 96 for 10 epochs. 11.9 has no code.
-- **Measured** (`spikes/seq-cost/`, as in Chapter 10, upper bounds). One training step of the book's Transformer (256 hidden units, 2 blocks
-  of 4 heads, a 64-unit feed-forward layer, batch 128, 9 steps, 195 and 213 tokens) takes 1.1 s in this spike's implementation, 0.19 s with 128
-  hidden units and 0.07 s with 64: 130 s, 23 s and 8 s for the book's 120 steps in CPython, and an estimated 6.5 minutes, 70 s and 25 s in xeus-python
-  and 17 minutes, 3 minutes and 70 s in Pyodide (3 and 8 times). So at the book's width the Transformer does not fit a browser's budget, and the
-  step time grows faster than the width does (the spike indexes and multiplies with plain autograd; the library's layers may differ). The Bahdanau
-  decoder costs about one and a half times 10.7's GRU step (an estimate: not run). **11.8's vision Transformer** takes about 241 million multiply-adds per
-  image forward (36 patches of 16 x 16 into 512 units, then 2 blocks of 37 tokens with 512 units and a 2048-unit MLP), about 0.7 billion with the backward pass, which
-  at Pyodide's 1.5 GMAC/s (`spikes/js-conv`) is half a second per image and about 8 hours for one epoch of 60,000; and the 96 x 96 training images
-  in `float32` are 2.2 GB, more than a browser kernel holds. Estimates from one machine, with backward counted as twice the forward pass.
-- **Decisions.** 11.1 to 11.3, 11.5 and 11.6 run as the book has them. 11.4 keeps the book's data and 30 epochs if the browser measurement allows
-  it, else `d2l.browser_epochs`. 11.7 trains the Transformer with **128 hidden units** and the book's other settings, a change that the notebook states with
-  a tablet-marked note, and with `d2l.browser_epochs` if the browser measurement says that 30 epochs are too long (the alternative, the book's
-  256 units for about 10 epochs in xeus-python, underfits; decide with the measurement). 11.8 builds the model, runs a forward pass on one image and shows
+- **Measured** (`spikes/seq-cost/`, as in Chapter 10). One training step of the book's Transformer (256 hidden units, 2 blocks of 4 heads, a 64-unit feed-forward layer, batch 128, 9 steps, 195 and 213 tokens)
+  takes 169 ms in CPython, 1.07 s in xeus-python and **3.57 s in Pyodide**, so the book's 120 steps are 20 s, 2.1 minutes and **7.1 minutes**. With 128 hidden units a step is 71 ms, 0.33 s and 0.91 s (110 s in
+  Pyodide), and with 64 it is 35 ms, 0.12 s and 0.28 s. (A first version of the spike used `np.dot` on three-dimensional arrays, 200 times slower than `@` there, and made the Transformer look 6 times worse: the library's
+  `nn.Linear` uses `@`.) The Bahdanau decoder costs about one and a half times 10.7's GRU step (an estimate: not run). **11.8's vision Transformer** takes about 241 million multiply-adds per
+  image forward (36 patches of 16 x 16 into 512 units, then 2 blocks of 37 tokens with 512 units and a 2048-unit MLP), about 0.7 billion with the backward pass, which at Pyodide's 1.5 GMAC/s (`spikes/js-conv`;
+  matrices that wide are slower in the spike above, so this is generous) is half a second per image and about 8 hours for one epoch of 60,000; and the 96 x 96 training images in `float32` are 2.2 GB, more than a browser kernel
+  holds. Estimates from one machine, with backward counted as twice the forward pass.
+- **Decisions.** 11.1 to 11.3, 11.5 and 11.6 run as the book has them. 11.7 keeps the book's width and uses `d2l.browser_epochs(30, pyodide=15, xeus=30)`: about 2.1 minutes in xeus-python and 3.6 minutes in
+  Pyodide, with a tablet-marked note (the earlier plan to cut the width to 128 is dropped: only Pyodide needs a cut, and it can have fewer epochs). 11.4 uses `d2l.browser_epochs(30, pyodide=10, xeus=30)`
+  (estimated 105 s and 230 s, from 1.5 times 10.7's step; measure it when written). Each gets a `RUN_MS_NOTEBOOKS` limit of 480 s. 11.8 builds the model, runs a forward pass on one image and shows
   the shapes, says why it does not train (cost from `spikes/js-conv/count_macs.py`) and keeps the book's training cell as a code block, as 8.1 does. 11.9 is prose (the
   pretrained models of its discussion are Phase 6's, through lmLite).
 - **New in `divelet_ml`:** `masked_softmax`, `DotProductAttention` and `AdditiveAttention` move from the 11.3 notebook into the library (the book saves them; 11.4, 11.5 and 11.7 use
@@ -571,14 +572,12 @@ large-scale pretraining. Builds on Chapter 10's sequence-to-sequence code and on
 - [ ] 11.4 *The Bahdanau Attention Mechanism*: after Chapter 10's library.
 - [ ] 11.5 *Multi-Head Attention*.
 - [ ] 11.6 *Self-Attention and Positional Encoding*.
-- [ ] 11.7 *The Transformer Architecture*: reduced width, possibly reduced epochs.
+- [ ] 11.7 *The Transformer Architecture*: the book's width, fewer epochs in Pyodide.
 - [ ] 11.8 *Transformers for Vision*: builds the model, no training.
 - [ ] 11.9 *Large-Scale Pretraining with Transformers* (no code).
 
-**Order of work for Chapters 10 and 11.** A browser timing spike first (xeus-python and Pyodide, Chrome, on a quiet machine) of
-`spikes/seq-cost/step_cost.py` and `text_cost.py`, to replace the estimates above and fix the `browser_epochs` values and the Transformer's width. Then
-the library and the data hosting for Chapter 10 (a PR, like #41), then 10.1 to 10.4, then 10.5 to 10.8, then Chapter 11's library, then 11.1, 11.2, 11.5
-and 11.6, then 11.4, 11.7 and 11.8, then 11.9.
+**Order of work for Chapters 10 and 11.** The browser timing spike is done (above). The library and the data hosting for Chapter 10 (a PR, like #41), then 10.1 to 10.4, then 10.5 to 10.8, then
+Chapter 11's library, then 11.1, 11.2, 11.5 and 11.6, then 11.4, 11.7 and 11.8, then 11.9. The smoke test's limits and the `browser_epochs` values are set for each notebook from its own run in the browser.
 
 ### Chapter 12 — Optimization Algorithms
 

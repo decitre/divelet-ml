@@ -35,7 +35,7 @@ def loss(P, kind, X, Y):
     x = anp.transpose(X, (1, 0, 2))
     for lp in P['layers']:
         x = layer(kind, x, lp, H)
-    logits = anp.dot(anp.transpose(x, (1, 0, 2)), P['out'])
+    logits = anp.reshape(anp.matmul(anp.reshape(anp.transpose(x, (1, 0, 2)), (-1, H)), P['out']), (B, T, V))  # a 2-D product: see README
     z = logits - anp.max(logits, -1, keepdims=True); lse = anp.log(anp.sum(anp.exp(z), -1))
     return anp.mean(lse - anp.sum(z * Y, -1))
 
