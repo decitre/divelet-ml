@@ -31,7 +31,7 @@ def gru_params(e, h, L, Vs, Vt):
 def gru_layer(x, h0, Wx, Wh, b, H):  # x: (T, B, d)
     h, outs = h0, []
     for t in range(x.shape[0]):
-        gx, gh = anp.dot(x[t], Wx) + b, anp.dot(h, Wh)
+        gx, gh = anp.matmul(x[t], Wx) + b, anp.matmul(h, Wh)
         z = sigmoid(gx[:, :H] + gh[:, :H]); r = sigmoid(gx[:, H:2 * H] + gh[:, H:2 * H])
         c = anp.tanh(gx[:, 2 * H:] + r * gh[:, 2 * H:])
         h = z * h + (1 - z) * c
@@ -49,7 +49,7 @@ def gru_loss(P, src, tgt_in, tgt_out, L, H):
     y = anp.concatenate([y, anp.repeat(ctx[None], y.shape[0], axis=0)], axis=2)
     for l in range(L):
         y, _ = gru_layer(y, states[l], *P[f'dec{l}'], H)
-    logits = anp.dot(anp.transpose(y, (1, 0, 2)), P['out'])
+    logits = anp.matmul(anp.transpose(y, (1, 0, 2)), P['out'])
     return xent(logits, tgt_out)
 
 # ---- Transformer encoder-decoder (11.7): multi-head attention, position-wise network, add and layer norm
@@ -57,13 +57,13 @@ def ln(x): m = anp.mean(x, -1, keepdims=True); v = anp.mean((x - m) ** 2, -1, ke
 
 def mha(q, kv, W, heads, causal):
     B, Tq, H = q.shape; Tk = kv.shape[1]; d = H // heads
-    Q = anp.transpose(anp.dot(q, W[0]).reshape(B, Tq, heads, d), (0, 2, 1, 3))
-    K = anp.transpose(anp.dot(kv, W[1]).reshape(B, Tk, heads, d), (0, 2, 1, 3))
-    V = anp.transpose(anp.dot(kv, W[2]).reshape(B, Tk, heads, d), (0, 2, 1, 3))
+    Q = anp.transpose(anp.matmul(q, W[0]).reshape(B, Tq, heads, d), (0, 2, 1, 3))
+    K = anp.transpose(anp.matmul(kv, W[1]).reshape(B, Tk, heads, d), (0, 2, 1, 3))
+    V = anp.transpose(anp.matmul(kv, W[2]).reshape(B, Tk, heads, d), (0, 2, 1, 3))
     s = anp.matmul(Q, anp.transpose(K, (0, 1, 3, 2))) / float(np.sqrt(d))
     if causal: s = s - f32(1e9) * np.triu(np.ones((Tq, Tk), f32), 1)
     o = anp.transpose(anp.matmul(softmax(s), V), (0, 2, 1, 3)).reshape(B, Tq, H)
-    return anp.dot(o, W[3])
+    return anp.matmul(o, W[3])
 
 def tf_params(H, ffn, blks, Vs, Vt):
     P = {'Es': w(Vs, H), 'Et': w(Vt, H), 'out': w(H, Vt), 'enc': [], 'dec': []}
@@ -76,12 +76,12 @@ def tf_loss(P, src, tgt_in, tgt_out, H, heads):
     pe = lambda T: anp.array(np.sin(np.arange(T)[:, None] / 10000 ** (np.arange(H)[None] / H)), f32)
     x = P['Es'][src] * float(np.sqrt(H)) + pe(src.shape[1])
     for b in P['enc']:
-        x = ln(x + mha(x, x, b['att'], heads, False)); x = ln(x + anp.dot(anp.maximum(anp.dot(x, b['f1']), 0), b['f2']))
+        x = ln(x + mha(x, x, b['att'], heads, False)); x = ln(x + anp.matmul(anp.maximum(anp.matmul(x, b['f1']), 0), b['f2']))
     y = P['Et'][tgt_in] * float(np.sqrt(H)) + pe(tgt_in.shape[1])
     for b in P['dec']:
         y = ln(y + mha(y, y, b['att1'], heads, True)); y = ln(y + mha(y, x, b['att2'], heads, False))
-        y = ln(y + anp.dot(anp.maximum(anp.dot(y, b['f1']), 0), b['f2']))
-    return xent(anp.dot(y, P['out']), tgt_out)
+        y = ln(y + anp.matmul(anp.maximum(anp.matmul(y, b['f1']), 0), b['f2']))
+    return xent(anp.matmul(y, P['out']), tgt_out)
 
 def time_step(kind, B, T, Vs, Vt, **cfg):
     src = rng.randint(0, Vs, (B, T)); tin = rng.randint(0, Vt, (B, T)); tout = rng.randint(0, Vt, (B, T))
@@ -111,5 +111,7 @@ if __name__ == '__main__':
     where = 'browser' if sys.platform == 'emscripten' else 'CPython'
     print(f'{where}, NumPy {np.__version__}')
     for kind, B, T, Vs, Vt, cfg in CONFIGS:
+        if sys.platform == 'emscripten' and Vt > 1000:
+            continue  # the whole data set's output layer is too big for WebAssembly's 32-bit memory
         t = time_step(kind, B, T, Vs, Vt, **cfg)
         print(f'{kind:12s} batch {B:3d} vocab {Vs:5d}/{Vt:5d} {cfg}: {t * 1000:7.0f} ms per step', flush=True)
