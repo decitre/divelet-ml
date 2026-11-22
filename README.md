@@ -17,7 +17,7 @@ divelet-ml is an experimental, browser-native adaptation of the Jupyter notebook
 
 The project aims to preserve the book's chapter structure, mathematical explanations, learning objectives, and exercises while adapting its framework-dependent Python implementations for execution directly in the browser.
 
-**Project status:** Early development. Chapters 2 to 7 and 9 are adapted in full. In Chapter 8, the models are built and their layer shapes shown, and only 8.5 (batch normalization) trains in the browser. Chapter 12 is in progress (12.1 to 12.4 so far). Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
+**Project status:** Early development. Chapters 2 to 7 and 9 are adapted in full. In Chapter 8, the models are built and their layer shapes shown, and only 8.5 (batch normalization) trains in the browser. Chapter 12 is in progress (12.1 to 12.7 so far). Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
 
 | Section | Original |
 |---|---|
@@ -84,6 +84,9 @@ The project aims to preserve the book's chapter structure, mathematical explanat
 | [12.2 Convexity][xeus-12.2] [\[p\]][pyodide-12.2] | [d2l.ai][d2l-12.2] |
 | [12.3 Gradient Descent][xeus-12.3] [\[p\]][pyodide-12.3] | [d2l.ai][d2l-12.3] |
 | [12.4 Stochastic Gradient Descent][xeus-12.4] [\[p\]][pyodide-12.4] | [d2l.ai][d2l-12.4] |
+| [12.5 Minibatch Stochastic Gradient Descent][xeus-12.5] [\[p\]][pyodide-12.5] | [d2l.ai][d2l-12.5] |
+| [12.6 Momentum][xeus-12.6] [\[p\]][pyodide-12.6] | [d2l.ai][d2l-12.6] |
+| [12.7 Adagrad][xeus-12.7] [\[p\]][pyodide-12.7] | [d2l.ai][d2l-12.7] |
 
 The notebooks' sources are in [`content/`][content].
 
@@ -391,6 +394,15 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [xeus-12.4]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=12_optimization/12.04_sgd.ipynb
 [pyodide-12.4]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=12_optimization/12.04_sgd.ipynb
 [d2l-12.4]: https://d2l.ai/chapter_optimization/sgd.html
+[xeus-12.5]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=12_optimization/12.05_minibatch-sgd.ipynb
+[pyodide-12.5]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=12_optimization/12.05_minibatch-sgd.ipynb
+[d2l-12.5]: https://d2l.ai/chapter_optimization/minibatch-sgd.html
+[xeus-12.6]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=12_optimization/12.06_momentum.ipynb
+[pyodide-12.6]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=12_optimization/12.06_momentum.ipynb
+[d2l-12.6]: https://d2l.ai/chapter_optimization/momentum.html
+[xeus-12.7]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=12_optimization/12.07_adagrad.ipynb
+[pyodide-12.7]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=12_optimization/12.07_adagrad.ipynb
+[d2l-12.7]: https://d2l.ai/chapter_optimization/adagrad.html
 [transformers-js]: https://huggingface.co/docs/transformers.js/
 [lmlite]: https://github.com/decitre/lmlite
 [roadmap]: https://github.com/decitre/divelet-ml/blob/main/ROADMAP.md
