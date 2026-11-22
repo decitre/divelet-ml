@@ -600,6 +600,12 @@ with a hosted model small enough for the site, and does it fit the section witho
 answer decides whether Chapter 14 sections that apply pretrained models are adapted, and how a notebook hosts and tests its
 model.
 
+*Result (`spikes/lmlite-detect`, 2026-11-22):* `Xenova/yolos-tiny` (Apache-2.0, 9.7 MB quantized) run as a bare `OnnxModel` finds the
+dog and the cat in both kernels (about 1 s per image after a 4 to 7 s load) and natively (0.1 s), with the same boxes in the two browser
+kernels and a few pixels' drift natively. It fits 14.3 as a tablet-marked section after the book's code. Blocked: `OnnxModel` is on
+lmLite's `main` but not in its PyPI release 0.12.1, and divelet-ml installs released packages only; wait for a lmLite release that has it,
+then adapt 14.3 with a self-hosted model.
+
 They are not intended to replace foundational implementations with opaque
 pretrained models.
 
