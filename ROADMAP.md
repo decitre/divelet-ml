@@ -483,6 +483,103 @@ recurrent networks. The text models are small enough for a browser; training the
 - [x] 9.6 *Concise Implementation of Recurrent Neural Networks*.
 - [x] 9.7 *Backpropagation Through Time* (no code).
 
+### Chapter 10 — Modern Recurrent Neural Networks
+
+Upstream: `chapter_recurrent-modern/`. LSTM, GRU, deep and bidirectional RNNs, the translation data set, the encoder-decoder
+architecture, sequence-to-sequence learning and beam search. Builds on Chapter 9's `nn.RNN`, `RNNLMScratch`, `RNNLM`,
+`TimeMachine` and the `Trainer` with gradient clipping.
+
+- **What the book really trains.** 10.1 to 10.3 are Chapter 9's character model with another cell: the Time Machine, 32 hidden
+  units, minibatches of 1024 sequences of 32 steps (50 epochs for LSTM and GRU, 100 for the deep GRU), each notebook training a
+  scratch and a concise model. 10.4 builds a bidirectional RNN and does not train it; 10.5, 10.6 and 10.8 have no training (10.8, beam
+  search, has no code). 10.7 trains the GRU encoder-decoder on English to French, and the book's translation data class
+  `MTFraEng` keeps **512 training and 128 validation sentence pairs and builds the vocabularies from those 640 pairs only**
+  (195 source and 213 target tokens with `min_freq=2`), so 30 epochs at batch size 128 are 120 steps. The whole data set (167,130 pairs,
+  vocabularies of 10,012 and 17,851 tokens) is not what the book trains on, and could not be: see below.
+- **Measured** (`spikes/seq-cost/`, plain NumPy and autograd, forward and backward, CPython on one Mac that another job was also using, so
+  upper bounds). One epoch of the character model (1024 x 32, 10 training and 5 validation minibatches, 32 hidden units): tanh RNN 0.40 s,
+  LSTM 0.81 s, GRU 0.84 s, two-layer GRU 1.52 s, that is 2.0, 2.1 and 3.8 times the RNN. 9.5 and 9.6 measured the RNN in the browser
+  (xeus-python 0.6 s, Pyodide 1.9 s per epoch without the progress plot; 1.2 s and 2.2 s as the notebook runs), so the estimates for the
+  browser are, per epoch with the plot: LSTM and GRU about 1.9 s in xeus-python and 4.3 s in Pyodide, the two-layer GRU about 2.9 s and 7.5 s.
+  One training step of the book's GRU encoder-decoder (256 embedding and hidden units, two layers, batch 128, 9 steps, 195 and 213 tokens)
+  takes 0.105 s, so the book's 120 steps are 13 s in CPython, and an estimated 40 s in xeus-python and 130 s in Pyodide (3 and 10 times, the
+  ratios of Chapter 9). With the whole data set's vocabularies a step takes 2.8 s and an epoch (1,306 steps) about an hour. **Not measured: any
+  of this in a browser.** The browser numbers are estimates from Chapter 9's ratios; a spike in a quiet window should replace them before the
+  notebooks set `d2l.browser_epochs`.
+- **Decisions.** 10.1 and 10.2 use `d2l.browser_epochs(50, pyodide=25, xeus=50)` and 10.3 `d2l.browser_epochs(100, pyodide=20, xeus=50)`
+  for each of their two trainings, with a tablet-marked note and a `RUN_MS_NOTEBOOKS` limit of 480 s (the estimate for 10.1 and 10.2 is about 190 s
+  in xeus-python and 215 s in Pyodide); the figures of the full runs come from `tools/full_run_figures.py` as in 9.5 and 9.6. 10.7 keeps the
+  book's data, sizes and 30 epochs. The translations are poor, as in the book, because 512 sentences is all it trains on.
+- **The data.** `fra-eng.zip` is the Tatoeba English to French file of ManyThings' Anki pairs, which the book downloads from its own bucket
+  and a browser cannot read (the problem of 5.7). 3,420,152 bytes (11.7 MB as `fra.txt`, 167,130 lines), SHA-1
+  `94646ad1522d915e7b0f9296181140edcf86a4f5` (the value the book's `download` checks), SHA-256 `fa96382b2c8b609e1662654c1e6e6baeb8d30b3bf63dfb4a5a261cc36347df13`.
+  License checked (2026-11-22): its `_about.txt` says the pairs are released under the licence of the source, the Tatoeba Project, and links
+  CC BY 2.0 and the attribution "www.manythings.org/anki and tatoeba.org"; Tatoeba's terms of use say that its sentences are under CC BY 2.0
+  France (some under CC0), the condition being attribution of the author. The file carries no per-sentence author names, so the credit
+  can only be to the Tatoeba contributors and ManyThings, as the book does: **to settle before hosting** (host it with that credit, or keep the
+  download-and-upload route of 5.7). Plan: `build.sh` copies the zip to `data/fra-eng/` with its checksum (3.4 MB of the site's 1 GB), `MTFraEng` reads it
+  in JupyterLite and downloads it elsewhere, and `NOTICE.md` and the notebooks credit Tatoeba, ManyThings and CC BY 2.0 FR.
+- **New in `divelet_ml`** (to add, each with a test, and run in Pyodide before a notebook uses it): `nn.Embedding`; `nn.LSTM` and `nn.GRU` as
+  loops over time steps like `nn.RNN` (with `num_layers` and `dropout`, and `bidirectional` if 10.4 needs it); `d2l.extract` (a zip); `MTFraEng` with
+  `build`, `truncate_pad` and `get_dataloader`; `Encoder`, `Decoder`, `EncoderDecoder`, `Seq2SeqEncoder`, `Seq2Seq` (loss with the padding mask,
+  `predict_step`), `init_seq2seq` (Xavier on the GRU weights) and `bleu`. The notebooks' `LSTMScratch`, `GRUScratch`, `StackedRNNScratch` and `BiRNNScratch` are
+  `#@save` and move to the library when a later section uses them (`d2l.GRU` in 10.7). The `Trainer` already passes `batch[:-1]` to the model, which the
+  four-tensor translation batches fit. An embedding that autograd indexes has a dense gradient of vocabulary size by width: harmless at 200 tokens.
+
+- [ ] 10.1 *Long Short-Term Memory (LSTM)*: reduced epochs, two trainings.
+- [ ] 10.2 *Gated Recurrent Units (GRU)*: as 10.1.
+- [ ] 10.3 *Deep Recurrent Neural Networks*: reduced epochs.
+- [ ] 10.4 *Bidirectional Recurrent Neural Networks*: builds the model, no training.
+- [ ] 10.5 *Machine Translation and the Dataset*: needs the hosted data.
+- [ ] 10.6 *The Encoder--Decoder Architecture*.
+- [ ] 10.7 *Sequence-to-Sequence Learning for Machine Translation*: the book's 30 epochs on 512 pairs.
+- [ ] 10.8 *Beam Search* (no code).
+
+### Chapter 11 — Attention Mechanisms and Transformers
+
+Upstream: `chapter_attention-mechanisms-and-transformers/`. Queries, keys and values, attention pooling, scoring functions
+(11.3, done), Bahdanau attention, multi-head attention, self-attention and positional encoding, the Transformer, the vision Transformer and
+large-scale pretraining. Builds on Chapter 10's sequence-to-sequence code and on 11.3.
+
+- **What the book trains.** 11.1 to 11.3, 11.5 and 11.6 only compute forward passes and plot them (11.2 is Nadaraya-Watson kernel regression on 40 points). 11.4
+  trains the GRU encoder-decoder with Bahdanau attention and 11.7 the Transformer, both on the 512 pairs of Chapter 10's `MTFraEng` for 30 epochs
+  at batch size 128. 11.8 trains a vision Transformer on Fashion-MNIST resized to 96 x 96 for 10 epochs. 11.9 has no code.
+- **Measured** (`spikes/seq-cost/`, as in Chapter 10, upper bounds). One training step of the book's Transformer (256 hidden units, 2 blocks
+  of 4 heads, a 64-unit feed-forward layer, batch 128, 9 steps, 195 and 213 tokens) takes 1.1 s in this spike's implementation, 0.19 s with 128
+  hidden units and 0.07 s with 64: 130 s, 23 s and 8 s for the book's 120 steps in CPython, and an estimated 6.5 minutes, 70 s and 25 s in xeus-python
+  and 17 minutes, 3 minutes and 70 s in Pyodide (3 and 8 times). So at the book's width the Transformer does not fit a browser's budget, and the
+  step time grows faster than the width does (the spike indexes and multiplies with plain autograd; the library's layers may differ). The Bahdanau
+  decoder costs about one and a half times 10.7's GRU step (an estimate: not run). **11.8's vision Transformer** takes about 241 million multiply-adds per
+  image forward (36 patches of 16 x 16 into 512 units, then 2 blocks of 37 tokens with 512 units and a 2048-unit MLP), about 0.7 billion with the backward pass, which
+  at Pyodide's 1.5 GMAC/s (`spikes/js-conv`) is half a second per image and about 8 hours for one epoch of 60,000; and the 96 x 96 training images
+  in `float32` are 2.2 GB, more than a browser kernel holds. Estimates from one machine, with backward counted as twice the forward pass.
+- **Decisions.** 11.1 to 11.3, 11.5 and 11.6 run as the book has them. 11.4 keeps the book's data and 30 epochs if the browser measurement allows
+  it, else `d2l.browser_epochs`. 11.7 trains the Transformer with **128 hidden units** and the book's other settings, a change that the notebook states with
+  a tablet-marked note, and with `d2l.browser_epochs` if the browser measurement says that 30 epochs are too long (the alternative, the book's
+  256 units for about 10 epochs in xeus-python, underfits; decide with the measurement). 11.8 builds the model, runs a forward pass on one image and shows
+  the shapes, says why it does not train (cost from `spikes/js-conv/count_macs.py`) and keeps the book's training cell as a code block, as 8.1 does. 11.9 is prose (the
+  pretrained models of its discussion are Phase 6's, through lmLite).
+- **New in `divelet_ml`:** `masked_softmax`, `DotProductAttention` and `AdditiveAttention` move from the 11.3 notebook into the library (the book saves them; 11.4, 11.5 and 11.7 use
+  them) with tests; `MultiHeadAttention`, `PositionalEncoding`, `AttentionDecoder`, the Bahdanau decoder, `AddNorm`, `PositionWiseFFN` and the Transformer
+  encoder and decoder blocks; `nn.LayerNorm` and `nn.GELU`; for 11.8 `PatchEmbedding`, `ViTMLP`, `ViTBlock` and `ViT` (`cls_token` and `pos_embedding` are arrays held as
+  attributes, so they are parameters; `LazyConv2d` takes `padding` before `stride`, so pass both by keyword). `torch.repeat_interleave` is `np.repeat`, and `torch.bmm` is `np.matmul`.
+  Needs Chapter 10's `nn.Embedding`, `MTFraEng`, `Seq2Seq` and `bleu` first.
+
+- [ ] 11.1 *Queries, Keys, and Values*.
+- [ ] 11.2 *Attention Pooling by Similarity*.
+- [x] 11.3 *Attention Scoring Functions*.
+- [ ] 11.4 *The Bahdanau Attention Mechanism*: after Chapter 10's library.
+- [ ] 11.5 *Multi-Head Attention*.
+- [ ] 11.6 *Self-Attention and Positional Encoding*.
+- [ ] 11.7 *The Transformer Architecture*: reduced width, possibly reduced epochs.
+- [ ] 11.8 *Transformers for Vision*: builds the model, no training.
+- [ ] 11.9 *Large-Scale Pretraining with Transformers* (no code).
+
+**Order of work for Chapters 10 and 11.** A browser timing spike first (xeus-python and Pyodide, Chrome, on a quiet machine) of
+`spikes/seq-cost/step_cost.py` and `text_cost.py`, to replace the estimates above and fix the `browser_epochs` values and the Transformer's width. Then
+the library and the data hosting for Chapter 10 (a PR, like #41), then 10.1 to 10.4, then 10.5 to 10.8, then Chapter 11's library, then 11.1, 11.2, 11.5
+and 11.6, then 11.4, 11.7 and 11.8, then 11.9.
+
 ### Chapter 12 — Optimization Algorithms
 
 Upstream: `chapter_optimization/`. Eleven sections: optimization and deep learning, convexity, gradient descent,
@@ -539,12 +636,12 @@ linear regression on 1,500 examples with five features. The exception is 12.11.
 
 68 of the book's 165 sections are adapted (Chapters 2 to 9, 11.3 and 12). The rest, in the book's order, with an
 estimate of how well each suits a browser kernel (a judgement, to revisit when a
-chapter is planned; none besides Chapter 12, above, is planned in detail):
+chapter is planned; none besides Chapters 10, 11 and 12, above, is planned in detail):
 
 | Chapter | Sections | Outlook |
 |---|---:|---|
-| 10 Modern Recurrent Neural Networks | 8 | As 9, with longer training |
-| 11 Attention Mechanisms and Transformers | 8 left (11.3 done) | Builds on the Chapter 3–5 framework; training is the cost |
+| 10 Modern Recurrent Neural Networks | 8 | Planned above |
+| 11 Attention Mechanisms and Transformers | 8 left (11.3 done) | Planned above |
 | 12 Optimization Algorithms | done | Planned above |
 | 13 Computational Performance | 7 | Mostly GPUs, hybridization and multi-GPU: little applies to a browser |
 | 14 Computer Vision | 14 | Heavy: large models and pretrained weights. Detection, segmentation and classification of given images can use lmLite's pretrained pipelines (Phase 6); training and fine-tuning cannot run |
@@ -605,6 +702,12 @@ dog and the cat in both kernels (about 1 s per image after a 4 to 7 s load) and 
 kernels and a few pixels' drift natively. It fits 14.3 as a tablet-marked section after the book's code. Blocked: `OnnxModel` is on
 lmLite's `main` but not in its PyPI release 0.12.1, and divelet-ml installs released packages only; wait for a lmLite release that has it,
 then adapt 14.3 with a self-hosted model.
+
+*Update, 2026-11-22:* lmLite 0.13.0 is on PyPI (an 88 KB `py3-none-any` wheel, Apache-2.0, Python 3.11 or later; its core dependencies are
+`ipywidgets` and `tqdm`, and the extras are `images` (NumPy, Pillow), `audio` and `native`) and has `OnnxModel`, `OnnxModel.map()`, `Pipeline.map()` and the image and speech
+pipelines. The spike's native run against that wheel gives the same boxes, so the blocker is gone. Left for the 14.3 notebook: lmLite is not on
+conda-forge, so the xeus-python build would mount the package from the wheel (as it does `divelet_ml`) and the Pyodide build take it from PyPI; `build.sh` hosts the model and its
+`config.json`; and the notebook must run in the browser kernels of this site's own build, which the spike did not do.
 
 They are not intended to replace foundational implementations with opaque
 pretrained models.
