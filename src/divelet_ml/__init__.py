@@ -15,7 +15,7 @@ respect to a model's parameter arrays, and `Trainer` uses it.
 no plots don't load matplotlib.
 """
 
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 
 from divelet_ml import nn, optim
 from divelet_ml.utils import (add_to_class, HyperParameters, check_shape, check_len, numpy, Timer, Accumulator, linreg, squared_loss,
