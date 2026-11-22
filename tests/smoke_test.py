@@ -43,7 +43,11 @@ RUN_MS_NOTEBOOKS = {"05_multilayer-perceptrons/05.02_mlp-implementation.ipynb": 
                     "09_recurrent-neural-networks/09.05_rnn-scratch.ipynb": 300_000,
                     "09_recurrent-neural-networks/09.06_rnn-concise.ipynb": 300_000,
                     # Five LeNet trainings of 30 epochs, each on 1,000 images in Pyodide (2,000 in xeus-python), with the test set evaluated every epoch.
-                    "12_optimization/12.11_lr-scheduler.ipynb": 480_000}
+                    "12_optimization/12.11_lr-scheduler.ipynb": 480_000,
+                    # Each of these trains two character models, from scratch and with the high-level API: about 3 to 5 minutes in Pyodide.
+                    "10_recurrent-modern/10.01_lstm.ipynb": 480_000,
+                    "10_recurrent-modern/10.02_gru.ipynb": 480_000,
+                    "10_recurrent-modern/10.03_deep-rnn.ipynb": 480_000}
 # The kernel name each site's toolbar shows: catches a site built with the other kernel.
 KERNEL_NAMES = {"xeus": "(XPython)", "pyodide": "(Pyodide)"}
 IPAD = "iPad (gen 11)"

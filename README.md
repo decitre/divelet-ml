@@ -17,7 +17,7 @@ divelet-ml is an experimental, browser-native adaptation of the Jupyter notebook
 
 The project aims to preserve the book's chapter structure, mathematical explanations, learning objectives, and exercises while adapting its framework-dependent Python implementations for execution directly in the browser.
 
-**Project status:** Early development. Chapters 2 to 7, 9 and 12 are adapted in full. In Chapter 8, the models are built and their layer shapes shown, and only 8.5 (batch normalization) trains in the browser. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
+**Project status:** Early development. Chapters 2 to 7, 9 and 12 are adapted in full, and Chapter 10 is in progress (10.1 to 10.4 so far). In Chapter 8, the models are built and their layer shapes shown, and only 8.5 (batch normalization) trains in the browser. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
 
 | Section | Original |
 |---|---|
@@ -79,6 +79,10 @@ The project aims to preserve the book's chapter structure, mathematical explanat
 | [9.5 Recurrent Neural Network Implementation from Scratch][xeus-9.5] [\[p\]][pyodide-9.5] | [d2l.ai][d2l-9.5] |
 | [9.6 Concise Implementation of Recurrent Neural Networks][xeus-9.6] [\[p\]][pyodide-9.6] | [d2l.ai][d2l-9.6] |
 | [9.7 Backpropagation Through Time][xeus-9.7] [\[p\]][pyodide-9.7] | [d2l.ai][d2l-9.7] |
+| [10.1 Long Short-Term Memory (LSTM)][xeus-10.1] [\[p\]][pyodide-10.1] | [d2l.ai][d2l-10.1] |
+| [10.2 Gated Recurrent Units (GRU)][xeus-10.2] [\[p\]][pyodide-10.2] | [d2l.ai][d2l-10.2] |
+| [10.3 Deep Recurrent Neural Networks][xeus-10.3] [\[p\]][pyodide-10.3] | [d2l.ai][d2l-10.3] |
+| [10.4 Bidirectional Recurrent Neural Networks][xeus-10.4] [\[p\]][pyodide-10.4] | [d2l.ai][d2l-10.4] |
 | [11.3 Attention Scoring Functions][xeus-11.3] [\[p\]][pyodide-11.3] | [d2l.ai][d2l-11.3] |
 | [12.1 Optimization and Deep Learning][xeus-12.1] [\[p\]][pyodide-12.1] | [d2l.ai][d2l-12.1] |
 | [12.2 Convexity][xeus-12.2] [\[p\]][pyodide-12.2] | [d2l.ai][d2l-12.2] |
@@ -383,6 +387,18 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [xeus-9.7]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=09_recurrent-neural-networks/09.07_bptt.ipynb
 [pyodide-9.7]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=09_recurrent-neural-networks/09.07_bptt.ipynb
 [d2l-9.7]: https://d2l.ai/chapter_recurrent-neural-networks/bptt.html
+[xeus-10.1]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=10_recurrent-modern/10.01_lstm.ipynb
+[pyodide-10.1]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=10_recurrent-modern/10.01_lstm.ipynb
+[d2l-10.1]: https://d2l.ai/chapter_recurrent-modern/lstm.html
+[xeus-10.2]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=10_recurrent-modern/10.02_gru.ipynb
+[pyodide-10.2]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=10_recurrent-modern/10.02_gru.ipynb
+[d2l-10.2]: https://d2l.ai/chapter_recurrent-modern/gru.html
+[xeus-10.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=10_recurrent-modern/10.03_deep-rnn.ipynb
+[pyodide-10.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=10_recurrent-modern/10.03_deep-rnn.ipynb
+[d2l-10.3]: https://d2l.ai/chapter_recurrent-modern/deep-rnn.html
+[xeus-10.4]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=10_recurrent-modern/10.04_bi-rnn.ipynb
+[pyodide-10.4]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=10_recurrent-modern/10.04_bi-rnn.ipynb
+[d2l-10.4]: https://d2l.ai/chapter_recurrent-modern/bi-rnn.html
 [xeus-11.3]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=11_attention-mechanisms-and-transformers/11.03_attention-scoring-functions.ipynb
 [pyodide-11.3]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=11_attention-mechanisms-and-transformers/11.03_attention-scoring-functions.ipynb
 [d2l-11.3]: https://d2l.ai/chapter_attention-mechanisms-and-transformers/attention-scoring-functions.html

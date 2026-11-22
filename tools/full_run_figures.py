@@ -36,6 +36,9 @@ TARGETS = {
         [("d2l.browser_examples(2000, pyodide=1000, xeus=2000)", "None")]),
     "09_recurrent-neural-networks/09.05_rnn-scratch.ipynb": ("100 epochs, as in the book", []),
     "09_recurrent-neural-networks/09.06_rnn-concise.ipynb": ("100 epochs, as in the book", []),
+    "10_recurrent-modern/10.01_lstm.ipynb": ("50 epochs, as in the book", []),
+    "10_recurrent-modern/10.02_gru.ipynb": ("50 epochs, as in the book", []),
+    "10_recurrent-modern/10.03_deep-rnn.ipynb": ("100 epochs, as in the book", []),
 }
 
 
