@@ -11,7 +11,7 @@ Development proceeds incrementally, one chapter at a time.
 performed. Chapters 2 (*Preliminaries*), 3 (*Linear Neural Networks for
 Regression*), 4 (*Linear Neural Networks for Classification*) and 5
 (*Multilayer Perceptrons*), 6 (*Builders' Guide*) and 7 (*Convolutional Neural
-Networks*) are adapted in full, along with 9 (*Recurrent Neural Networks*), 8 (*Modern Convolutional Neural Networks*, whose models are built and shown but trained only in 8.5) 11.3 *Attention Scoring Functions* and 12 (*Optimization Algorithms*). The adapted notebooks run in JupyterLite with both the Pyodide and
+Networks*) are adapted in full, along with 9 (*Recurrent Neural Networks*), 8 (*Modern Convolutional Neural Networks*, whose models are built and shown but trained only in 8.5) 10.1 to 10.4 (*Modern Recurrent Neural Networks*, first four sections), 11.3 *Attention Scoring Functions* and 12 (*Optimization Algorithms*). The adapted notebooks run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -537,10 +537,10 @@ architecture, sequence-to-sequence learning and beam search. Builds on Chapter 9
   per-sentence authors: see the data note above). The book's 10.7, written with these classes, trains its 30 epochs in 16 s in CPython and translates 'go .', 'i lost .' and "i'm home ." as the book does.
   `Seq2SeqDecoder` is not saved by the book, so it stays in the 10.7 notebook. Not done: the notebooks, and running these classes in the browser kernels.
 
-- [ ] 10.1 *Long Short-Term Memory (LSTM)*: reduced epochs, two trainings.
-- [ ] 10.2 *Gated Recurrent Units (GRU)*: as 10.1.
-- [ ] 10.3 *Deep Recurrent Neural Networks*: reduced epochs.
-- [ ] 10.4 *Bidirectional Recurrent Neural Networks*: builds the model, no training.
+- [x] 10.1 *Long Short-Term Memory (LSTM)*: reduced epochs, two trainings.
+- [x] 10.2 *Gated Recurrent Units (GRU)*: as 10.1.
+- [x] 10.3 *Deep Recurrent Neural Networks*: reduced epochs.
+- [x] 10.4 *Bidirectional Recurrent Neural Networks*: builds the model, no training.
 - [ ] 10.5 *Machine Translation and the Dataset*: needs the hosted data.
 - [ ] 10.6 *The Encoder--Decoder Architecture*.
 - [ ] 10.7 *Sequence-to-Sequence Learning for Machine Translation*: the book's 30 epochs on 512 pairs.
@@ -640,13 +640,13 @@ linear regression on 1,500 examples with five features. The exception is 12.11.
 
 ### Later chapters
 
-68 of the book's 165 sections are adapted (Chapters 2 to 9, 11.3 and 12). The rest, in the book's order, with an
+72 of the book's 165 sections are adapted (Chapters 2 to 9, 10.1 to 10.4, 11.3 and 12). The rest, in the book's order, with an
 estimate of how well each suits a browser kernel (a judgement, to revisit when a
 chapter is planned; none besides Chapters 10, 11 and 12, above, is planned in detail):
 
 | Chapter | Sections | Outlook |
 |---|---:|---|
-| 10 Modern Recurrent Neural Networks | 8 | Planned above |
+| 10 Modern Recurrent Neural Networks | 4 left (10.1 to 10.4 done) | Planned above |
 | 11 Attention Mechanisms and Transformers | 8 left (11.3 done) | Planned above |
 | 12 Optimization Algorithms | done | Planned above |
 | 13 Computational Performance | 7 | Mostly GPUs, hybridization and multi-GPU: little applies to a browser |
