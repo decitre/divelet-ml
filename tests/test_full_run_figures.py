@@ -27,7 +27,7 @@ def test_every_notebook_that_trains_less_in_the_browser_is_a_target():
 def test_each_training_cell_is_followed_by_its_full_run_figure():
     for rel in tool.TARGETS:
         cs = cells(rel)
-        training = [i for i, c in enumerate(cs) if c["cell_type"] == "code" and "trainer.fit(" in "".join(c["source"])]
+        training = [i for i, c in enumerate(cs) if tool.is_training(c)]
         assert training, rel
         for i in training:
             figure = cs[i + 1]

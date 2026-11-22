@@ -17,7 +17,7 @@ divelet-ml is an experimental, browser-native adaptation of the Jupyter notebook
 
 The project aims to preserve the book's chapter structure, mathematical explanations, learning objectives, and exercises while adapting its framework-dependent Python implementations for execution directly in the browser.
 
-**Project status:** Early development. Chapters 2 to 7 and 9 are adapted in full. In Chapter 8, the models are built and their layer shapes shown, and only 8.5 (batch normalization) trains in the browser. Chapter 12 is in progress (12.1 to 12.10 so far). Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
+**Project status:** Early development. Chapters 2 to 7, 9 and 12 are adapted in full. In Chapter 8, the models are built and their layer shapes shown, and only 8.5 (batch normalization) trains in the browser. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
 
 | Section | Original |
 |---|---|
@@ -90,6 +90,7 @@ The project aims to preserve the book's chapter structure, mathematical explanat
 | [12.8 RMSProp][xeus-12.8] [\[p\]][pyodide-12.8] | [d2l.ai][d2l-12.8] |
 | [12.9 Adadelta][xeus-12.9] [\[p\]][pyodide-12.9] | [d2l.ai][d2l-12.9] |
 | [12.10 Adam][xeus-12.10] [\[p\]][pyodide-12.10] | [d2l.ai][d2l-12.10] |
+| [12.11 Learning Rate Scheduling][xeus-12.11] [\[p\]][pyodide-12.11] | [d2l.ai][d2l-12.11] |
 
 The notebooks' sources are in [`content/`][content].
 
@@ -415,6 +416,9 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [xeus-12.10]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=12_optimization/12.10_adam.ipynb
 [pyodide-12.10]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=12_optimization/12.10_adam.ipynb
 [d2l-12.10]: https://d2l.ai/chapter_optimization/adam.html
+[xeus-12.11]: https://decitre.github.io/divelet-ml/xeus/notebooks/index.html?path=12_optimization/12.11_lr-scheduler.ipynb
+[pyodide-12.11]: https://decitre.github.io/divelet-ml/pyodide/notebooks/index.html?path=12_optimization/12.11_lr-scheduler.ipynb
+[d2l-12.11]: https://d2l.ai/chapter_optimization/lr-scheduler.html
 [transformers-js]: https://huggingface.co/docs/transformers.js/
 [lmlite]: https://github.com/decitre/lmlite
 [roadmap]: https://github.com/decitre/divelet-ml/blob/main/ROADMAP.md

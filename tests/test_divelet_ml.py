@@ -1043,6 +1043,8 @@ def test_load_data_fashion_mnist_gives_training_and_validation_loaders(monkeypat
     assert seen == [('../data', (4, 4))] and len(train) == 3 and len(val) == 2 and train.shuffle and not val.shuffle
     d2l.load_data_fashion_mnist(2)
     assert seen[-1] == ('../data', (28, 28))
+    train, val = d2l.load_data_fashion_mnist(2, num_train=3, num_val=1)
+    assert len(train) == 2 and len(val) == 1 and train.arrays[0].shape[0] == 3 and val.arrays[1].shape == (1,)
 
 
 def test_train_2d_and_show_trace_2d():

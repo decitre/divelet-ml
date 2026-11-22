@@ -31,6 +31,9 @@ TARGETS = {
     "08_convolutional-modern/08.05_batch-norm.ipynb": (
         "10 epochs on all 60,000 training images, as in the book",
         [("num_train=d2l.browser_examples(10000, pyodide=2000, xeus=10000)", "num_train=None")]),
+    "12_optimization/12.11_lr-scheduler.ipynb": (
+        "30 epochs on all 60,000 training images and 10,000 test images, as in the book",
+        [("d2l.browser_examples(2000, pyodide=1000, xeus=2000)", "None")]),
     "09_recurrent-neural-networks/09.05_rnn-scratch.ipynb": ("100 epochs, as in the book", []),
     "09_recurrent-neural-networks/09.06_rnn-concise.ipynb": ("100 epochs, as in the book", []),
 }
@@ -52,7 +55,20 @@ print(json.dumps({'svg': svg.getvalue(), 'values': {k: float(v[-1].y) for k, v i
 
 
 def is_training(cell):
-    return cell.cell_type == "code" and "trainer.fit(" in cell.source
+    """A cell that trains: `trainer.fit(` (the framework's `Trainer`, with a board) or a call of a notebook's own `train(net, ...)`
+    function (with an `Animator`, as in 12.11)."""
+    source = cell["source"] if isinstance(cell, dict) else cell.source
+    source = "".join(source)
+    kind = cell["cell_type"] if isinstance(cell, dict) else cell.cell_type
+    return kind == "code" and ("trainer.fit(" in source or re.search(r"^train\(net,", source, re.M) is not None)
+
+
+# The Animator's figure, which the cell that trained still holds when it ends: kept in `_fig` by a line added to the cell.
+KEEP = "\nimport matplotlib.pyplot as _plt\n_fig = _plt.gcf()"
+DRAW_ANIMATOR = """import io
+svg = io.StringIO(); _fig.savefig(svg, format='svg', bbox_inches='tight')
+print(json.dumps({'svg': svg.getvalue()}))"""
+FINAL = re.compile(r"train loss ([\d.]+), train acc ([\d.]+), test acc ([\d.]+)")
 
 
 def run(path, replacements):
@@ -68,16 +84,23 @@ def run(path, replacements):
         if cell.cell_type == "markdown" and "full-run" in cell.metadata.get("tags", []):
             continue  # the figures of an earlier run
         cells.append(cell)
-        if is_training(cell):
+        if cell.cell_type == "code":  # the data can be loaded in an earlier cell than the training
             for old, new in replacements:
                 cell.source = cell.source.replace(old, new)
+        if is_training(cell):
+            animator = "trainer.fit(" not in cell.source
+            if animator:
+                cell.source += KEEP
             trained.append(len(cells) - 1)
-            cells.append(nbformat.v4.new_code_cell(DRAW))
+            cells.append(nbformat.v4.new_code_cell(DRAW_ANIMATOR if animator else DRAW))
     nb.cells = cells
     NotebookClient(nb, timeout=1800, kernel_name="python3", resources={"metadata": {"path": str(path.parent)}}).execute()
     found = []
     for i in trained:
         out = json.loads("".join(o["text"] for o in nb.cells[i + 1].outputs if o.get("name") == "stdout"))
+        if "values" not in out:  # the Animator's figure: the final values are in the line the training function prints
+            printed = "".join(o["text"] for o in nb.cells[i].outputs if o.get("name") == "stdout")
+            out["values"] = dict(zip(["train loss", "train acc", "test acc"], map(float, FINAL.search(printed).groups())))
         found.append((re.sub(r"<metadata>.*?</metadata>\s*", "", out["svg"], flags=re.S), out["values"]))  # the metadata holds the date
     return found
 
@@ -99,7 +122,7 @@ def update(rel):
     found = run(path, replacements)
     nb = json.loads(path.read_text())
     cells = [c for c in nb["cells"] if "full-run" not in c.get("metadata", {}).get("tags", [])]
-    positions = [i for i, c in enumerate(cells) if c["cell_type"] == "code" and "trainer.fit(" in "".join(c["source"])]
+    positions = [i for i, c in enumerate(cells) if is_training(c)]
     assert len(positions) == len(found), (rel, positions, len(found))
     for n, (i, (svg, values)) in reversed(list(enumerate(zip(positions, found)))):
         cells.insert(i + 1, figure_cell(rel, n, settings, svg, values))

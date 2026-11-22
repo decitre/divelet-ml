@@ -11,7 +11,7 @@ Development proceeds incrementally, one chapter at a time.
 performed. Chapters 2 (*Preliminaries*), 3 (*Linear Neural Networks for
 Regression*), 4 (*Linear Neural Networks for Classification*) and 5
 (*Multilayer Perceptrons*), 6 (*Builders' Guide*) and 7 (*Convolutional Neural
-Networks*) are adapted in full, along with 9 (*Recurrent Neural Networks*), 8 (*Modern Convolutional Neural Networks*, whose models are built and shown but trained only in 8.5) 11.3 *Attention Scoring Functions* and 12.1 to 12.10 (*Optimization Algorithms*, all but 12.11). The adapted notebooks run in JupyterLite with both the Pyodide and
+Networks*) are adapted in full, along with 9 (*Recurrent Neural Networks*), 8 (*Modern Convolutional Neural Networks*, whose models are built and shown but trained only in 8.5) 11.3 *Attention Scoring Functions* and 12 (*Optimization Algorithms*). The adapted notebooks run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
 GitHub Actions tests, builds and deploys the site on every push to `main`.
 
@@ -494,12 +494,12 @@ linear regression on 1,500 examples with five features. The exception is 12.11.
   slowest case): 0.17 s in CPython and 0.26 s in Pyodide, about 0.11 and 0.17 ms per step. The book's two epochs per run cost
   well under a second in either, so 12.1 to 12.10 need no cut. 3D plots (`plot_wireframe`, used in 12.1 and 12.2) work in
   Pyodide's matplotlib.
-- **12.11 is the cost.** It trains LeNet on Fashion-MNIST for 30 epochs in six runs (constant rate, a rate changed by hand,
-  square-root, factor, multi-step and cosine schedules, with and without warmup). At 0.42 million multiply-adds per image, one
+- **12.11 is the cost.** It trains LeNet on Fashion-MNIST for 30 epochs in five training runs (constant rate, square-root,
+  multi-step and cosine schedules, and cosine with warmup; the rate changed by hand and the factor scheduler are not trained). At 0.42 million multiply-adds per image, one
   epoch of 60,000 images is about 50 s in Pyodide (an estimate, as for 8.5), so the book's budget is about 2.5 hours there, and it
   would also exceed the 300 s the CPython notebook test gives a notebook. Decision: use `d2l.browser_epochs` and
   `d2l.browser_examples` as in 7.6, with values measured when the notebook is written so that the CPython test runs in minutes, a
-  `RUN_MS_NOTEBOOKS` limit, and a figure of the book's full runs for each training cell (about an hour of CPython for the six
+  `RUN_MS_NOTEBOOKS` limit, and a figure of the book's full runs for each training cell (about an hour of CPython for the five
   runs, made once with `tools/full_run_figures.py`; CI does not run it).
 - **The data** of 12.5 to 12.10 is the airfoil self-noise data set (NASA; UCI), which the book downloads from its own bucket, and
   a browser cannot read that (the problem of 5.7 and 9.2). License checked (2026-11-21): UCI's page for the data set says CC BY 4.0
@@ -533,11 +533,11 @@ linear regression on 1,500 examples with five features. The exception is 12.11.
 - [x] 12.8 *RMSProp*.
 - [x] 12.9 *Adadelta*.
 - [x] 12.10 *Adam*.
-- [ ] 12.11 *Learning Rate Scheduling*: reduced training and figures of the full runs.
+- [x] 12.11 *Learning Rate Scheduling*: trains on 2,000 images (1,000 in Pyodide) for the book's 30 epochs; a figure of the full run follows each of its five training cells.
 
 ### Later chapters
 
-67 of the book's 165 sections are adapted (Chapters 2 to 9, 11.3 and 12.1 to 12.10). The rest, in the book's order, with an
+68 of the book's 165 sections are adapted (Chapters 2 to 9, 11.3 and 12). The rest, in the book's order, with an
 estimate of how well each suits a browser kernel (a judgement, to revisit when a
 chapter is planned; none besides Chapter 12, above, is planned in detail):
 
@@ -545,7 +545,7 @@ chapter is planned; none besides Chapter 12, above, is planned in detail):
 |---|---:|---|
 | 10 Modern Recurrent Neural Networks | 8 | As 9, with longer training |
 | 11 Attention Mechanisms and Transformers | 8 left (11.3 done) | Builds on the Chapter 3–5 framework; training is the cost |
-| 12 Optimization Algorithms | 1 left (12.1 to 12.10 done) | Planned above |
+| 12 Optimization Algorithms | done | Planned above |
 | 13 Computational Performance | 7 | Mostly GPUs, hybridization and multi-GPU: little applies to a browser |
 | 14 Computer Vision | 14 | Heavy: large models and pretrained weights |
 | 15 Natural Language Processing: Pretraining | 10 | Heavy: large corpora |

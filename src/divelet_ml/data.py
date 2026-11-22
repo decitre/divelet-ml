@@ -336,7 +336,9 @@ def get_data_ch11(batch_size=10, n=1500):
     return data_iter, data.shape[1] - 1
 
 
-def load_data_fashion_mnist(batch_size, resize=None, root='../data'):
-    """The training and validation minibatches of Fashion-MNIST: images of shape (1, h, w) in [0, 1], and their labels."""
+def load_data_fashion_mnist(batch_size, resize=None, root='../data', num_train=None, num_val=None):
+    """The training and validation minibatches of Fashion-MNIST: images of shape (1, h, w) in [0, 1], and their labels.
+    `num_train` and `num_val` keep only the first examples (the data is in random order); not in the book."""
     train, val = load_fashion_mnist(root, resize or (28, 28))
-    return ArrayLoader((train.X, train.y), batch_size, shuffle=True), ArrayLoader((val.X, val.y), batch_size)
+    return (ArrayLoader((train.X[:num_train], train.y[:num_train]), batch_size, shuffle=True),
+            ArrayLoader((val.X[:num_val], val.y[:num_val]), batch_size))
