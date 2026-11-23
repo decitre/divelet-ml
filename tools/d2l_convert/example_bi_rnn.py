@@ -18,7 +18,7 @@ SECTIONS = [("lstm", "Long Short-Term Memory (LSTM)"), ("gru", "Gated Recurrent 
 IMPORTS = "from divelet_ml import nn\nimport autograd.numpy as np\n\nimport divelet_ml as d2l"
 
 
-def build(out_dir, adapted=(1, 2, 3, 4)):
+def build(out_dir, adapted=tuple(range(1, 9))):  # all of Chapter 10 exists, so 10.4 links forward to 10.5
     chapter = Chapter(10, "chapter_recurrent-modern", out_dir, SECTIONS, adapted,
                       previous="Previous: [Section 9.7: Backpropagation Through Time](../09_recurrent-neural-networks/09.07_bptt.ipynb)")
     return chapter.build("bi-rnn", {

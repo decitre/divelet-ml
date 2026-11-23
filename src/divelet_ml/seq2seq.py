@@ -46,10 +46,10 @@ class EncoderDecoder(Classifier):
         # Return decoder output only
         return self.decoder(dec_X, dec_state)[0]
 
-    def predict_step(self, batch, device=None, num_steps=9, save_attention_weights=False):
+    def predict_step(self, batch, num_steps=9, save_attention_weights=False):
         """Translate a batch greedily, `num_steps` tokens, from `<bos>`: the predicted token indices, of shape (batch, num_steps),
-        and the attention weights of each step if the decoder keeps them. `device` is ignored, as a browser kernel has no GPU: the
-        name is the book's."""
+        and the attention weights of each step if the decoder keeps them. The book's version takes a `device` before `num_steps`;
+        a browser kernel has no GPU, so it is left out, as it is from `predict` of Chapter 9."""
         src, tgt, src_valid_len, _ = batch
         enc_all_outputs = self.encoder(src, src_valid_len)
         dec_state = self.decoder.init_state(enc_all_outputs, src_valid_len)

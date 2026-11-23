@@ -39,6 +39,7 @@ TARGETS = {
     "10_recurrent-modern/10.01_lstm.ipynb": ("50 epochs, as in the book", []),
     "10_recurrent-modern/10.02_gru.ipynb": ("50 epochs, as in the book", []),
     "10_recurrent-modern/10.03_deep-rnn.ipynb": ("100 epochs, as in the book", []),
+    "10_recurrent-modern/10.07_seq2seq.ipynb": ("30 epochs, as in the book", []),
 }
 
 

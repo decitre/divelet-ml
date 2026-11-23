@@ -82,8 +82,9 @@ SNIPPET = """
 import json, sys
 sys.path.insert(0, %r)
 import convert
+from d2lindex import FILES
 title, cells, forum = convert.draft('chapter_demo/sec.md')
-print(json.dumps({'title': title, 'cells': cells, 'forum': forum, 'warnings': convert.WARN}))
+print(json.dumps({'title': title, 'cells': cells, 'forum': forum, 'warnings': convert.WARN, 'files': FILES}))
 """
 
 
@@ -94,7 +95,8 @@ def draft(tmp_path_factory):
     (book / "chapter_introduction").mkdir()
     (book / "chapter_introduction" / "index.md").write_text("# Introduction\n```toc\n```\n")
     (book / "chapter_demo").mkdir()
-    (book / "chapter_demo" / "index.md").write_text("# Demo\n```toc\nsec\n```\n")
+    (book / "chapter_demo" / "index.md").write_text("# Demo\n```toc\nsec\nsec2.md\n```\n")  # a few entries of the book's tables of contents carry the extension
+    (book / "chapter_demo" / "sec2.md").write_text("# Second\n")
     (book / "chapter_demo" / "sec.md").write_text(SECTION)
     (book / "d2l.bib").write_text(BIB)
     img = book / "img"
@@ -126,6 +128,10 @@ def test_highlight_markers_are_stripped_but_bold_links_stay(draft):
     text = "\n".join(v for k, v in draft["cells"] if k == "md")
     assert "The highlighted and marked words" in text and "[**bold link**](https://example.com)" in text
     assert "a span\nover lines too" in text and "[**" not in text.replace("[**bold link**]", "") and "(**" not in text
+
+
+def test_sections_are_numbered_by_their_place_in_the_tables_of_contents(draft):
+    assert draft["files"] == {"chapter_demo/sec.md": [2, 1], "chapter_demo/sec2.md": [2, 2]}
 
 
 def test_an_unknown_label_is_a_warning_not_an_error(draft):

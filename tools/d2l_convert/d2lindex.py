@@ -7,7 +7,8 @@ def toc(path):
     t = open(SRC + path).read()
     out = []
     for block in re.findall(r"```toc\n(.*?)```", t, re.S):
-        out += [l.strip() for l in block.splitlines() if l.strip() and not l.startswith(":")]
+        # A few entries are written with the file extension (`rs-async.md`).
+        out += [re.sub(r"\.md$", "", l.strip()) for l in block.splitlines() if l.strip() and not l.startswith(":")]
     return out
 chapters = [c for c in toc("index.md") if c.endswith("/index") and c.startswith("chapter_")]
 chapters = chapters[chapters.index("chapter_introduction/index"):]  # numbered chapters start at the introduction

@@ -7,7 +7,7 @@ textbook.
 
 Development proceeds incrementally, one chapter at a time.
 
-**Current status:** Active development. 72 of the book's 165 sections are adapted: Chapters 2 to 7, 9, 12 and 10.1 to 10.4 in full, Chapter 8 with its models built
+**Current status:** Active development. 76 of the book's 164 sections are adapted: Chapters 2 to 7, 9, 10 and 12 in full, Chapter 8 with its models built
 and shown but trained only in 8.5, and 11.3 *Attention Scoring Functions*. The adapted notebooks run in JupyterLite with both the Pyodide and
 xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>. GitHub Actions tests, builds and deploys the site on every push to `main`
 (its browser smoke test covers Chapters 2 to 5 and 11: see Phase 4). The package is on PyPI as `divelet-ml`. What does not work in a browser is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md),
@@ -29,8 +29,8 @@ The PyTorch edition serves as the primary implementation reference.
 - [x] Identify framework-specific code variants.
 - [x] Classify chapters by estimated adaptation difficulty.
 - [x] Identify initial candidate chapters.
-- [x] Review remaining parser warnings and ambiguous code variants: the converter drafts all 163 sections that the book's tables of contents list without an error, and the
-      adapted chapters give no warning. Eight warnings in five sections of Chapters 16, 18 and 19 are left, listed in the converter's README, for whoever adapts those chapters.
+- [x] Review remaining parser warnings and ambiguous code variants: the converter drafts all 164 sections of the book without an error, and the
+      adapted chapters give no warning. Three warnings, one in each of Chapters 16, 18 and 19, are left, listed in the converter's README, for whoever adapts those chapters.
 - [x] Verify upstream code licenses and third-party asset requirements
       (`LICENSE-SUMMARY`: text CC BY-SA 4.0, sample code MIT-0). Covers the
       material adapted so far; datasets and images that later chapters use
@@ -41,7 +41,7 @@ The PyTorch edition serves as the primary implementation reference.
 ### Initial Assessment
 
 The first audit was a static analysis of the book's Markdown. Its script was not kept, so the figures below are a record; the converter (`tools/d2l_convert`) replaced it and reports its own (see
-its README: 165 section files, 163 of them in the tables of contents, 1,190 code cells in the PyTorch tab or shared by every tab, and the eight warnings above). The first audit was performed against the book's commit:
+its README: 164 sections, 1,201 code cells in the PyTorch tab or shared by every tab, and the three warnings above). The first audit was performed against the book's commit:
 
 `23d7a5aecceee57d1292c56e90cce307f183bb0a`
 
@@ -510,8 +510,8 @@ architecture, sequence-to-sequence learning and beam search. Builds on Chapter 9
   a model with wide matrices pays for it (`d2l.browser_epochs`' docstring says 8 times; the wide models are far worse). With the whole data set's vocabularies a step takes 1.1 s in CPython (the
   browser kernels cannot hold its output layer: a WebAssembly array is limited to 2 GB), so an epoch of 1,306 steps is about 23 minutes in CPython and out of reach in a browser.
 - **Decisions.** 10.1 and 10.2 use `d2l.browser_epochs(50, pyodide=20, xeus=50)` for each of their two trainings: about 190 s in xeus-python and 190 to 220 s in Pyodide per notebook.
-  10.3 uses `d2l.browser_epochs(100, pyodide=15, xeus=40)`: about 230 s and 250 s. 10.7 keeps the book's data and sizes and uses `d2l.browser_epochs(30, pyodide=15, xeus=30)`: 70 s in
-  xeus-python and about 230 s in Pyodide (15 epochs are 60 steps; the alternative, 128 units for all 30 epochs, is 108 s in Pyodide and a different model). Each gets a tablet-marked note, a
+  10.3 uses `d2l.browser_epochs(100, pyodide=15, xeus=40)`: about 230 s and 250 s. 10.7 keeps the book's data and sizes and uses `d2l.browser_epochs(30, pyodide=12, xeus=30)` (the classes of #48 took 0.74 s a step in xeus-python and 5.2 s in Pyodide, with the plots): about 90 s in
+  xeus-python and about 250 s in Pyodide (12 epochs are 48 steps; the first plan had 15, the alternative, 128 units for all 30 epochs, is 108 s in Pyodide and a different model). Each gets a tablet-marked note, a
   `RUN_MS_NOTEBOOKS` limit of 480 s, and, for 10.1 to 10.3, the figures of the full runs from `tools/full_run_figures.py` as in 9.5 and 9.6. The translations are poor, as in the book, because
   512 sentences is all it trains on. These are estimates for the library's classes from the spike's numbers: confirm each notebook's time in the browser when it is written.
 - **The data.** `fra-eng.zip` is the Tatoeba English to French file of ManyThings' Anki pairs, which the book downloads from its own bucket
@@ -538,16 +538,16 @@ architecture, sequence-to-sequence learning and beam search. Builds on Chapter 9
   214 tokens, 641 pairs including the one the book's `max_examples` test lets through); `Encoder`, `Decoder`, `EncoderDecoder` with `predict_step`, `Seq2SeqEncoder`, `Seq2Seq`,
   `init_seq2seq`, `bleu`, `d2l.GRU` and `show_list_len_pair_hist`; and `build.sh` hosts `fra-eng.zip` with its checksum, credited in `NOTICE.md` to the Tatoeba contributors (the file has no
   per-sentence authors: see the data note above). The book's 10.7, written with these classes, trains its 30 epochs in 16 s in CPython and translates 'go .', 'i lost .' and "i'm home ." as the book does.
-  `Seq2SeqDecoder` is not saved by the book, so it stays in the 10.7 notebook. Not done: the notebooks, and running these classes in the browser kernels.
+  `Seq2SeqDecoder` is not saved by the book, so it stays in the 10.7 notebook. The classes also run in xeus-python and Pyodide with the hosted data (3 epochs: 0.74 s a step and 5.2 s a step, with the plots). `predict_step` takes no `device`, as `predict` of Chapter 9 takes none.
 
 - [x] 10.1 *Long Short-Term Memory (LSTM)*: reduced epochs, two trainings.
 - [x] 10.2 *Gated Recurrent Units (GRU)*: as 10.1.
 - [x] 10.3 *Deep Recurrent Neural Networks*: reduced epochs.
 - [x] 10.4 *Bidirectional Recurrent Neural Networks*: builds the model, no training.
-- [ ] 10.5 *Machine Translation and the Dataset*: needs the hosted data.
-- [ ] 10.6 *The Encoder--Decoder Architecture*.
-- [ ] 10.7 *Sequence-to-Sequence Learning for Machine Translation*: the book's 30 epochs on 512 pairs.
-- [ ] 10.8 *Beam Search* (no code).
+- [x] 10.5 *Machine Translation and the Dataset*: needs the hosted data.
+- [x] 10.6 *The Encoder--Decoder Architecture*.
+- [x] 10.7 *Sequence-to-Sequence Learning for Machine Translation*: the book's 30 epochs on 512 pairs.
+- [x] 10.8 *Beam Search* (no code).
 
 ### Chapter 11 — Attention Mechanisms and Transformers
 
@@ -643,13 +643,13 @@ linear regression on 1,500 examples with five features. The exception is 12.11.
 
 ### Later chapters
 
-72 of the book's 165 sections are adapted (Chapters 2 to 9, 10.1 to 10.4, 11.3 and 12). The rest, in the book's order, with an
+76 of the book's 164 sections are adapted (Chapters 2 to 10, 11.3 and 12). The rest, in the book's order, with an
 estimate of how well each suits a browser kernel (a judgement, to revisit when a
 chapter is planned; none besides Chapters 10, 11 and 12, above, is planned in detail):
 
 | Chapter | Sections | Outlook |
 |---|---:|---|
-| 10 Modern Recurrent Neural Networks | 4 left (10.1 to 10.4 done) | Planned above |
+| 10 Modern Recurrent Neural Networks | done | Planned above |
 | 11 Attention Mechanisms and Transformers | 8 left (11.3 done) | Planned above |
 | 12 Optimization Algorithms | done | Planned above |
 | 13 Computational Performance | 7 | Mostly GPUs, hybridization and multi-GPU: little applies to a browser |

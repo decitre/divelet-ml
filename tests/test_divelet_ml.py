@@ -1351,7 +1351,7 @@ def test_seq2seq_shapes_loss_mask_training_and_greedy_translation():
         optimizer.step(grads)
     model.eval()
     assert float(model.loss(model(*batch_[:-1]), batch_[-1])) < first / 2
-    preds, weights = model.predict_step(batch_, None, 5)
+    preds, weights = model.predict_step(batch_, 5)
     assert preds.shape == (16, 5) and weights == []
     assert (preds == src).mean() > 0.5  # greedy decoding from <bos> reproduces most of the copy
 

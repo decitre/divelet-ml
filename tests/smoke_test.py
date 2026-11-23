@@ -47,7 +47,9 @@ RUN_MS_NOTEBOOKS = {"05_multilayer-perceptrons/05.02_mlp-implementation.ipynb": 
                     # Each of these trains two character models, from scratch and with the high-level API: about 3 to 5 minutes in Pyodide.
                     "10_recurrent-modern/10.01_lstm.ipynb": 480_000,
                     "10_recurrent-modern/10.02_gru.ipynb": 480_000,
-                    "10_recurrent-modern/10.03_deep-rnn.ipynb": 480_000}
+                    "10_recurrent-modern/10.03_deep-rnn.ipynb": 480_000,
+                    # The GRU encoder-decoder: 12 epochs of 4 steps in Pyodide take about 5 s a step with the progress plot.
+                    "10_recurrent-modern/10.07_seq2seq.ipynb": 480_000}
 # The kernel name each site's toolbar shows: catches a site built with the other kernel.
 KERNEL_NAMES = {"xeus": "(XPython)", "pyodide": "(Pyodide)"}
 IPAD = "iPad (gen 11)"

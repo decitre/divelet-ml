@@ -42,14 +42,15 @@ D2L_SRC=d2l-en python tools/d2l_convert/d2lindex.py
 
 ## What it finds in the whole book
 
-Run over every section listed in the book's tables of contents (163 of the 165 section files: `chapter_hyperparameter-optimization/rs-async.md` is in none, and `chapter_references/zreferences.md`
-is the bibliography), it drafts all of them without an error, and keeps 1,190 code cells of the PyTorch tab or shared by every tab. Five sections give warnings, eight in all, all in chapters that are not adapted yet:
+Run over every section listed in the book's tables of contents (164 sections; the 165th file, `chapter_references/zreferences.md`, is the bibliography), it drafts all of them without an error,
+and keeps 1,201 code cells of the PyTorch tab or shared by every tab. Three sections give a warning, one each, all in chapters that are not adapted yet:
 
 | Section | Warning |
 |---|---|
 | `chapter_natural-language-processing-applications/natural-language-inference-attention.md` | unknown label `eq_nli_v_ab` |
 | `chapter_gaussian-processes/gp-priors.md` | unknown label `eq_gp-function` |
-| `chapter_hyperparameter-optimization/hyperopt-intro.md` | unknown citation `hutter-book19a`; unknown label `sec_rs_async` |
-| `chapter_hyperparameter-optimization/sh-intro.md`, `sh-async.md` | unknown label `sec_rs_async` |
+| `chapter_hyperparameter-optimization/hyperopt-intro.md` | unknown citation `hutter-book19a` |
 
-The adapted chapters (2 to 10, 11.3 and 12) give none. The warnings are for whoever adapts Chapters 16, 18 and 19 to look at: the labels are either in the book's own text under another form, or dangling in the book.
+(One entry of a table of contents, `rs-async.md`, is written with its extension; `d2lindex.py` accepts that. Before it did, that section was missing from the index and five references to it were reported as unknown.)
+
+The adapted chapters (2 to 10, 11.3 and 12) give none. The warnings are for whoever adapts Chapters 16, 18 and 19 to look at: the label or the citation is either in the book's own text under another form, or dangling in the book.
