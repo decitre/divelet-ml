@@ -7,17 +7,15 @@ textbook.
 
 Development proceeds incrementally, one chapter at a time.
 
-**Current status:** Early development. Static compatibility analysis has been
-performed. Chapters 2 (*Preliminaries*), 3 (*Linear Neural Networks for
-Regression*), 4 (*Linear Neural Networks for Classification*) and 5
-(*Multilayer Perceptrons*), 6 (*Builders' Guide*) and 7 (*Convolutional Neural
-Networks*) are adapted in full, along with 9 (*Recurrent Neural Networks*), 8 (*Modern Convolutional Neural Networks*, whose models are built and shown but trained only in 8.5) 10 (*Modern Recurrent Neural Networks*), 11.3 *Attention Scoring Functions* and 12 (*Optimization Algorithms*). The adapted notebooks run in JupyterLite with both the Pyodide and
-xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>.
-GitHub Actions tests, builds and deploys the site on every push to `main`.
+**Current status:** Active development. 76 of the book's 164 sections are adapted: Chapters 2 to 7, 9, 10 and 12 in full, Chapter 8 with its models built
+and shown but trained only in 8.5, and 11.3 *Attention Scoring Functions*. The adapted notebooks run in JupyterLite with both the Pyodide and
+xeus-python kernels, on the site published at <https://decitre.github.io/divelet-ml/>. GitHub Actions tests, builds and deploys the site on every push to `main`
+(its browser smoke test covers Chapters 2 to 5 and 11: see Phase 4). The package is on PyPI as `divelet-ml`. What does not work in a browser is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md),
+how the project is put together in [docs/CONVENTIONS.md](docs/CONVENTIONS.md), and the tool that drafts the notebooks in [tools/d2l_convert](tools/d2l_convert/README.md).
 
 ## Phase 1 — Compatibility Assessment
 
-**Status: In progress**
+**Status: Complete**
 
 The first phase evaluates the feasibility of adapting the book for browser-native
 Python execution.
@@ -31,16 +29,19 @@ The PyTorch edition serves as the primary implementation reference.
 - [x] Identify framework-specific code variants.
 - [x] Classify chapters by estimated adaptation difficulty.
 - [x] Identify initial candidate chapters.
-- [ ] Review remaining parser warnings and ambiguous code variants.
+- [x] Review remaining parser warnings and ambiguous code variants: the converter drafts all 164 sections of the book without an error, and the
+      adapted chapters give no warning. Three warnings, one in each of Chapters 16, 18 and 19, are left, listed in the converter's README, for whoever adapts those chapters.
 - [x] Verify upstream code licenses and third-party asset requirements
       (`LICENSE-SUMMARY`: text CC BY-SA 4.0, sample code MIT-0). Covers the
       material adapted so far; datasets and images that later chapters use
       are reviewed as they are adapted.
-- [ ] Publish the compatibility assessment and methodology.
+- [x] Publish the compatibility assessment and methodology: the converter that drafts every section, with its README (`tools/d2l_convert`), and the outlook of each chapter in the
+      plans and the table of chapters below.
 
 ### Initial Assessment
 
-The initial audit was performed against the book's commit:
+The first audit was a static analysis of the book's Markdown. Its script was not kept, so the figures below are a record; the converter (`tools/d2l_convert`) replaced it and reports its own (see
+its README: 164 sections, 1,201 code cells in the PyTorch tab or shared by every tab, and the three warnings above). The first audit was performed against the book's commit:
 
 `23d7a5aecceee57d1292c56e90cce307f183bb0a`
 
@@ -154,7 +155,7 @@ of 2.1 and 3.3 matches the book's PyTorch output up to print precision, and
 
 ## Phase 3 — JupyterLite Infrastructure
 
-**Status: In progress**
+**Status: Complete**
 
 Establish a reproducible browser-native learning environment.
 
@@ -163,7 +164,7 @@ Establish a reproducible browser-native learning environment.
 - [x] Configure a JupyterLite distribution for divelet-ml.
 - [x] Integrate the Pyodide kernel.
 - [x] Integrate the xeus-python kernel.
-- [ ] Establish dependency and package-management conventions.
+- [x] Establish dependency and package-management conventions ([docs/CONVENTIONS.md](docs/CONVENTIONS.md)).
 - [x] Define dataset-loading and caching strategies (Chapter 4: datasets the site can
       host are served from its own root and cached by the browser; Kaggle's
       house-price files, which cannot be hosted, are uploaded by the reader, 5.7).
@@ -171,7 +172,7 @@ Establish a reproducible browser-native learning environment.
       [jl-forge](https://github.com/decitre/jl-forge)).
 - [x] Publish a browser-accessible demonstration
       (<https://decitre.github.io/divelet-ml/>, deployed by GitHub Actions).
-- [ ] Document browser and runtime limitations.
+- [x] Document browser and runtime limitations ([docs/LIMITATIONS.md](docs/LIMITATIONS.md)).
 
 Pyodide and xeus-python will be evaluated separately. Compatibility with one
 runtime does not imply compatibility with the other.
@@ -185,9 +186,9 @@ executable and educationally consistent.
 
 ### Tasks
 
-- [ ] Add tests for numerical correctness (started:
-      `tests/test_attention_scoring.py` for 11.3).
-- [ ] Validate representative notebook outputs.
+- [x] Add tests for numerical correctness: `tests/test_divelet_ml.py` checks the library against reference NumPy implementations and finite differences
+      (layers, recurrent networks, optimizers, data, the encoder--decoder), and `tests/test_attention_scoring.py` checks 11.3's equations.
+- [ ] Validate representative notebook outputs: `tests/test_notebooks.py` checks that every notebook runs without an error or stderr output, not what it prints or plots.
 - [x] Introduce browser-based execution tests (`tests/smoke_test.py`: every
       notebook runs in both kernels, with no request to other hosts and no
       browser console error).
@@ -196,7 +197,9 @@ executable and educationally consistent.
       built site, before deploying).
 - [x] Track compatibility separately for Pyodide and xeus-python (the smoke
       test runs each notebook on each site and checks the site's kernel).
-- [ ] Document known failures and unsupported features.
+- [x] Document known failures and unsupported features ([docs/LIMITATIONS.md](docs/LIMITATIONS.md)).
+- [ ] Run every chapter's browser smoke test in CI: its groups are Chapters 2 to 3, 4 and 5 with 11 (`.github/workflows/build.yml`), so Chapters 6 to 10 and 12 are smoke-tested
+      on the author's machine before each pull request and not in CI.
 
 Where possible, tests should verify mathematical properties rather than
 depend exclusively on exact numerical outputs.
@@ -640,7 +643,7 @@ linear regression on 1,500 examples with five features. The exception is 12.11.
 
 ### Later chapters
 
-76 of the book's 165 sections are adapted (Chapters 2 to 10, 11.3 and 12). The rest, in the book's order, with an
+76 of the book's 164 sections are adapted (Chapters 2 to 10, 11.3 and 12). The rest, in the book's order, with an
 estimate of how well each suits a browser kernel (a judgement, to revisit when a
 chapter is planned; none besides Chapters 10, 11 and 12, above, is planned in detail):
 

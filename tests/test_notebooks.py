@@ -13,13 +13,16 @@ import pytest
 from nbclient import NotebookClient
 
 NOTEBOOKS = sorted((Path(__file__).parent.parent / "content").rglob("*.ipynb"))
+# Seconds that one cell may run, 300 unless listed. These notebooks train for the book's full epochs outside the browser, twice (from scratch and with the high-level API):
+# 10.3's cells took about 140 s each on a laptop and passed 300 s on the CI runners, which also run several notebooks at once.
+CELL_TIMEOUTS = {"10.01_lstm": 600, "10.02_gru": 600, "10.03_deep-rnn": 900}
 
 
 @pytest.mark.parametrize("path", NOTEBOOKS, ids=lambda p: p.stem)
 def test_notebook_runs(path):
     nb = nbformat.read(path, as_version=4)
     nbformat.validate(nb)  # a cell type such as "md" is not rejected by `read`, and Lab shows that cell as raw text
-    NotebookClient(nb, timeout=300, kernel_name="python3").execute()
+    NotebookClient(nb, timeout=CELL_TIMEOUTS.get(path.stem, 300), kernel_name="python3").execute()
     stderr = [o["text"] for c in nb.cells if c.cell_type == "code" for o in c.outputs if o.get("name") == "stderr"]
     assert not stderr
 
