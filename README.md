@@ -17,7 +17,7 @@ divelet-ml is an experimental, browser-native adaptation of the Jupyter notebook
 
 The project aims to preserve the book's chapter structure, mathematical explanations, learning objectives, and exercises while adapting its framework-dependent Python implementations for execution directly in the browser.
 
-**Project status:** Early development. Chapters 2 to 7, 9 and 12 are adapted in full, and Chapter 10 is in progress (10.1 to 10.4 so far). In Chapter 8, the models are built and their layer shapes shown, and only 8.5 (batch normalization) trains in the browser. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
+**Project status:** Active development. Chapters 2 to 7, 9 and 12 are adapted in full, and Chapter 10 is in progress (10.1 to 10.4 so far). In Chapter 8, the models are built and their layer shapes shown, and only 8.5 (batch normalization) trains in the browser. Adapted sections run in the browser with no installation. A section link opens its notebook with the xeus-python kernel; **[p]** opens it with Pyodide instead.
 
 | Section | Original |
 |---|---|
@@ -164,7 +164,7 @@ This integration is optional and is not intended to replace the mathematical and
 
 ## Compatibility
 
-A static audit of the book's source repository drives the adaptation order; reviewing its remaining parser warnings and publishing it are still open. Static analysis does not establish that a chapter runs in JupyterLite: every adapted notebook is validated by a browser smoke test under both kernels, and educational fidelity is reviewed separately.
+The adaptation order follows an audit of the book's source repository, and a converter ([`tools/d2l_convert`][converter]) drafts each section. What does not work in a browser, and what differs from PyTorch, is in [LIMITATIONS.md][limitations]; how the project is put together is in [CONVENTIONS.md][conventions]. Static analysis does not establish that a chapter runs in JupyterLite: every adapted notebook is validated by a browser smoke test under both kernels, and educational fidelity is reviewed separately.
 
 See [ROADMAP.md][roadmap] for the audit and the adaptation plan.
 
@@ -444,3 +444,6 @@ Please share suggestions, bug reports, and use cases through [GitHub Issues][iss
 [issues]: https://github.com/decitre/divelet-ml/issues
 [contributing]: https://github.com/decitre/divelet-ml/blob/main/CONTRIBUTING.md
 [apache]: https://github.com/decitre/divelet-ml/blob/main/LICENSE
+[converter]: https://github.com/decitre/divelet-ml/tree/main/tools/d2l_convert
+[limitations]: https://github.com/decitre/divelet-ml/blob/main/docs/LIMITATIONS.md
+[conventions]: https://github.com/decitre/divelet-ml/blob/main/docs/CONVENTIONS.md
