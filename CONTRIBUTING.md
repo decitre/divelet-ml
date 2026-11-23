@@ -17,9 +17,9 @@ uv sync
 These are the same checks [CI][build-yml] runs on every push and pull request:
 
 ```bash
-# divelet_ml package tests, the 11.3 notebook's attention properties, and every notebook in content/ run in CPython
+# divelet_ml package tests, the 11.3 notebook's attention properties, the converter of tools/d2l_convert, and every notebook in content/ run in CPython
 # (-n auto runs them in parallel workers; CI runs it once per Python version, 3.11 and 3.13)
-uv run --group test pytest tests/test_divelet_ml.py tests/test_attention_scoring.py tests/test_notebooks.py -v -n auto
+uv run --group test pytest tests/test_divelet_ml.py tests/test_attention_scoring.py tests/test_converter.py tests/test_notebooks.py -v -n auto
 
 # divelet_ml package tests with a coverage report (CI uploads it to Codecov)
 uv run --group test pytest tests/test_divelet_ml.py --cov --cov-report=term-missing
